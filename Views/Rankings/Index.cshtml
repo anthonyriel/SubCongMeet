@@ -1,0 +1,536 @@
+@model IEnumerable<SubcongMeet.Models.MedalTally>
+@{
+    ViewData["Title"] = "Overall Team Rankings";
+    var recentResults = ViewBag.RecentResults as List<SubcongMeet.Models.Event> ?? new List<SubcongMeet.Models.Event>();
+    var teamNames = ViewBag.Teams as Dictionary<int, string> ?? new Dictionary<int, string>();
+    
+    int eventsRecorded = recentResults.Count;
+    int totalEvents = ViewBag.TotalEvents ?? 0;
+    
+    // Core Philippine Standard Time (PST - UTC+8) Utility
+    string FormatToPst(DateTime? dt, string format = "MMM dd, yyyy • h:mm tt") {
+        if (!dt.HasValue) return "N/A";
+        
+        DateTime utcDateTime;
+        if (dt.Value.Kind == DateTimeKind.Utc) {
+            utcDateTime = dt.Value;
+        } else if (dt.Value.Kind == DateTimeKind.Local) {
+            utcDateTime = dt.Value.ToUniversalTime();
+        } else {
+            utcDateTime = DateTime.SpecifyKind(dt.Value, DateTimeKind.Utc);
+        }
+            
+        return utcDateTime.AddHours(8).ToString(format);
+    }
+
+    DateTime? lastUpdateUtc = recentResults.Any() ? recentResults.Max(r => r.UpdatedAt) : null;
+    string lastUpdatedString = lastUpdateUtc.HasValue ? FormatToPst(lastUpdateUtc.Value, "MM/dd/yy • h:mm tt") : FormatToPst(DateTime.UtcNow, "MM/dd/yy • h:mm tt");
+
+    string GetHouseText(string name) {
+        if(string.IsNullOrEmpty(name)) return "var(--deped-blue, #0033A0)";
+        if(name.Contains("Lannister", StringComparison.OrdinalIgnoreCase)) return "#b8860b"; 
+        if(name.Contains("Baratheon", StringComparison.OrdinalIgnoreCase)) return "#744210"; 
+        if(name.Contains("Targaryen", StringComparison.OrdinalIgnoreCase)) return "#c2410c"; 
+        if(name.Contains("Stark", StringComparison.OrdinalIgnoreCase)) return "#4a5568";     
+        return "var(--deped-blue, #0033A0)";
+    }
+
+    // Build a lookup dictionary for acronyms based on the Model
+    var acronymMap = new Dictionary<string, string>();
+    foreach (var tally in Model)
+    {
+        if (tally.Team != null && !string.IsNullOrEmpty(tally.Team.Name))
+        {
+            acronymMap[tally.Team.Name] = !string.IsNullOrEmpty(tally.Team.Acronym) ? tally.Team.Acronym : tally.Team.Name;
+        }
+    }
+
+    // Helper to fetch the acronym for the Recent Updates feed
+    string GetTeamDisplayName(int teamId)
+    {
+        if (!teamNames.ContainsKey(teamId)) return "Unknown Team";
+        string fullName = teamNames[teamId];
+        return acronymMap.ContainsKey(fullName) ? acronymMap[fullName] : fullName;
+    }
+
+    // FIX: Pre-sort the standings by Gold, Silver, Bronze, and then Alphabetically by Team Name for ties
+    var sortedStandings = Model
+        .OrderByDescending(t => t.Gold)
+        .ThenByDescending(t => t.Silver)
+        .ThenByDescending(t => t.Bronze)
+        .ThenBy(t => t.Team?.Name ?? "")
+        .ToList();
+}
+
+<style>
+    /* Clean Page Header */
+    .page-header {
+        color: var(--deped-blue, #0033A0);
+        border-bottom: 3px solid var(--golden-yellow, #FFD700);
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Animated Gradient Core Setup */
+    @@keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* Uniform Cards Styling with Moving Gradient */
+    .stat-card-clean, .feed-item {
+        background: linear-gradient(-45deg, #0033A0 0%, #004aad 25%, #0033A0 50%, #002a7a 75%, #0033A0 100%);
+        background-size: 300% 300%;
+        animation: gradientMove 8s ease-in-out infinite;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        color: #ffffff;
+    }
+
+    .stat-card-clean:hover, .feed-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 25px rgba(0, 34, 122, 0.35) !important; 
+    }
+
+    .stat-card-clean {
+        border-left: 5px solid rgba(255, 255, 255, 0.4);
+        padding: 1rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        flex: 1;
+        min-width: 140px;
+        max-width: 260px;
+    }
+
+    .stat-title {
+        font-family: var(--font-header, 'Poppins', sans-serif);
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-family: var(--font-header, 'Poppins', sans-serif);
+        color: #ffffff;
+        font-size: 0.98rem; 
+        font-weight: 700;
+        margin-top: 4px;
+        line-height: 1.2;
+        text-align: center;
+    }
+
+    /* Division Filter Tabs */
+    .division-filters {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        background: white;
+        border: 2px solid var(--deped-blue, #0033A0);
+        color: var(--deped-blue, #0033A0);
+        font-family: var(--font-header, 'Poppins', sans-serif);
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 6px 18px;
+        font-size: 0.85rem;
+        border-radius: 50px;
+        transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+        background: rgba(0, 51, 160, 0.08);
+        border-color: var(--deped-blue, #0033A0);
+        color: var(--deped-blue, #0033A0);
+    }
+
+    .filter-btn.active-filter {
+        background: var(--deped-blue, #0033A0);
+        border-color: var(--deped-blue, #0033A0);
+        color: white;
+        box-shadow: 0 4px 10px rgba(0, 51, 160, 0.2);
+    }
+
+    /* Minimalist Rankings Table Layout */
+    .minimalist-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+        background: white;
+        table-layout: fixed;
+    }
+    
+    .minimalist-table th {
+        font-family: var(--font-header, 'Poppins', sans-serif);
+        background: linear-gradient(135deg, #0056b3 0%, #0033A0 100%);
+        color: #ffffff;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        padding: 12px 8px;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+        letter-spacing: 0.3px;
+    }
+
+    .minimalist-table td {
+        padding: 0.85rem 8px;
+        vertical-align: middle;
+        border-bottom: 1px solid #dee2e6;
+        font-family: var(--font-body, 'Inter', sans-serif);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Dynamic Alternating Zebra Contrast Settings */
+    .minimalist-table tbody tr {
+        background-color: #ffffff;
+    }
+
+    .minimalist-table tbody tr:nth-child(even) {
+        background-color: rgba(0, 51, 160, 0.04);
+    }
+
+    .minimalist-table tbody tr:hover {
+        background-color: rgba(0, 51, 160, 0.08) !important;
+    }
+
+    /* Blue Glow Shadow Effect for Table Container */
+    .table-shadow-blue {
+        border: 1px solid rgba(0, 51, 160, 0.18) !important;
+        box-shadow: 0 10px 30px rgba(0, 51, 160, 0.12) !important;
+    }
+
+    /* Medal Text Colors */
+    .medal-text-gold { color: #D4AF37; font-weight: 700; }
+    .medal-text-silver { color: #9E9E9E; font-weight: 700; }
+    .medal-text-bronze { color: #CD7F32; font-weight: 700; }
+
+    /* Glass Sidebar Panel - Solid White Background */
+    .glass-card {
+        padding: 1.5rem;
+        background: #ffffff !important;
+        border: 1px solid #dee2e6 !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+        border-top: 4px solid var(--golden-yellow, #FFD700) !important;
+        border-radius: 12px;
+        color: #212529 !important;
+    }
+
+    /* Feed Layout Itemization Adjustments */
+    .feed-item {
+        border-left: 5px solid var(--golden-yellow, #FFD700) !important;
+        padding: 1.15rem; 
+        box-shadow: 0 4px 15px rgba(0, 51, 160, 0.12);
+        margin-bottom: 1.15rem;
+    }
+    
+    .feed-title { 
+        font-family: var(--font-header, 'Poppins', sans-serif); 
+        color: #ffffff !important; 
+        font-size: 0.9rem; 
+        font-weight: 600;
+        margin-bottom: 3px; 
+    }
+
+    .feed-time { 
+        color: rgba(255,255,255,0.8) !important; 
+        font-size: 0.7rem; 
+        font-weight: 600; 
+    }
+
+    .feed-div { 
+        font-size: 0.72rem; 
+        color: var(--golden-yellow, #FFD700) !important; 
+        font-weight: 700; 
+        text-transform: uppercase;
+        margin-bottom: 8px; 
+        letter-spacing: 0.3px;
+    }
+    
+    .medal-text { 
+        font-size: 0.82rem; 
+        color: #ffffff !important; 
+        display: flex; 
+        align-items: center; 
+    }
+
+    .medal-icon { 
+        margin-right: 6px; 
+        font-size: 0.95rem; 
+    }
+
+    /* Mobile View Responsive Layout Modifications */
+    @@media (max-width: 768px) {
+        .page-header h1 {
+            font-size: 1.15rem !important;
+            white-space: nowrap !important; 
+            flex-wrap: nowrap !important; 
+        }
+        .page-header p {
+            font-size: 0.80rem !important; 
+        }
+
+        .stat-value { font-size: 0.85rem; }
+        .stat-title { font-size: 0.65rem; letter-spacing: 0px; }
+        .stat-card-clean { padding: 0.75rem; border-left-width: 4px; max-width: 100%; }
+        
+        /* Table Compact Settings for Tight Screen Real Estate */
+        .minimalist-table th, .minimalist-table td {
+            padding: 10px 4px !important;
+            font-size: 0.78rem !important;
+        }
+        .school-name-text {
+            font-size: 0.82rem !important;
+        }
+    }
+
+    /* Dedicated Filter Balancing for Mobile Screen Widths */
+    @@media (max-width: 576px) {
+        .division-filters {
+            justify-content: flex-start; /* Changed to left-aligned */
+        }
+        .filter-btn {
+            text-align: center;
+            font-size: 0.78rem;
+        }
+    }
+</style>
+
+<div class="container py-4 py-md-5">
+    
+    <!-- Header Section -->
+    <div class="page-header d-flex justify-content-between align-items-end">
+        <div>
+            <h1 class="display-6 fw-bold mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-trophy-fill text-warning"></i> OVERALL TEAM RANKINGS
+            </h1>
+            <p class="fs-6 text-muted mb-0" style="font-family: var(--font-body); font-weight: 600;">Calape District Meet Official Medal Standings</p>
+        </div>
+    </div>
+
+    <div class="row g-4 align-items-stretch">
+        
+        <!-- Main Standings Board Section -->
+        <div class="col-12 col-lg-8 d-flex flex-column">
+            
+            <!-- Dashboard Status Cards (Centered Relative to the Table Layout) -->
+            <div class="d-flex justify-content-center gap-2 gap-md-3 mb-4 w-100">
+                <div class="stat-card-clean">
+                    <div class="stat-title">Last Update</div>
+                    <div class="stat-value">@lastUpdatedString</div>
+                </div>
+                <div class="stat-card-clean" style="border-left-color: var(--golden-yellow, #FFD700);">
+                    <div class="stat-title">Events Done</div>
+                    <div class="stat-value">@eventsRecorded <span class="fw-normal opacity-75" style="font-size: 0.85em;">/ @totalEvents Games</span></div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0" style="font-family: var(--font-header); color: var(--deped-blue);">Leaderboard</h4>
+            </div>
+
+            <!-- Division Selection Tabs (Left Aligned on Mobile) -->
+            <div class="division-filters">
+                <button class="filter-btn active-filter" onclick="setDivisionFilter('Secondary', this)">Secondary</button>
+                <button class="filter-btn" onclick="setDivisionFilter('Elementary', this)">Elementary</button>
+            </div>
+
+            <div class="flex-grow-1 p-0 bg-transparent border-0 shadow-none">
+                @if(!Model.Any())
+                {
+                    <div class="text-center py-5 bg-white rounded shadow-sm">
+                        <i class="bi bi-trophy" style="font-size: 3rem; color: var(--text-muted);"></i>
+                        <p class="mt-3 text-muted fw-bold">No recorded entries yet. The games have not started.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive bg-white rounded table-shadow-blue p-2 p-md-3">
+                        <table class="minimalist-table w-100" id="rankingsTable">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 14%;">Rank</th>
+                                    <th style="width: 32%;">School</th>
+                                    <th class="text-center" style="width: 13%;">🥇 G</th>
+                                    <th class="text-center" style="width: 13%;">🥈 S</th>
+                                    <th class="text-center" style="width: 13%;">🥉 B</th>
+                                    <th class="text-center" style="width: 15%;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- FIX: Using the strictly ordered variable here -->
+                                @foreach (var tally in sortedStandings)
+                                {
+                                    int totalMedals = tally.Gold + tally.Silver + tally.Bronze;
+                                    string fullTeamName = tally.Team?.Name ?? "Unknown Team";
+                                    
+                                    // Use Acronym out of the database structure to guarantee small viewport scaling footprint
+                                    string displaySchoolName = !string.IsNullOrEmpty(tally.Team?.Acronym) ? tally.Team.Acronym : fullTeamName;
+                                    
+                                    string teamColor = GetHouseText(fullTeamName);
+                                    string rowDivision = tally.Team?.Division ?? "Secondary";
+
+                                    <tr class="ranking-row" data-division="@rowDivision" data-gold="@tally.Gold" data-silver="@tally.Silver" data-bronze="@tally.Bronze">
+                                        <td class="text-center fw-bold rank-cell" style="color: var(--deped-blue); font-size: 1rem;"></td>
+                                        <td>
+                                            <span class="fw-bold school-name-text" data-default-color="@teamColor" style="color: @teamColor; font-size: 0.95rem;">
+                                                @displaySchoolName
+                                            </span>
+                                        </td>
+                                        <td class="text-center fw-bold medal-text-gold">@tally.Gold</td>
+                                        <td class="text-center fw-bold medal-text-silver">@tally.Silver</td>
+                                        <td class="text-center fw-bold medal-text-bronze">@tally.Bronze</td>
+                                        <td class="text-center fw-bold" style="color: var(--deped-blue); font-size: 0.95rem;">@totalMedals</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        
+                        <div id="noRankingsRow" class="text-center py-5 bg-white mt-2" style="display: none;">
+                            <p class="mb-0 text-muted fw-bold">No ranking statistics recorded for this division yet.</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Sidebar Updates Feed Section -->
+        <div class="col-12 col-lg-4">
+            <div class="glass-card h-100 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0 fw-bold" style="font-family: var(--font-header); color: var(--deped-blue);">Recent Updates</h4>
+                    <span class="badge bg-light text-primary border rounded-pill px-2 py-1" style="font-size: 0.7rem; font-weight: 700;">Latest Results</span>
+                </div>
+                
+                <div style="max-height: 550px; overflow-y: auto; padding-right: 5px;">
+                    @if (!recentResults.Any())
+                    {
+                        <div class="text-center py-4 text-muted border border-dashed rounded" style="background: #f8f9fa">
+                            <small>Awaiting news from ongoing match events...</small>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var game in recentResults)
+                        {
+                            <div class="feed-item">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <h6 class="feed-title mb-0">@game.Title</h6>
+                                    <small class="feed-time">@FormatToPst(game.UpdatedAt, "h:mm tt")</small>
+                                </div>
+                                <div class="feed-div">@(game.Division ?? "Secondary")</div>
+                                
+                                <div class="d-flex flex-column gap-1">
+                                    @if(game.GoldTeamId.HasValue && teamNames.ContainsKey(game.GoldTeamId.Value))
+                                    {
+                                        string goldIdentifier = GetTeamDisplayName(game.GoldTeamId.Value);
+                                        <div class="medal-text"><span class="medal-icon">🥇</span> <span class="fw-bold">@goldIdentifier</span><span class="ms-1 opacity-75" style="font-size: 0.75rem;">(Gold)</span></div>
+                                    }
+                                    @if(game.SilverTeamId.HasValue && teamNames.ContainsKey(game.SilverTeamId.Value))
+                                    {
+                                        string silverIdentifier = GetTeamDisplayName(game.SilverTeamId.Value);
+                                        <div class="medal-text"><span class="medal-icon">🥈</span> <span class="fw-bold">@silverIdentifier</span><span class="ms-1 opacity-75" style="font-size: 0.75rem;">(Silver)</span></div>
+                                    }
+                                    @if(game.BronzeTeamId.HasValue && teamNames.ContainsKey(game.BronzeTeamId.Value))
+                                    {
+                                        string bronzeIdentifier = GetTeamDisplayName(game.BronzeTeamId.Value);
+                                        <div class="medal-text"><span class="medal-icon">🥉</span> <span class="fw-bold">@bronzeIdentifier</span><span class="ms-1 opacity-75" style="font-size: 0.75rem;">(Bronze)</span></div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    $(document).ready(function() {
+        applyDivisionFilter('Secondary');
+    });
+
+    function setDivisionFilter(division, btnElement) {
+        $('.filter-btn').removeClass('active-filter');
+        $(btnElement).addClass('active-filter');
+        applyDivisionFilter(division);
+    }
+
+    function applyDivisionFilter(division) {
+        let visibleCount = 0;
+        let runningCount = 1;
+        let displayRank = 1;
+        
+        let prevGold = -1;
+        let prevSilver = -1;
+        let prevBronze = -1;
+
+        $('.ranking-row').each(function() {
+            let rowDivision = $(this).data('division') ? $(this).data('division').toString().trim().toLowerCase() : '';
+            let targetDivision = division.toString().trim().toLowerCase();
+
+            if (rowDivision === targetDivision) {
+                $(this).show();
+                
+                let gold = parseInt($(this).data('gold')) || 0;
+                let silver = parseInt($(this).data('silver')) || 0;
+                let bronze = parseInt($(this).data('bronze')) || 0;
+
+                if (gold === prevGold && silver === prevSilver && bronze === prevBronze) {
+                    // Tie scenario encountered - displayRank remains the same
+                } else {
+                    displayRank = runningCount;
+                }
+
+                $(this).find('.rank-cell').text(displayRank);
+
+                let nameElement = $(this).find('.school-name-text');
+                let defaultColor = nameElement.data('default-color');
+                
+                if (displayRank === 1) {
+                    nameElement.css('color', '#996515'); 
+                } else if (displayRank === 2) {
+                    nameElement.css('color', '#5A626A'); 
+                } else if (displayRank === 3) {
+                    nameElement.css('color', '#965119'); 
+                } else {
+                    nameElement.css('color', defaultColor); 
+                }
+
+                prevGold = gold;
+                prevSilver = silver;
+                prevBronze = bronze;
+                
+                runningCount++;
+                visibleCount++;
+            } else {
+                $(this).hide();
+            }
+        });
+
+        // Dynamic Striping Fix for Visibility Shifts
+        $('.ranking-row:visible').each(function(index) {
+            $(this).css('background-color', (index % 2 === 1) ? 'rgba(0, 51, 160, 0.04)' : '#ffffff');
+        });
+
+        if (visibleCount === 0) {
+            $('#noRankingsRow').show();
+            $('#rankingsTable').hide();
+        } else {
+            $('#noRankingsRow').hide();
+            $('#rankingsTable').show();
+        }
+    }
+</script>
+}

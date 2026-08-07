@@ -1,0 +1,868 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@inject SubcongMeet.Data.ApplicationDbContext DbContext
+@model IEnumerable<SubcongMeet.Models.Event>
+@{
+    ViewData["Title"] = "All Events Results Report";
+    
+    // Fetch lists
+    var schoolsList = ViewBag.SchoolsList as IEnumerable<SubcongMeet.Models.Team>;
+    var allDbEvents = DbContext.Events.ToList();
+    
+    var selectedSports = Context.Request.Query["sportsName"].ToList();
+    var selectedEvents = Context.Request.Query["eventId"].ToList();
+    var selectedDivisions = Context.Request.Query["division"].ToList();
+    var selectedSchools = Context.Request.Query["schoolId"].ToList();
+
+    // EXCLUDE EVENTS WITH NO RESULTS
+    var filteredEvents = Model?.Where(evt => 
+        (evt.GoldTeamId != null && evt.GoldTeamId != 0) || 
+        (evt.SilverTeamId != null && evt.SilverTeamId != 0) || 
+        (evt.BronzeTeamId != null && evt.BronzeTeamId != 0)
+    ).ToList() ?? new List<SubcongMeet.Models.Event>();
+
+    // Helper lambda to determine division dynamically if not explicitly property-bound
+    string GetEventDivision(SubcongMeet.Models.Event evt) {
+        string div = "";
+        var prop = evt.GetType().GetProperty("Division");
+        if (prop != null) {
+            div = (prop.GetValue(evt) as string)?.ToUpper() ?? "";
+        } else if (evt.Title != null) {
+            if (evt.Title.IndexOf("ELEM", StringComparison.OrdinalIgnoreCase) >= 0) div = "ELEMENTARY";
+            else if (evt.Title.IndexOf("SEC", StringComparison.OrdinalIgnoreCase) >= 0) div = "SECONDARY";
+        }
+        return div;
+    }
+
+    // STRICT SORTING: Division -> SportName -> Event Title
+    var reportEvents = filteredEvents
+        .OrderBy(evt => GetEventDivision(evt))
+        .ThenBy(evt => evt.SportName ?? "")
+        .ThenBy(evt => evt.Title ?? "")
+        .ToList();
+    
+    // Determine if we need to group by Division
+    bool groupEvents = selectedDivisions.Count == 0 || selectedDivisions.Count > 1;
+    
+    var elementaryEvents = new List<SubcongMeet.Models.Event>();
+    var secondaryEvents = new List<SubcongMeet.Models.Event>();
+    var otherEvents = new List<SubcongMeet.Models.Event>();
+
+    if (groupEvents && reportEvents.Any())
+    {
+        foreach(var evt in reportEvents) 
+        {
+            string div = GetEventDivision(evt);
+            
+            if (div.Contains("ELEM")) elementaryEvents.Add(evt);
+            else if (div.Contains("SEC")) secondaryEvents.Add(evt);
+            else otherEvents.Add(evt);
+        }
+    }
+
+    string GetSchoolName(int? schoolId) 
+    {
+        if (schoolId == null || schoolId == 0) return "No School Assigned";
+        var school = schoolsList?.FirstOrDefault(t => t.Id == schoolId);
+        return school != null ? school.Name : $"School ID: {schoolId}";
+    }
+
+    string GetCoordinatorName(string? coordinatorRef)
+    {
+        if (string.IsNullOrEmpty(coordinatorRef)) return "Unassigned";
+        
+        if (int.TryParse(coordinatorRef, out int coordId))
+        {
+            var coordById = DbContext.Coordinators.FirstOrDefault(c => c.Id == coordId);
+            if (coordById != null) return coordById.FullName;
+        }
+        
+        var coordByUsername = DbContext.Coordinators.FirstOrDefault(c => c.Username == coordinatorRef);
+        if (coordByUsername != null) return coordByUsername.FullName;
+        
+        return coordinatorRef;
+    }
+
+    Microsoft.AspNetCore.Html.IHtmlContent RenderWinnerNames(string? namesString)
+    {
+        if (string.IsNullOrWhiteSpace(namesString))
+        {
+            return Html.Raw("<span style=\"color: #666; font-size: 0.75rem;\">N/A</span>");
+        }
+
+        var names = namesString.Split(new[] { ',', ';', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                               .Select(n => n.Trim())
+                               .Where(n => !string.IsNullOrEmpty(n))
+                               .ToList();
+
+        if (!names.Any())
+        {
+            return Html.Raw("<span style=\"color: #666; font-size: 0.75rem;\">N/A</span>");
+        }
+
+        var result = "";
+        foreach (var name in names)
+        {
+            result += $"<span class=\"winner-name\"><i class=\"bi bi-person-fill emoji-hide\"></i> {System.Net.WebUtility.HtmlEncode(name)}</span>";
+        }
+        return Html.Raw(result);
+    }
+
+    void RenderEventRow(SubcongMeet.Models.Event evt)
+    {
+        <tr>
+            <td class="text-start"><strong>@evt.Title</strong></td>
+            <td class="text-start">
+                <span class="fw-bold">@GetSchoolName(evt.GoldTeamId)</span>
+                @RenderWinnerNames(evt.GoldWinnerName)
+            </td>
+            <td class="text-start">
+                <span class="fw-bold">@GetSchoolName(evt.SilverTeamId)</span>
+                @RenderWinnerNames(evt.SilverWinnerName)
+            </td>
+            <td class="text-start">
+                <span class="fw-bold">@GetSchoolName(evt.BronzeTeamId)</span>
+                @RenderWinnerNames(evt.BronzeWinnerName)
+            </td>
+            <td class="text-start">@GetCoordinatorName(evt.CoordinatorId?.ToString())</td>
+        </tr>
+    }
+}
+
+<!-- Include Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+    /* ==========================================
+       SCREEN VIEW (Print Preview Style)
+       ========================================== */
+    .report-wrapper {
+        background-color: #ffffff; 
+        color: #000000; 
+        font-family: Arial, Helvetica, sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 40px 50px;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .report-header-text { font-size: 0.9rem; margin-bottom: 3px; font-weight: 600; color: #000000; }
+    .report-divider { border-top: 2px solid #000000; margin: 15px 0; width: 100%; }
+    .report-title { font-size: 1.4rem; font-weight: 800; letter-spacing: 0.5px; color: #000000; }
+    
+    .meta-col { border-right: 1px solid #000000; }
+    .meta-col:last-child { border-right: none; }
+    .meta-label { font-size: 0.65rem; color: #000000; margin-bottom: 2px; font-weight: 700; letter-spacing: 0.5px; }
+    .meta-value { font-size: 0.85rem; font-weight: bold; color: #000000; }
+    
+    .table-report { width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #ffffff; border-radius: 0; overflow: hidden; border: 1px solid #000000; }
+    .table-report th { padding: 10px 12px; text-align: center; font-size: 0.85rem; font-weight: bold; border-bottom: 2px solid #000000; color: #000000; background-color: #f2f2f2; }
+    .table-report td { padding: 10px 12px; font-size: 0.85rem; border-bottom: 1px solid #cccccc; vertical-align: top; color: #000000; text-align: left; font-weight: normal; }
+    .group-header { background-color: #e9ecef !important; color: #000000 !important; font-weight: bold !important; text-align: left !important; font-size: 0.95rem !important; border-top: 2px solid #000000 !important; border-bottom: 2px solid #000000 !important; }
+
+    .cert-text { font-size: 0.85rem; line-height: 1.5; color: #000000; margin-bottom: 25px; text-align: justify; font-weight: normal; }
+    
+    .sig-block { text-align: center; margin-top: 40px; } 
+    .sig-title { font-size: 0.85rem; font-weight: bold; margin-bottom: 0px; text-transform: uppercase; color: #000000; display: inline-block; min-width: 200px; border-bottom: 1px solid #000000; padding-bottom: 2px; }
+    .sig-line { font-size: 0.75rem; color: #000000; margin-top: 2px; font-weight: normal; }
+
+    /* Filter Card Setup */
+    .setup-card {
+        background-color: #ffffff;
+        border: 1px solid rgba(0, 51, 160, 0.15);
+        border-top: 4px solid #0033A0;
+        max-width: 1200px;
+        margin: 0 auto 20px auto;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 51, 160, 0.08);
+    }
+
+    .winner-name { color: #000000; font-size: 0.75rem; display: block; font-weight: normal; margin-top: 2px; }
+
+    /* ==========================================
+       STRICT PRINT & NATIVE PDF LAYOUT 
+       ========================================== */
+    @@page {
+        size: A4 portrait;
+        margin: 0.5in; 
+    }
+
+    @@media print {
+        header, footer, nav, .d-print-none, #setup-section { 
+            display: none !important; 
+        }
+        
+        .emoji-hide { display: none !important; }
+
+        body, html {
+            background-color: #ffffff !important;
+            background-image: none !important;
+            margin: 0 !important; 
+            padding: 0 !important;
+            color: #000000 !important;
+        }
+
+        .container {
+            max-width: 100% !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .report-wrapper {
+            display: block !important; 
+            position: relative !important;
+            width: 100% !important; 
+            max-width: 100% !important;
+            margin: 0 !important; 
+            padding: 0 !important;
+            box-shadow: none !important;
+            background-color: transparent !important;
+            color: #000000 !important;
+        }
+
+        .report-divider { border-top: 2px solid #000000 !important; margin: 18px 0 !important; }
+        .meta-col { border-right: 1px solid #cccccc !important; width: 50%; display: inline-block; vertical-align: top; }
+        .meta-label { color: #000000 !important; font-size: 0.7rem !important; }
+        .meta-value { color: #000000 !important; font-size: 0.9rem !important; }
+        
+        .report-header-text { font-size: 0.95rem !important; color: #000000 !important; }
+        .report-title { font-size: 1.5rem !important; color: #000000 !important; }
+        
+        .table-report { 
+            background-color: transparent !important; 
+            border: 1px solid #000000 !important; 
+            border-radius: 0 !important;
+            margin-bottom: 25px !important;
+            page-break-inside: auto;
+        }
+        .table-report thead { display: table-header-group; }
+        .table-report tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        .table-report th { 
+            background-color: #f2f2f2 !important; 
+            color: #000000 !important; 
+            border-bottom: 2px solid #000000 !important; 
+            padding: 10px 12px !important;
+            text-align: center !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .table-report td { 
+            color: #000000 !important; 
+            border-bottom: 1px solid #cccccc !important; 
+            padding: 10px 12px !important;
+            text-align: left !important;
+            font-weight: normal !important;
+        }
+        .group-header {
+            background-color: #e9ecef !important;
+            color: #000000 !important;
+            font-weight: bold !important;
+            text-align: left !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        .winner-name { color: #000000 !important; font-weight: normal !important; }
+        .cert-text { color: #000000 !important; font-weight: normal !important; }
+        
+        /* Stable block layout for print signatures avoiding float tree corruption in Acrobat */
+        .sig-block { display: inline-block; width: 48%; vertical-align: top; page-break-inside: avoid !important; margin-top: 30px; }
+        .sig-title { color: #000000 !important; border-bottom: 1px solid #000000 !important; }
+        .sig-line { color: #000000 !important; }
+    }
+</style>
+
+<div class="container py-4">
+
+    <!-- STEP 1: CONFIGURATION SETUP -->
+    <div id="setup-section" class="card setup-card p-4 mb-4 d-print-none">
+        <h4 class="fw-bold mb-3 border-bottom pb-2" style="color: #0033A0;">
+            Configure Report Filters
+        </h4>
+        
+        <div class="mb-4 bg-light p-3 rounded border">
+            <label class="form-label fw-bold mb-3" style="color: #0033A0;">Database Record Filtering</label>
+            <form method="get" asp-action="AllEventsResultsReport" id="filterForm">
+                <div class="row g-3 align-items-end">
+                    
+                    <!-- 1. Sports Filter -->
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Filter by Sports</label>
+                        <select name="sportsName" class="form-select select2-multi" multiple="multiple" data-placeholder="-- All Sports --">
+                            @if (ViewBag.SportsList != null)
+                            {
+                                foreach (var sport in ViewBag.SportsList)
+                                {
+                                    if (selectedSports.Contains(sport.Value)) { <option value="@sport.Value" selected>@sport.Text</option> }
+                                    else { <option value="@sport.Value">@sport.Text</option> }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- 2. Searchable Event Filter with Cascading Data Attribute -->
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Filter by Event</label>
+                        <select name="eventId" class="form-select select2-multi cascading-event" multiple="multiple" data-placeholder="-- All Events --">
+                            @if (ViewBag.EventsList != null)
+                            {
+                                foreach (var evt in ViewBag.EventsList)
+                                {
+                                    string sportData = "";
+                                    if (int.TryParse(evt.Value, out int parsedId))
+                                    {
+                                        var matchingEvent = allDbEvents.FirstOrDefault(e => e.Id == parsedId);
+                                        if (matchingEvent != null)
+                                        {
+                                            var prop = matchingEvent.GetType().GetProperty("SportsName") ?? 
+                                                       matchingEvent.GetType().GetProperty("SportName") ?? 
+                                                       matchingEvent.GetType().GetProperty("Sport");
+                                            if (prop != null) sportData = prop.GetValue(matchingEvent)?.ToString() ?? "";
+                                        }
+                                    }
+
+                                    if (selectedEvents.Contains(evt.Value)) 
+                                    { 
+                                        <option value="@evt.Value" data-sport="@sportData" selected>@evt.Text</option> 
+                                    }
+                                    else 
+                                    { 
+                                        <option value="@evt.Value" data-sport="@sportData">@evt.Text</option> 
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- 3. Division Filter -->
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Filter by Division</label>
+                        <select name="division" id="divisionFilter" class="form-select select2-multi" multiple="multiple" data-placeholder="-- All Divisions --">
+                            @if (ViewBag.DivisionsList != null)
+                            {
+                                foreach (var div in ViewBag.DivisionsList)
+                                {
+                                    if (selectedDivisions.Contains(div.Value)) { <option value="@div.Value" selected>@div.Text</option> }
+                                    else { <option value="@div.Value">@div.Text</option> }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- 4. Cascading School Filter -->
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold mb-1">Filter by School</label>
+                        <select name="schoolId" id="schoolFilter" class="form-select select2-multi" multiple="multiple" data-placeholder="-- All Schools --">
+                            @if (schoolsList != null)
+                            {
+                                foreach (var school in schoolsList)
+                                {
+                                    if (selectedSchools.Contains(school.Id.ToString()))
+                                    {
+                                        <option value="@school.Id" data-division="@school.Division" selected>@school.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@school.Id" data-division="@school.Division">@school.Name</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-12 text-end mt-3">
+                        <button type="submit" class="btn text-white shadow-sm px-4 fw-bold" style="background-color: #0033A0;" onclick="saveSignatories();">Apply Filters</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Signatories Configuration -->
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label fw-bold mb-0" style="color: #0033A0;">Signatories</label>
+                <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="addSignatory()">
+                    Add Signatory
+                </button>
+            </div>
+
+            <div id="signatory-error" class="alert alert-danger py-2 px-3 mb-3 fw-bold d-flex align-items-center" style="display: none;" role="alert">
+                Please enter at least one signatory.
+            </div>
+            
+            <div id="signatories-container">
+                <!-- Dynamically populated via JavaScript on Load -->
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-2">
+            <a asp-action="Index" class="btn btn-outline-secondary px-4 fw-bold">Cancel</a>
+            <button type="button" class="btn text-white px-4 fw-bold" style="background-color: #0033A0;" onclick="generateReport()">
+                Generate Report Preview
+            </button>
+        </div>
+    </div>
+
+    <!-- STEP 2: REPORT PREVIEW / PRINT AREA -->
+    <div id="report-section" style="display: none;">
+        
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-4 mx-auto gap-3 d-print-none" style="max-width: 1000px;">
+            <button onclick="backToSetup()" class="btn btn-outline-secondary btn-sm fw-bold align-self-start align-self-sm-center">
+                Back to Configuration
+            </button>
+            <div class="d-flex gap-2">
+                <button onclick="window.print()" class="btn text-white shadow px-4 fw-bold" style="background-color: #0033A0;">
+                    <i class="bi bi-printer"></i> Print / Save PDF
+                </button>
+                <button onclick="generateExcel()" class="btn btn-success shadow px-4 fw-bold">
+                    <i class="bi bi-file-earmark-excel"></i> Export Excel
+                </button>
+            </div>
+        </div>
+
+        <div id="pdf-content" class="report-wrapper">
+            <div>
+                <div class="text-center">
+                    <div class="report-header-text">Republic of the Philippines</div>
+                    <div class="report-header-text">Department of Education</div>
+                    <div class="report-header-text">Division of Bohol</div>
+                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">SUB-CONGRESSIONAL MEET 2026</div>
+                    <div class="report-header-text" style="font-weight: normal;">Calape, Bohol</div><br>
+                    <div class="report-header-text fs-6 fw-bold text-uppercase" id="report-division-text"></div>
+                </div>
+
+                <div class="report-divider"></div>
+
+                <div class="text-center mb-3">
+                    <div class="report-title mb-1">EVENTS RESULTS REPORT</div>
+                </div>
+
+                <div class="report-divider"></div>
+
+                <div class="row text-center py-1">
+                    <div class="col-6 meta-col">
+                        <div class="meta-label">REPORT DATE</div>
+                        <div class="meta-value">@DateTime.Now.ToString("MMMM dd, yyyy h:mm tt")</div>
+                    </div>
+                    <div class="col-6 meta-col">
+                        <div class="meta-label">TOTAL RECORDS</div>
+                        <div class="meta-value">@(reportEvents.Count()) Events</div>
+                    </div>
+                </div>
+
+                <div class="report-divider"></div>
+
+                <h5 class="fw-bold mb-3" style="font-size: 1.05rem; letter-spacing: 0.5px; color: #000000;">EVENT RESULTS</h5>
+                <table class="table-report" id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Event Title</th>
+                            <th style="width: 20%;">Gold <span class="emoji-hide">🥇</span></th>
+                            <th style="width: 20%;">Silver <span class="emoji-hide">🥈</span></th>
+                            <th style="width: 20%;">Bronze <span class="emoji-hide">🥉</span></th>
+                            <th style="width: 20%;">Coordinator</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if(!reportEvents.Any())
+                        {
+                            <tr><td colspan="5" class="text-center py-4">No finalized event results available for the current filters.</td></tr>
+                        }
+                        else
+                        {
+                            if (groupEvents)
+                            {
+                                if (elementaryEvents.Any())
+                                {
+                                    <tr><td colspan="5" class="group-header py-2">ELEMENTARY</td></tr>
+                                    foreach(var evt in elementaryEvents) { RenderEventRow(evt); }
+                                }
+                                if (secondaryEvents.Any())
+                                {
+                                    <tr><td colspan="5" class="group-header py-2">SECONDARY</td></tr>
+                                    foreach(var evt in secondaryEvents) { RenderEventRow(evt); }
+                                }
+                                if (otherEvents.Any())
+                                {
+                                    <tr><td colspan="5" class="group-header py-2">OTHER EVENTS</td></tr>
+                                    foreach(var evt in otherEvents) { RenderEventRow(evt); }
+                                }
+                            }
+                            else 
+                            {
+                                foreach (var evt in reportEvents)
+                                {
+                                    RenderEventRow(evt);
+                                }
+                            }
+                        }
+                    </tbody>
+                </table>
+
+                <h5 class="fw-bold mb-2 mt-4" style="font-size: 1.05rem; letter-spacing: 0.5px; color: #000000;">CERTIFICATION</h5>
+                <p class="cert-text">
+                    This report is generated from the official Calape District Meet Management System and reflects the 
+                    finalized event standings and results recorded at the time of generation.
+                </p>
+
+                <div class="report-divider" style="margin-bottom: 25px;"></div>
+
+                <div class="row" id="dynamic-signatures"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <script>
+        function initSelect2(element) {
+            $(element).select2({
+                placeholder: $(element).attr('data-placeholder'),
+                allowClear: true,
+                width: '100%',
+                multiple: true,
+                closeOnSelect: false
+            });
+        }
+
+        $(document).ready(function() {
+            loadSignatories();
+
+            $('.select2-multi').each(function() {
+                initSelect2(this);
+            });
+
+            var $eventSelect = $('select[name="eventId"]');
+            var originalEventOptions = $eventSelect.html(); 
+
+            $('select[name="sportsName"]').on('change', function(e) {
+                var selectedSports = $(this).val() || [];
+                var currentSelectedEvents = $eventSelect.val() || [];
+
+                if (!e.originalEvent) {
+                    if ($eventSelect.hasClass("select2-hidden-accessible")) {
+                        $eventSelect.select2('destroy');
+                    }
+                    $eventSelect.html(originalEventOptions);
+                    
+                    if (selectedSports.length > 0) {
+                        $eventSelect.find('option').each(function() {
+                            var optionSport = $(this).attr('data-sport');
+                            if ($(this).val() !== "" && !selectedSports.includes(optionSport)) {
+                                $(this).remove();
+                            }
+                        });
+                    }
+                    initSelect2($eventSelect);
+                    
+                    var validSelections = currentSelectedEvents.filter(val => $eventSelect.find(`option[value="${val}"]`).length > 0);
+                    $eventSelect.val(validSelections).trigger('change.select2');
+                }
+            });
+
+            $('select[name="sportsName"]').trigger('change');
+
+            $('#divisionFilter').on('change', function(e) {
+                var selectedDivs = $(this).val() || [];
+                var $schoolFilter = $('#schoolFilter');
+                
+                if (!e.originalEvent) {
+                    $schoolFilter.find('option').each(function() {
+                        if ($(this).val() === "") return; 
+                        var optDiv = $(this).attr('data-division');
+                        if (selectedDivs.length === 0 || selectedDivs.includes(optDiv)) {
+                            $(this).show().prop('disabled', false);
+                        } else {
+                            $(this).hide().prop('disabled', true);
+                        }
+                    });
+
+                    var currentSchoolVals = $schoolFilter.val() || [];
+                    var validSchools = currentSchoolVals.filter(val => !$schoolFilter.find(`option[value="${val}"]`).is(':hidden'));
+                    $schoolFilter.val(validSchools).trigger('change.select2');
+                }
+            });
+
+            $('#divisionFilter').trigger('change');
+        });
+
+        // Signatories Persistence Logic
+        let activeSignatories = [];
+
+        function saveSignatories() {
+            const sigRows = document.querySelectorAll('.signatory-row');
+            const dataToSave = [];
+            
+            sigRows.forEach(row => {
+                const name = row.querySelector('.sig-name').value;
+                const designation = row.querySelector('.sig-designation').value;
+                dataToSave.push({ name: name, designation: designation });
+            });
+            
+            sessionStorage.setItem('calape_report_signatories', JSON.stringify(dataToSave));
+        }
+
+        function loadSignatories() {
+            const stored = sessionStorage.getItem('calape_report_signatories');
+            const container = document.getElementById('signatories-container');
+            container.innerHTML = ''; 
+            
+            if (stored) {
+                const parsedData = JSON.parse(stored);
+                if (parsedData.length > 0) {
+                    parsedData.forEach(sig => addSignatoryRow(sig.name, sig.designation));
+                    return;
+                }
+            }
+            addSignatoryRow('', '');
+        }
+
+        function addSignatoryRow(nameVal = '', desigVal = '') {
+            const container = document.getElementById('signatories-container');
+            const row = document.createElement('div');
+            row.className = 'row mb-2 signatory-row';
+            row.innerHTML = `
+                <div class="col-sm-5"><input type="text" class="form-control setup-input sig-name" placeholder="Name" value="${nameVal}" /></div>
+                <div class="col-sm-6"><input type="text" class="form-control setup-input sig-designation" placeholder="Designation" value="${desigVal}" /></div>
+                <div class="col-sm-1 text-end"><button type="button" class="btn btn-outline-danger btn-sm mt-1" title="Remove" onclick="this.closest('.signatory-row').remove()">X</button></div>
+            `;
+            container.appendChild(row);
+        }
+
+        function addSignatory() {
+            addSignatoryRow('', '');
+        }
+
+        function generateReport() {
+            saveSignatories();
+            
+            const sigRows = document.querySelectorAll('.signatory-row');
+            activeSignatories = [];
+            const sigError = document.getElementById('signatory-error');
+
+            sigRows.forEach(row => {
+                const name = row.querySelector('.sig-name')?.value.trim() || '';
+                const designation = row.querySelector('.sig-designation')?.value.trim() || '';
+                
+                if (name !== '' || designation !== '') {
+                    activeSignatories.push({
+                        name: name || '_________________________',
+                        designation: designation || '_________________________'
+                    });
+                }
+            });
+
+            if (activeSignatories.length === 0) {
+                if (sigError) sigError.style.display = 'flex';
+                const firstInput = document.querySelector('.sig-name');
+                if (firstInput) firstInput.focus();
+                return;
+            }
+
+            if (sigError) sigError.style.display = 'none';
+
+            var divisionSelect = document.getElementById('divisionFilter');
+            var selectedDivText = Array.from(divisionSelect.options)
+                                       .filter(option => option.selected)
+                                       .map(option => option.text);
+            
+            let finalDivTitle = "GENERAL / OVER-ALL";
+            if(selectedDivText.length > 0) {
+                finalDivTitle = selectedDivText.join(" & ").toUpperCase() + " DIVISION";
+            }
+            
+            document.getElementById('report-division-text').innerText = finalDivTitle;
+
+            const sigContainer = document.getElementById('dynamic-signatures');
+            sigContainer.innerHTML = ''; 
+
+            activeSignatories.forEach(sig => {
+                const colClass = activeSignatories.length <= 2 ? 'col-6' : 'col'; 
+                const sigBlock = document.createElement('div');
+                sigBlock.className = `${colClass} sig-block`;
+                sigBlock.innerHTML = `<div class="sig-title">${sig.name}</div><div class="sig-line">${sig.designation}</div>`;
+                sigContainer.appendChild(sigBlock);
+            });
+
+            document.getElementById('setup-section').style.display = 'none';
+            document.getElementById('report-section').style.display = 'block';
+        }
+
+        function backToSetup() {
+            document.getElementById('report-section').style.display = 'none';
+            document.getElementById('setup-section').style.display = 'block';
+        }
+
+        async function generateExcel() {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Event Results', {
+                pageSetup: {
+                    paperSize: 9, // A4
+                    orientation: 'portrait',
+                    fitToPage: true,
+                    fitToWidth: 1,
+                    fitToHeight: 9999,
+                    margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 }
+                }
+            });
+
+            const lastCol = 'E';
+            worksheet.columns = [
+                { width: 26 }, { width: 23 }, { width: 23 }, { width: 23 }, { width: 20 }
+            ];
+
+            function addCenterText(text, size, bold) {
+                const row = worksheet.addRow([text]);
+                worksheet.mergeCells(`A${row.number}:${lastCol}${row.number}`);
+                const cell = row.getCell(1);
+                cell.alignment = { horizontal: 'center' };
+                cell.font = { size: size, bold: bold };
+            }
+
+            addCenterText('Republic of the Philippines', 9, false);
+            addCenterText('Department of Education', 9, false);
+            addCenterText('Division of Bohol', 9, false);
+            addCenterText('CALAPE DISTRICT MEET', 12, true);
+            const divText = document.getElementById('report-division-text').innerText;
+            if(divText) addCenterText(divText, 11, true);
+            addCenterText('Calape, Bohol', 9, false);
+            worksheet.addRow([]); 
+
+            addCenterText('EVENTS RESULTS REPORT', 14, true);
+            addCenterText('School Year 2026–2027', 11, true);
+            worksheet.addRow([]); 
+
+            const metaLabels = ['REPORT DATE', '', '', 'TOTAL RECORDS', ''];
+            const metaValues = [
+                '@DateTime.Now.ToString("MMMM dd, yyyy h:mm tt")',
+                '',
+                '',
+                '@(reportEvents.Count()) Events',
+                ''
+            ];
+            
+            const labelRow = worksheet.addRow(metaLabels);
+            labelRow.font = { size: 8, bold: true };
+            const valueRow = worksheet.addRow(metaValues);
+            valueRow.font = { size: 10, bold: true };
+            
+            worksheet.mergeCells(`A${labelRow.number}:C${labelRow.number}`);
+            worksheet.mergeCells(`A${valueRow.number}:C${valueRow.number}`);
+            worksheet.mergeCells(`D${labelRow.number}:E${labelRow.number}`);
+            worksheet.mergeCells(`D${valueRow.number}:E${valueRow.number}`);
+            worksheet.addRow([]);
+
+            const headerRow = worksheet.addRow(['Event Title', 'Gold', 'Silver', 'Bronze', 'Coordinator']);
+            headerRow.eachCell(cell => {
+                cell.font = { bold: true };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
+                cell.border = { bottom: { style: 'medium' }, top: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            });
+
+            const tbodyRows = document.querySelectorAll('#resultsTable tbody tr');
+            tbodyRows.forEach(tr => {
+                const rowData = [];
+                const tds = tr.querySelectorAll('td');
+                
+                if (tds.length === 1) { 
+                    const r = worksheet.addRow([tds[0].innerText.trim()]);
+                    worksheet.mergeCells(`A${r.number}:${lastCol}${r.number}`);
+                    const cell = r.getCell(1);
+                    cell.alignment = { horizontal: 'left', vertical: 'middle' };
+                    cell.font = { bold: true, size: 11 };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE9ECEF' } };
+                    cell.border = { bottom: { style: 'medium', color: { argb: 'FF000000' } }, top: { style: 'medium', color: { argb: 'FF000000' } } };
+                } else {
+                    tds.forEach(td => {
+                        let cellClone = td.cloneNode(true);
+                        cellClone.querySelectorAll('.emoji-hide').forEach(e => e.remove());
+                        
+                        let text = "";
+                        cellClone.childNodes.forEach(child => {
+                            if (child.nodeType === Node.TEXT_NODE) {
+                                text += child.textContent;
+                            } else if (child.nodeType === Node.ELEMENT_NODE) {
+                                if (child.classList.contains('winner-name') || child.classList.contains('d-block')) {
+                                    text += '\n' + child.innerText;
+                                } else {
+                                    text += child.innerText;
+                                }
+                            }
+                        });
+                        
+                        rowData.push(text.trim());
+                    });
+                    
+                    const r = worksheet.addRow(rowData);
+                    r.eachCell(cell => {
+                        cell.alignment = { wrapText: true, vertical: 'top', horizontal: 'left' };
+                        cell.font = { bold: false };
+                        cell.border = { bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
+                    });
+                }
+            });
+
+            worksheet.addRow([]);
+            worksheet.addRow([]);
+
+            const certTitle = worksheet.addRow(['CERTIFICATION']);
+            certTitle.font = { bold: true, size: 11 };
+            
+            const certText = worksheet.addRow(['This report is generated from the official Calape District Meet Management System and reflects the finalized event standings and results recorded at the time of generation.']);
+            worksheet.mergeCells(`A${certText.number}:${lastCol}${certText.number}`);
+            certText.getCell(1).alignment = { wrapText: true, horizontal: 'left' };
+            certText.getCell(1).font = { bold: false };
+            worksheet.getRow(certText.number).height = 30; 
+
+            worksheet.addRow([]);
+            worksheet.addRow([]);
+
+            if (activeSignatories.length > 0) {
+                for (let i = 0; i < activeSignatories.length; i += 2) {
+                    const sigRow = worksheet.addRow([]);
+                    const titleRow = worksheet.addRow([]);
+                    
+                    sigRow.getCell(1).value = activeSignatories[i].name;
+                    sigRow.getCell(1).font = { bold: true };
+                    sigRow.getCell(1).alignment = { horizontal: 'center' };
+                    titleRow.getCell(1).value = activeSignatories[i].designation;
+                    titleRow.getCell(1).alignment = { horizontal: 'center' };
+                    titleRow.getCell(1).font = { bold: false };
+                    
+                    worksheet.mergeCells(`A${sigRow.number}:B${sigRow.number}`);
+                    worksheet.mergeCells(`A${titleRow.number}:B${titleRow.number}`);
+
+                    if (i + 1 < activeSignatories.length) {
+                        sigRow.getCell(4).value = activeSignatories[i+1].name;
+                        sigRow.getCell(4).font = { bold: true };
+                        sigRow.getCell(4).alignment = { horizontal: 'center' };
+                        titleRow.getCell(4).value = activeSignatories[i+1].designation;
+                        titleRow.getCell(4).alignment = { horizontal: 'center' };
+                        titleRow.getCell(4).font = { bold: false };
+                        
+                        worksheet.mergeCells(`D${sigRow.number}:E${sigRow.number}`);
+                        worksheet.mergeCells(`D${titleRow.number}:E${titleRow.number}`);
+                    }
+                    
+                    worksheet.addRow([]);
+                    worksheet.addRow([]);
+                }
+            }
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, 'CalapeDistrict_All_Events_Results.xlsx');
+        }
+    </script>
+}

@@ -1,0 +1,667 @@
+@model IEnumerable<SubcongMeet.Models.MedalTally>
+@{
+    ViewData["Title"] = "General Official Report";
+}
+
+<style>
+    /* ==========================================
+       SCREEN VIEW (DepEd Blue Light Theme)
+       ========================================== */
+    .report-wrapper {
+        background-color: #ffffff;
+        color: var(--text-main, #212529);
+        font-family: var(--font-body, 'Inter', sans-serif);
+        max-width: 800px; 
+        margin: 0 auto;
+        padding: 40px 50px;
+        border-radius: 12px;
+        border-top: 6px solid var(--deped-blue, #0033A0);
+        box-shadow: 0 10px 30px rgba(0, 51, 160, 0.1);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    
+    .report-header-text { 
+        font-size: 0.9rem; 
+        margin-bottom: 3px; 
+        font-weight: 600; 
+        color: #495057;
+        font-family: var(--font-body, 'Inter', sans-serif);
+    }
+
+    .report-divider { 
+        border-top: 2px solid rgba(0, 51, 160, 0.15); 
+        margin: 15px 0; 
+        width: 100%; 
+    }
+
+    .report-title { 
+        font-family: var(--font-header, 'Montserrat', sans-serif);
+        font-size: 1.35rem; 
+        font-weight: 900; 
+        letter-spacing: 0.5px; 
+        color: var(--deped-blue, #0033A0);
+    }
+    
+    .meta-container {
+        background-color: rgba(0, 51, 160, 0.03);
+        border: 1px solid rgba(0, 51, 160, 0.12);
+        border-radius: 8px;
+        padding: 8px 0;
+    }
+
+    .meta-col { 
+        border-right: 1px solid rgba(0, 51, 160, 0.12); 
+    }
+    .meta-col:last-child { 
+        border-right: none; 
+    }
+
+    .meta-label { 
+        font-family: var(--font-header, 'Montserrat', sans-serif);
+        font-size: 0.68rem; 
+        color: var(--deped-blue, #0033A0); 
+        margin-bottom: 2px; 
+        font-weight: 700; 
+        letter-spacing: 0.5px; 
+    }
+
+    .meta-value { 
+        font-size: 0.85rem; 
+        font-weight: 700; 
+        color: #212529; 
+    }
+    
+    .table-report { 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin-bottom: 20px; 
+        background-color: #ffffff; 
+        border: 1px solid rgba(0, 51, 160, 0.18);
+        border-radius: 8px; 
+        overflow: hidden;
+    }
+
+    .table-report th { 
+        font-family: var(--font-header, 'Montserrat', sans-serif);
+        background: linear-gradient(135deg, #0056b3 0%, #0033A0 100%);
+        color: #ffffff;
+        padding: 10px 12px; 
+        text-align: left; 
+        font-size: 0.82rem; 
+        font-weight: 700; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table-report td { 
+        padding: 10px 12px; 
+        font-size: 0.88rem; 
+        border-bottom: 1px solid #dee2e6; 
+        font-weight: 500;
+        color: #212529;
+    }
+
+    .table-report tbody tr:nth-child(even) {
+        background-color: rgba(0, 51, 160, 0.03);
+    }
+
+    .table-report th.text-center, .table-report td.text-center { 
+        text-align: center; 
+    }
+    
+    .cert-text { 
+        font-size: 0.85rem; 
+        line-height: 1.5; 
+        color: #495057; 
+        margin-bottom: 25px; 
+        text-align: justify;
+    }
+    
+    .sig-block { 
+        text-align: center; 
+        margin-top: 30px; 
+    }
+
+    .sig-title { 
+        font-size: 0.85rem; 
+        font-weight: 700; 
+        margin-bottom: 4px; 
+        text-transform: uppercase; 
+        color: #212529;
+        border-bottom: 1.5px solid #212529;
+        display: inline-block;
+        min-width: 180px;
+        padding-bottom: 2px;
+    }
+
+    .sig-line { 
+        font-size: 0.78rem; 
+        color: #6c757d; 
+        margin-top: 2px; 
+        font-weight: 500;
+    }
+
+    /* ==========================================
+       SETUP CONFIGURATION STYLES (Screen only)
+       ========================================== */
+    .setup-card { 
+        background-color: #ffffff; 
+        border: 1px solid rgba(0, 51, 160, 0.15); 
+        border-top: 4px solid var(--deped-blue, #0033A0);
+        border-radius: 12px;
+        color: #212529; 
+        max-width: 800px; 
+        margin: 0 auto; 
+        box-shadow: 0 8px 25px rgba(0, 51, 160, 0.08);
+    }
+
+    .setup-input { 
+        background-color: #ffffff; 
+        color: #212529; 
+        border: 1px solid #ced4da; 
+    }
+
+    .setup-input:focus { 
+        background-color: #ffffff; 
+        color: #212529; 
+        border-color: var(--deped-blue, #0033A0); 
+        outline: 0; 
+        box-shadow: 0 0 0 0.25rem rgba(0, 51, 160, 0.25); 
+    }
+
+    /* Medal Text Colors */
+    .medal-gold { color: #D4AF37; font-weight: 700; }
+    .medal-silver { color: #9E9E9E; font-weight: 700; }
+    .medal-bronze { color: #CD7F32; font-weight: 700; }
+
+    /* ==========================================
+       STRICT PRINT & NATIVE PDF LAYOUT (A4 Portrait, 0.5in margins)
+       ========================================== */
+    @@page {
+        size: A4 portrait;
+        margin: 0.5in;
+    }
+
+    @@media print {
+        /* Completely hide navigation, headers, footers, setup card, and print controls */
+        header, footer, nav, .d-print-none, #setup-section {
+            display: none !important;
+        }
+
+        body, html {
+            background-color: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            font-family: Arial, Helvetica, sans-serif !important;
+        }
+
+        .container, .container-fluid, main {
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        #report-section {
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        #pdf-content, .report-wrapper {
+            display: block !important;
+            position: static !important;
+            visibility: visible !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important; /* Margins strictly handled by @@page (0.5in all sides) */
+            box-shadow: none !important;
+            border: none !important;
+            border-top: none !important;
+            border-radius: 0 !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+
+        .report-divider { border-top: 1.5px solid #0033A0 !important; margin: 12px 0 !important; }
+        .meta-container { 
+            background-color: #f8f9fa !important; 
+            border: 1px solid #0033A0 !important; 
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .meta-col { border-right: 1px solid #cccccc !important; }
+        .meta-col:last-child { border-right: none !important; }
+        .meta-label { color: #0033A0 !important; font-size: 0.68rem !important; font-weight: bold !important; }
+        .meta-value { color: #000000 !important; font-size: 0.85rem !important; }
+        
+        .report-header-text { font-size: 0.9rem !important; color: #000000 !important; }
+        .report-title { font-size: 1.4rem !important; color: #0033A0 !important; font-weight: bold !important; }
+        .text-muted { color: #444444 !important; }
+
+        .table-report { 
+            width: 100% !important;
+            background-color: #ffffff !important; 
+            border: 1px solid #0033A0 !important; 
+            border-radius: 0 !important;
+            margin-bottom: 20px !important;
+            border-collapse: collapse !important;
+            page-break-inside: auto;
+        }
+
+        .table-report tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        .table-report th { 
+            background-color: #0033A0 !important; 
+            color: #ffffff !important; 
+            border-bottom: 2px solid #002277 !important; 
+            padding: 8px 10px !important;
+            font-size: 0.85rem !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .table-report td { 
+            color: #000000 !important; 
+            border-bottom: 1px solid #cccccc !important; 
+            padding: 8px 10px !important;
+            font-size: 0.85rem !important;
+        }
+        
+        .table-report tbody tr:nth-child(even) {
+            background-color: #f9f9f9 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .cert-text { 
+            color: #111111 !important; 
+            font-size: 0.85rem !important; 
+            line-height: 1.5 !important;
+        }
+
+        .sig-block {
+            margin-top: 25px !important;
+            page-break-inside: avoid !important;
+        }
+
+        .sig-title { 
+            color: #000000 !important; 
+            border-bottom: 1px solid #000000 !important;
+            font-size: 0.85rem !important; 
+            font-weight: bold !important;
+        }
+        .sig-line { color: #333333 !important; font-size: 0.78rem !important; }
+    }
+
+    /* Temporary clean layout for client-side PDF rendering canvas */
+    .report-wrapper.pdf-rendering {
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 20px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        background-color: #ffffff !important;
+    }
+</style>
+
+<div class="container py-4">
+
+    <!-- ==========================================
+         STEP 1: CONFIGURATION SETUP (d-print-none)
+         ========================================== -->
+    <div id="setup-section" class="card setup-card p-4 mb-4 d-print-none">
+        <h4 class="fw-bold mb-3 border-bottom pb-2" style="color: var(--deped-blue, #0033A0); font-family: var(--font-header, 'Montserrat', sans-serif);">
+            <i class="bi bi-gear-fill me-2"></i> Configure Report
+        </h4>
+        
+        <!-- Division Selection -->
+        <div class="mb-4">
+            <label class="form-label fw-bold" style="color: var(--deped-blue, #0033A0);">Select Division</label>
+            <select id="division-select" class="form-select setup-input">
+                <option value="Elementary">Elementary Division</option>
+                <option value="Secondary">Secondary Division</option>
+            </select>
+        </div>
+
+        <!-- Signatories Configuration -->
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label fw-bold mb-0" style="color: var(--deped-blue, #0033A0);">Signatories</label>
+                <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="addSignatory()">
+                    <i class="bi bi-plus-lg me-1"></i> Add Signatory
+                </button>
+            </div>
+
+            <!-- Signatory Error Alert -->
+            <div id="signatory-error" class="alert alert-danger py-2 px-3 mb-3 fw-bold d-flex align-items-center" style="display: none;" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> Please enter at least one signatory (Name or Designation) before generating the report.
+            </div>
+            
+            <div id="signatories-container">
+                <!-- Signatory Row 1 -->
+                <div class="row mb-2 signatory-row">
+                    <div class="col-sm-5">
+                        <input type="text" class="form-control setup-input sig-name" placeholder="Name (e.g. Juan Dela Cruz)" />
+                    </div>
+                    <div class="col-sm-6">
+                        <input type="text" class="form-control setup-input sig-designation" placeholder="Designation (e.g. School Head)" />
+                    </div>
+                    <div class="col-sm-1 text-end">
+                        <button type="button" class="btn btn-outline-danger btn-sm mt-1" title="Remove" onclick="this.closest('.signatory-row').remove()">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- Signatory Row 2 -->
+                <div class="row mb-2 signatory-row">
+                    <div class="col-sm-5">
+                        <input type="text" class="form-control setup-input sig-name" placeholder="Name" />
+                    </div>
+                    <div class="col-sm-6">
+                        <input type="text" class="form-control setup-input sig-designation" placeholder="Designation" />
+                    </div>
+                    <div class="col-sm-1 text-end">
+                        <button type="button" class="btn btn-outline-danger btn-sm mt-1" title="Remove" onclick="this.closest('.signatory-row').remove()">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-end gap-2 mt-2">
+            <a asp-action="Index" class="btn btn-outline-secondary px-4 fw-bold">Cancel</a>
+            <button type="button" class="btn text-white px-4 fw-bold" style="background-color: var(--deped-blue, #0033A0); border-color: var(--deped-blue, #0033A0);" onclick="generateReport()">
+                <i class="bi bi-file-earmark-check me-1"></i> Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         STEP 2: REPORT PREVIEW / PRINT AREA
+         ========================================== -->
+    <div id="report-section" style="display: none;">
+        
+        <!-- Action Controls -->
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-4 mx-auto gap-3 d-print-none" style="max-width: 800px;">
+            <button onclick="backToSetup()" class="btn btn-outline-secondary btn-sm fw-bold align-self-start align-self-sm-center">
+                <i class="bi bi-arrow-left me-1"></i> Edit Configuration
+            </button>
+            
+            <div class="d-flex gap-2">
+                <!-- Native command triggers high-definition vector print/save dialog -->
+                <button onclick="window.print()" class="btn text-white shadow px-4 fw-bold" style="background-color: var(--deped-blue, #0033A0); border-color: var(--deped-blue, #0033A0);">
+                    <i class="bi bi-printer me-1"></i> Print / Save as PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Printable Report Container -->
+        <div id="pdf-content" class="report-wrapper">
+            
+            <!-- Header Section -->
+            <div>
+                <div class="text-center">
+                    <div class="report-header-text">Republic of the Philippines</div>
+                    <div class="report-header-text">Department of Education</div>
+                    <div class="report-header-text">Division of Bohol</div>
+                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold" style="color: var(--deped-blue, #0033A0); font-family: var(--font-header, 'Montserrat', sans-serif);">DISTRICT OF CALAPE</div>
+                    <div class="report-header-text text-muted" style="font-weight: normal;">Calape, Bohol</div><br>
+                    <div class="report-header-text fs-6 fw-bold text-uppercase" id="report-division-text" style="color: var(--deped-blue, #0033A0); font-family: var(--font-header, 'Montserrat', sans-serif);"></div>
+                </div>
+
+                <div class="report-divider"></div>
+
+                <!-- Title -->
+                <div class="text-center mb-3">
+                    <div class="report-title mb-1">OFFICIAL DISTRICT MEET RANKINGS REPORT</div>
+                    <div class="fs-6 fw-bold text-muted">School Year 2026–2027</div>
+                </div>
+
+                <div class="report-divider"></div>
+
+                <!-- 3-Column Metadata Block (Report Date and Time in one div) -->
+                <div class="meta-container mb-3">
+                    <div class="row text-center py-1 g-0">
+                        <div class="col-4 meta-col">
+                            <div class="meta-label">REPORT DATE & TIME</div>
+                            <div class="meta-value">@DateTime.Now.ToString("MMMM dd, yyyy • h:mm tt")</div>
+                        </div>
+                        <div class="col-4 meta-col">
+                            <div class="meta-label">PREPARED BY</div>
+                            <div class="meta-value">ICT / Awards Committee</div>
+                        </div>
+                        <div class="col-4 meta-col">
+                            <div class="meta-label">GENERATED FROM</div>
+                            <div class="meta-value">Calape District Meet System</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-divider"></div>
+
+                <!-- Data Table -->
+                <h5 class="fw-bold mb-3" style="font-size: 1.05rem; letter-spacing: 0.5px; color: var(--deped-blue, #0033A0); font-family: var(--font-header, 'Montserrat', sans-serif);">
+                    OVERALL MEDAL TALLY
+                </h5>
+                <table class="table-report" id="report-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 10%;">Rank</th>
+                            <th style="width: 40%;">Team</th>
+                            <th class="text-center" style="width: 12.5%;">Gold</th>
+                            <th class="text-center" style="width: 12.5%;">Silver</th>
+                            <th class="text-center" style="width: 12.5%;">Bronze</th>
+                            <th class="text-center" style="width: 12.5%;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-tbody">
+                        @if(!Model.Any())
+                        {
+                            <tr id="no-records-row">
+                                <td colspan="6" class="text-center text-muted py-4">No records available.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var tally in Model)
+                            {
+                                int totalMedals = tally.Gold + tally.Silver + tally.Bronze;
+                                string teamName = tally.Team?.Name ?? "Unknown Team";
+                                string teamDivision = tally.Team?.Division ?? "Elementary";
+
+                                <tr class="report-data-row" data-division="@teamDivision" data-gold="@tally.Gold" data-silver="@tally.Silver" data-bronze="@tally.Bronze">
+                                    <td class="text-center fw-bold rank-cell" style="color: var(--deped-blue, #0033A0);">1</td>
+                                    <td class="fw-bold">@teamName</td>
+                                    <td class="text-center medal-gold">@tally.Gold</td>
+                                    <td class="text-center medal-silver">@tally.Silver</td>
+                                    <td class="text-center medal-bronze">@tally.Bronze</td>
+                                    <td class="text-center fw-bold" style="color: var(--deped-blue, #0033A0);">@totalMedals</td>
+                                </tr>
+                            }
+                            <tr id="no-matching-row" style="display: none;">
+                                <td colspan="6" class="text-center text-muted py-4 fw-bold">No records available for the selected division.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <!-- Certification -->
+                <h5 class="fw-bold mb-2" style="font-size: 1.05rem; letter-spacing: 0.5px; color: var(--deped-blue, #0033A0); font-family: var(--font-header, 'Montserrat', sans-serif);">
+                    CERTIFICATION
+                </h5>
+                <p class="cert-text">
+                    This report is generated from the official Calape District Meet Management System and reflects the 
+                    standings recorded at the time of generation. Any subsequent game results or medal updates may 
+                    affect the rankings shown in this document.
+                </p>
+
+                <div class="report-divider" style="margin-bottom: 25px;"></div>
+
+                <!-- Dynamic Signatures Area -->
+                <div class="row" id="dynamic-signatures">
+                    <!-- Populated via JavaScript -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Function to dynamically append a new signatory input row
+        function addSignatory() {
+            const container = document.getElementById('signatories-container');
+            const row = document.createElement('div');
+            row.className = 'row mb-2 signatory-row';
+            row.innerHTML = `
+                <div class="col-sm-5">
+                    <input type="text" class="form-control setup-input sig-name" placeholder="Name" />
+                </div>
+                <div class="col-sm-6">
+                    <input type="text" class="form-control setup-input sig-designation" placeholder="Designation" />
+                </div>
+                <div class="col-sm-1 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm mt-1" title="Remove" onclick="this.closest('.signatory-row').remove()">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
+        // Function to capture form values and render the actual report UI
+        function generateReport() {
+            // 1. Fetch and validate signatories (Do not generate result if no signatories)
+            const sigRows = document.querySelectorAll('.signatory-row');
+            const validSignatories = [];
+            const sigError = document.getElementById('signatory-error');
+
+            sigRows.forEach(row => {
+                const nameInput = row.querySelector('.sig-name');
+                const designationInput = row.querySelector('.sig-designation');
+                
+                const name = nameInput ? nameInput.value.trim() : '';
+                const designation = designationInput ? designationInput.value.trim() : '';
+                
+                if (name !== '' || designation !== '') {
+                    validSignatories.push({
+                        name: name || '_________________________',
+                        designation: designation || '_________________________'
+                    });
+                }
+            });
+
+            if (validSignatories.length === 0) {
+                if (sigError) {
+                    sigError.style.display = 'flex';
+                }
+                const firstInput = document.querySelector('.sig-name');
+                if (firstInput) firstInput.focus();
+                return; // Block report generation if no signatories provided
+            }
+
+            if (sigError) {
+                sigError.style.display = 'none';
+            }
+
+            // 2. Set the Division Text
+            const divisionSelect = document.getElementById('division-select');
+            const selectedDivision = divisionSelect.value.trim(); // e.g. "Elementary" or "Secondary"
+            document.getElementById('report-division-text').innerText = selectedDivision.toUpperCase() + " DIVISION";
+
+            // 3. Filter Table Rows by Division & Recalculate Ranks
+            const rows = document.querySelectorAll('.report-data-row');
+            let visibleCount = 0;
+            let runningCount = 1;
+            let displayRank = 1;
+            
+            let prevGold = null;
+            let prevSilver = null;
+            let prevBronze = null;
+
+            rows.forEach(row => {
+                const rowDivision = (row.getAttribute('data-division') || '').trim();
+
+                if (rowDivision.toLowerCase() === selectedDivision.toLowerCase()) {
+                    row.style.display = '';
+                    
+                    const gold = parseInt(row.getAttribute('data-gold')) || 0;
+                    const silver = parseInt(row.getAttribute('data-silver')) || 0;
+                    const bronze = parseInt(row.getAttribute('data-bronze')) || 0;
+
+                    if (prevGold !== null && prevSilver !== null && prevBronze !== null && 
+                        gold === prevGold && silver === prevSilver && bronze === prevBronze) {
+                        // Keep tie display rank
+                    } else {
+                        displayRank = runningCount;
+                    }
+
+                    const rankCell = row.querySelector('.rank-cell');
+                    if (rankCell) {
+                        rankCell.innerText = displayRank;
+                    }
+
+                    prevGold = gold;
+                    prevSilver = silver;
+                    prevBronze = bronze;
+                    runningCount++;
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Handle empty state row if no records match division
+            const noMatchingRow = document.getElementById('no-matching-row');
+            if (noMatchingRow) {
+                if (visibleCount === 0) {
+                    noMatchingRow.style.display = '';
+                    const td = noMatchingRow.querySelector('td');
+                    if (td) {
+                        td.innerText = `No records available for ${selectedDivision} Division.`;
+                    }
+                } else {
+                    noMatchingRow.style.display = 'none';
+                }
+            }
+
+            // 4. Render all valid Signatories into the report signature section
+            const sigContainer = document.getElementById('dynamic-signatures');
+            sigContainer.innerHTML = ''; // Clear out old data
+
+            validSignatories.forEach(sig => {
+                const sigBlock = document.createElement('div');
+                sigBlock.className = 'col sig-block';
+                sigBlock.innerHTML = `
+                    <div class="sig-title">${sig.name}</div>
+                    <div class="sig-line">${sig.designation}</div>
+                `;
+                sigContainer.appendChild(sigBlock);
+            });
+
+            // 5. Hide Setup and Show Report
+            document.getElementById('setup-section').style.display = 'none';
+            document.getElementById('report-section').style.display = 'block';
+        }
+
+        // Function to go back and edit
+        function backToSetup() {
+            document.getElementById('report-section').style.display = 'none';
+            document.getElementById('setup-section').style.display = 'block';
+        }
+    </script>
+}

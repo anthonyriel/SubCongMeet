@@ -1,0 +1,777 @@
+@model IEnumerable<SubcongMeet.Models.Event>?
+@{
+    ViewData["Title"] = "Match Results & Events";
+    
+    // Fallback to empty enumerable if Model is null to prevent CS8602
+    var eventsList = Model ?? Enumerable.Empty<SubcongMeet.Models.Event>();
+
+    // Fetch teams list and map to their database-defined acronyms
+    var teamsList = ViewBag.Teams as List<SubcongMeet.Models.Team> ?? new List<SubcongMeet.Models.Team>();
+    var teamAcronymsLookup = teamsList
+        .Where(t => t != null)
+        .ToDictionary(
+            t => t.Id, 
+            t => !string.IsNullOrEmpty(t.Acronym) ? t.Acronym : (t.Name ?? "")
+        );
+
+    var completedGames = eventsList.Where(e => e?.Status == "Completed").OrderByDescending(e => e?.UpdatedAt).ToList();
+
+    // Stats Calculation
+    var totalEvents = eventsList.Count();
+    var completedCount = eventsList.Count(e => e?.Status == "Completed");
+    var pendingCount = totalEvents - completedCount;
+    var lastUpdate = eventsList.OrderByDescending(e => e?.UpdatedAt).FirstOrDefault()?.UpdatedAt;
+    
+    // Core Philippine Standard Time (PST - UTC+8) Utility
+    string FormatToPst(DateTime? dt, string format = "MMMM dd, yyyy • h:mm tt") {
+        if (!dt.HasValue) return "N/A";
+        
+        DateTime utcDateTime;
+        if (dt.Value.Kind == DateTimeKind.Utc) {
+            utcDateTime = dt.Value;
+        } else if (dt.Value.Kind == DateTimeKind.Local) {
+            utcDateTime = dt.Value.ToUniversalTime();
+        } else {
+            utcDateTime = DateTime.SpecifyKind(dt.Value, DateTimeKind.Utc);
+        }
+            
+        return utcDateTime.AddHours(8).ToString(format);
+    }
+
+    var lastUpdateText = FormatToPst(lastUpdate);
+
+    // FIX: Broadened claim search to catch standard Identity claims just in case the login isn't using exact "CoordinatorId"
+    var currentCoordinatorIdStr = User?.FindFirst("CoordinatorId")?.Value 
+        ?? User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        ?? User?.FindFirst("Id")?.Value;
+}
+
+<style>
+    /* Clean Page Header */
+    .page-header {
+        color: var(--deped-blue, #0033A0);
+        border-bottom: 3px solid var(--golden-yellow, #FFD700);
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Animated Gradient Core Setup */
+    @@keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* Top Dashboard Summary Metric Cards - Vibrant Moving Gradient */
+    .stat-card-clean {
+        background: linear-gradient(-45deg, #0033A0 0%, #004aad 25%, #0033A0 50%, #002a7a 75%, #0033A0 100%);
+        background-size: 300% 300%;
+        animation: gradientMove 8s ease-in-out infinite;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        color: #ffffff;
+        border-left: 5px solid rgba(255, 255, 255, 0.4);
+        padding: 1.5rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .stat-card-clean:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 34, 122, 0.4) !important; 
+    }
+
+    .stat-title {
+        font-family: var(--font-header, 'Poppins', sans-serif);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .stat-value {
+        font-family: var(--font-header, 'Poppins', sans-serif);
+        color: #ffffff;
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-top: 5px;
+    }
+
+    /* Status Color Rules Mapping */
+    .status-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
+    .status-completed-dot { background-color: #28a745 !important; }
+    .status-pending-dot, .status-upcoming-dot { background-color: #E4002B !important; }
+    .status-completed-text { color: #28a745 !important; }
+    .status-pending-text, .status-upcoming-text { color: #E4002B !important; }
+
+    /* Division Filter Tabs */
+    .division-filters {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        background: white;
+        border: 2px solid var(--deped-blue, #0033A0);
+        color: var(--deped-blue, #0033A0);
+        font-family: var(--font-header, 'Poppins', sans-serif);
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 8px 20px;
+        border-radius: 50px;
+        transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+        background: rgba(0, 51, 160, 0.08);
+        border-color: var(--deped-blue, #0033A0);
+        color: var(--deped-blue, #0033A0);
+    }
+
+    .filter-btn.active-filter {
+        background: var(--deped-blue, #0033A0);
+        border-color: var(--deped-blue, #0033A0);
+        color: white;
+        box-shadow: 0 4px 10px rgba(0, 51, 160, 0.2);
+    }
+
+    /* Filter Bar Layout */
+    .filter-bar { 
+        background: white; 
+        padding: 1rem; 
+        border-radius: 8px; 
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        margin-bottom: 1.5rem; 
+    }
+    
+    .form-control-custom {
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        font-family: var(--font-body, 'Inter', sans-serif);
+    }
+
+    /* Table Container Grid Configuration */
+    .table-container-card {
+        background: white !important;
+        border: 1px solid rgba(0, 51, 160, 0.2) !important;
+        box-shadow: 0 10px 30px rgba(0, 51, 160, 0.15) !important;
+        padding: 1.5rem !important;
+        color: initial !important;
+    }
+
+    /* Vibrant Table Headers Blue Gradient */
+    #eventsTable thead th {
+        font-family: var(--font-header, 'Poppins', sans-serif);
+        background: linear-gradient(135deg, #0056b3 0%, #0033A0 100%);
+        color: #ffffff;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        padding: 14px 16px;
+        letter-spacing: 0.5px;
+        border: none;
+    }
+    #eventsTable thead th:first-child {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+    #eventsTable thead th:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    #eventsTable tbody td {
+        padding: 1rem 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #dee2e6;
+        font-family: var(--font-body, 'Inter', sans-serif);
+    }
+
+    /* Desktop Badges High-Legibility Styling Configuration */
+    #eventsTable tbody td .badge {
+        background-color: rgba(0, 51, 160, 0.08);
+        color: var(--deped-blue, #0033A0);
+        border: 1px solid rgba(0, 51, 160, 0.18);
+        padding: 5px 10px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.3px;
+    }
+
+    /* Strict Desktop View Alternating Rows */
+    @@media (min-width: 769px) {
+        #eventsTable tbody tr {
+            background-color: #ffffff;
+        }
+        #eventsTable tbody tr:nth-child(even) {
+            background-color: rgba(0, 51, 160, 0.04);
+        }
+        #eventsTable tbody tr:hover {
+            background-color: rgba(0, 51, 160, 0.08) !important;
+        }
+    }
+
+    /* Optimized Event Title Font Sizing */
+    .event-title-display {
+        font-family: var(--font-header, 'Poppins', sans-serif);
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--deped-blue, #0033A0);
+        line-height: 1.3;
+    }
+
+    /* Clean White Sidebar Layout Configurations */
+    .glass-card {
+        padding: 1.5rem;
+        background: #ffffff !important;
+        border: 1px solid #dee2e6 !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+        border-top: 4px solid var(--golden-yellow, #FFD700) !important;
+        border-radius: 12px;
+        color: #212529 !important;
+    }
+
+    /* Dynamic Recent Update Feed Cards with DepEd Blue Animated Gradient */
+    .feed-item {
+        background: linear-gradient(-45deg, #0033A0 0%, #004aad 25%, #0033A0 50%, #002a7a 75%, #0033A0 100%) !important;
+        background-size: 300% 300% !important;
+        animation: gradientMove 8s ease-in-out infinite;
+        border-left: 5px solid var(--golden-yellow, #FFD700) !important;
+        padding: 1.25rem; 
+        box-shadow: 0 4px 15px rgba(0, 51, 160, 0.15) !important;
+        margin-bottom: 1.25rem;
+        color: #ffffff !important;
+        border-radius: 8px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .feed-item:hover {
+        transform: scale(1.02);
+        box-shadow: 0 6px 20px rgba(0, 51, 160, 0.25) !important;
+    }
+    
+    .feed-title { 
+        font-family: var(--font-header, 'Poppins', sans-serif); 
+        color: #ffffff !important; 
+        font-size: 0.95rem; 
+        margin-bottom: 5px; 
+        font-weight: 600;
+    }
+
+    .feed-time { 
+        color: rgba(255, 255, 255, 0.75) !important; 
+        font-size: 0.75rem; 
+        font-weight: bold; 
+    }
+
+    .feed-div { 
+        font-size: 0.75rem; 
+        color: var(--golden-yellow, #FFD700) !important; 
+        font-weight: 700; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 10px; 
+    }
+    
+    .medal-text { 
+        font-size: 0.85rem; 
+        color: #ffffff !important; 
+        display: flex; 
+        align-items: center; 
+    }
+
+    .medal-icon { 
+        margin-right: 8px; 
+        font-size: 1rem; 
+    }
+    
+    .individual-winner { 
+        font-size: 0.75rem; 
+        color: rgba(255, 255, 255, 0.85) !important; 
+        font-style: italic; 
+        margin-left: 24px;
+        margin-bottom: 5px;
+    }
+
+    /* Global Medal Text Colors */
+    .medal-text-gold { color: #D4AF37; font-weight: 700; }
+    .medal-text-silver { color: #A0A0A0; font-weight: 700; }
+    .medal-text-bronze { color: #CD7F32; font-weight: 700; }
+    
+    /* Responsive High-Contrast DepEd Blue Cards for Mobile Devices */
+    @@media (max-width: 768px) {
+        .page-header h1 {
+            font-size: 1.15rem !important; 
+            white-space: nowrap; 
+            flex-wrap: nowrap !important; 
+        }
+        .page-header p {
+            font-size: 0.80rem !important;
+        }
+
+        .division-filters {
+            flex-wrap: nowrap !important;
+            gap: 5px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .filter-btn {
+            flex: 1;
+            font-size: 0.75rem;
+            padding: 8px 4px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .mobile-cards thead { display: none; }
+        
+        .mobile-cards tbody tr { 
+            display: flex; 
+            flex-direction: column;
+            background: var(--deped-blue, #0033A0) !important; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-left: 5px solid var(--golden-yellow, #FFD700) !important;
+            border-radius: 12px; 
+            margin-bottom: 1.25rem; 
+            padding: 1.25rem; 
+            box-shadow: 0 4px 15px rgba(0, 51, 160, 0.2);
+            color: #ffffff !important;
+            gap: 0.5rem;
+        }
+        
+        .mobile-cards tbody td { 
+            display: block; 
+            width: 100%;
+            border: none !important; 
+            padding: 0 !important; 
+            text-align: left !important;
+        }
+        
+        .mobile-cards tbody td:nth-child(1) { 
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 0.25rem;
+        }
+        .mobile-cards tbody td:nth-child(1) br { display: none; }
+        
+        .mobile-cards .status-completed-text,
+        .mobile-cards .status-pending-text {
+            color: #ffffff !important;
+            margin-right: 4px;
+        }
+
+        .mobile-cards .sport-badge {
+            background-color: var(--golden-yellow, #FFD700) !important;
+            color: var(--deped-blue, #0033A0) !important;
+            border: 1px solid var(--golden-yellow, #FFD700) !important;
+            font-weight: 700 !important;
+            padding: 4px 10px !important;
+            font-size: 0.72rem !important;
+            border-radius: 20px !important;
+            letter-spacing: 0.5px;
+            display: inline-block !important;
+        }
+
+        .mobile-cards .division-badge {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.5) !important;
+            font-weight: 600 !important;
+            padding: 4px 10px !important;
+            font-size: 0.72rem !important;
+            border-radius: 20px !important;
+            letter-spacing: 0.5px;
+            display: inline-block !important;
+        }
+
+        .mobile-cards tbody td:nth-child(2) { 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+            padding-bottom: 0.75rem !important; 
+            margin-bottom: 0.5rem; 
+        }
+        
+        .mobile-cards .event-title-display {
+            color: var(--golden-yellow, #FFD700) !important;
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .mobile-cards tbody td:nth-child(3) .d-flex { 
+            align-items: flex-start !important; 
+        } 
+        .mobile-cards .text-muted {
+            color: rgba(255, 255, 255, 0.75) !important;
+        }
+
+        .mobile-cards tbody td:nth-child(4) { 
+            display: flex;
+            gap: 10px;
+            margin-top: 0.5rem; 
+            padding-top: 1rem !important; 
+            border-top: 1px dashed rgba(255, 255, 255, 0.3) !important; 
+        }
+
+        .mobile-cards tbody td:nth-child(4) a {
+            margin-bottom: 0 !important;
+            flex: 1;
+            padding: 10px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mobile-cards .btn-light {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        }
+
+        .mobile-cards .btn-outline-primary {
+            background-color: transparent !important;
+            color: var(--golden-yellow, #FFD700) !important;
+            border: 2px solid var(--golden-yellow, #FFD700) !important;
+        }
+
+        .mobile-cards .btn-primary {
+            background-color: var(--golden-yellow, #FFD700) !important;
+            color: var(--deped-blue, #0033A0) !important;
+            border: none !important;
+            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3) !important;
+        }
+
+        .stat-value { font-size: 1.2rem; }
+    }
+</style>
+
+<div class="container py-4 py-md-5">
+    
+    <!-- Header Section -->
+    <div class="page-header d-flex justify-content-between align-items-end">
+        <div>
+            <h1 class="display-6 fw-bold mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-calendar-event-fill text-warning"></i> EVENT RESULTS
+            </h1>
+            <p class="fs-6 text-muted mb-0" style="font-family: var(--font-body); font-weight: 600;">Calape District Meet Event Records</p>
+        </div>
+    </div>
+
+    <!-- Dashboard Metric Summary Cards -->
+    <div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
+        <div class="col">
+            <div class="stat-card-clean">
+                <div class="stat-title d-flex justify-content-between">Total Events<i class="bi bi-calendar-event text-white-50 d-none d-md-block"></i></div>
+                <div class="stat-value">@totalEvents</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="stat-card-clean" style="border-left-color: var(--golden-yellow, #FFD700);">
+                <div class="stat-title d-flex justify-content-between">Completed<i class="bi bi-check-circle text-white-50 d-none d-md-block"></i></div>
+                <div class="stat-value" style="color: #FFD700 !important;">@completedCount</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="stat-card-clean">
+                <div class="stat-title d-flex justify-content-between">Pending<i class="bi bi-clock text-white-50 d-none d-md-block"></i></div>
+                <div class="stat-value" style="color: #FFD700 !important;">@pendingCount</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="stat-card-clean" style="border-left-color: var(--golden-yellow, #FFD700);">
+                <div class="stat-title d-flex justify-content-between">Last Update<i class="bi bi-arrow-clockwise text-white-50 d-none d-md-block"></i></div>
+                <div class="stat-value" style="font-size: 0.95rem; margin-top: 10px; line-height: 1.2;">@lastUpdateText</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 align-items-stretch">
+        
+        <!-- Main Event Tracking Grid -->
+        <div class="col-lg-8 d-flex flex-column">
+            
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h4 class="mb-0" style="font-family: var(--font-header); color: var(--deped-blue);">Events Results</h4>
+                
+                <div class="d-flex gap-2 flex-wrap">
+                    @if (User?.Identity?.IsAuthenticated == true) {
+                        <button id="btnViewAssigned" class="btn btn-outline-primary fw-bold" style="padding: 6px 16px; font-size: 0.85rem; border-radius: 4px; border: 2px solid var(--deped-blue); color: var(--deped-blue);" onclick="toggleAssignedEvents()">
+                            <i class="bi bi-person-lines-fill"></i> View Assigned Events
+                        </button>
+                    }
+                    @if (User?.IsInRole("Admin") == true) { 
+                        <a asp-action="Create" class="btn btn-primary fw-bold" style="padding: 6px 16px; font-size: 0.85rem; background-color: var(--deped-blue, #0033A0); border: none;">
+                            <span><i class="bi bi-plus-lg"></i> Add Event</span>
+                        </a> 
+                    }
+                </div>
+            </div>
+
+            <!-- Division Hierarchy Selectors -->
+            <div class="division-filters">
+                <button class="filter-btn active-filter" onclick="setDivisionFilter('All', this)">Overall</button>
+                <button class="filter-btn" onclick="setDivisionFilter('Elementary', this)">Elementary</button>
+                <button class="filter-btn" onclick="setDivisionFilter('Secondary', this)">Secondary</button>
+            </div>
+            
+            <!-- Search, Sports and Game Status Multitask Filters -->
+            <div class="filter-bar row g-2">
+                <div class="col-md-4">
+                    <input type="text" id="searchInput" class="form-control form-control-custom" placeholder="Search event title..." onkeyup="applyFilters()">
+                </div>
+                <div class="col-md-4">
+                    <select id="sportFilter" class="form-select form-control-custom" onchange="applyFilters()">
+                        <option value="">All Sports</option>
+                        @foreach(var sport in eventsList.Select(e => e?.SportName?.Trim()).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(s => s)){ 
+                            <option value="@sport">@sport</option> 
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select id="statusFilter" class="form-select form-control-custom" onchange="applyFilters()">
+                        <option value="">All Statuses</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Pending">Pending</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Event Log Presentation Board -->
+            <div class="flex-grow-1 table-container-card rounded shadow-sm">
+                @if(!eventsList.Any()){ 
+                    <div class="text-center py-5 bg-white rounded shadow-sm">
+                        <i class="bi bi-calendar-x" style="font-size: 3rem; color: var(--text-muted);"></i>
+                        <p class="mt-3 text-muted fw-bold">No athletic events scheduled yet.</p>
+                    </div> 
+                }
+                else {
+                    <div class="table-responsive">
+                        <table class="minimalist-table mobile-cards w-100" id="eventsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Sport & Class</th>
+                                    <th style="width: 32%;">Event Title</th>
+                                    <th style="width: 28%;">Winners Allocation</th>
+                                    <th class="text-center" style="width: 15%;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ev in eventsList) {
+                                    if (ev == null) continue;
+                                    bool hasResults = ev.GoldTeamId.HasValue || ev.SilverTeamId.HasValue || ev.BronzeTeamId.HasValue;
+                                    
+                                    var coordIdStr = ev.CoordinatorId?.ToString() ?? "";
+                                    bool isCoordinator = !string.IsNullOrEmpty(coordIdStr) && coordIdStr == currentCoordinatorIdStr;
+                                    
+                                    bool isAuthorized = User?.Identity?.IsAuthenticated == true &&
+                                        (User?.IsInRole("Admin") == true || isCoordinator);
+                                    
+                                    <tr class="event-row" 
+                                        data-sport="@(ev.SportName?.Trim() ?? "")" 
+                                        data-division="@(ev.Division?.Trim() ?? "")" 
+                                        data-status="@(ev.Status?.Trim() ?? "")" 
+                                        data-is-assigned="@(isCoordinator ? "true" : "false")">
+                                        <td>
+                                            @if(ev.Status == "Completed") {
+                                                <span class="status-indicator status-completed-dot"></span><small class="fw-bold status-completed-text">Completed</small>
+                                            } else {
+                                                <span class="status-indicator status-pending-dot"></span><small class="fw-bold status-pending-text">Pending</small>
+                                            }
+                                            <br />
+                                            <span class="badge sport-badge mt-1 text-uppercase">@ev.SportName</span>
+                                            <span class="badge division-badge mt-1 text-uppercase">@ev.Division</span>
+                                        </td>
+                                        
+                                        <td>
+                                            <div class="event-title-display">@ev.Title</div>
+                                        </td>
+                                        
+                                        <td>
+                                            <div class="d-flex flex-column gap-1">
+                                                @if (ev.GoldTeamId.HasValue && teamAcronymsLookup.ContainsKey(ev.GoldTeamId.Value)) {
+                                                    <div style="font-size: 0.9rem;"><span class="medal-text-gold">🥇</span> <span class="fw-bold">@teamAcronymsLookup[ev.GoldTeamId.Value]</span></div>
+                                                }
+                                                @if (ev.SilverTeamId.HasValue && teamAcronymsLookup.ContainsKey(ev.SilverTeamId.Value)) {
+                                                    <div style="font-size: 0.9rem;"><span class="medal-text-silver">🥈</span> <span class="fw-bold">@teamAcronymsLookup[ev.SilverTeamId.Value]</span></div>
+                                                }
+                                                @if (ev.BronzeTeamId.HasValue && teamAcronymsLookup.ContainsKey(ev.BronzeTeamId.Value)) {
+                                                    <div style="font-size: 0.9rem;"><span class="medal-text-bronze">🥉</span> <span class="fw-bold">@teamAcronymsLookup[ev.BronzeTeamId.Value]</span></div>
+                                                }
+                                                @if (!hasResults) { 
+                                                    <small class="text-muted fw-bold"><i class="bi bi-dash"></i>Pending Result</small> 
+                                                }
+                                            </div>
+                                        </td>
+                                        
+                                        <td class="text-center align-middle">
+                                            @if (hasResults) { 
+                                                <a asp-action="SubmitResults" asp-route-id="@ev.Id" class="btn btn-sm w-100 @(isAuthorized ? "btn-outline-primary" : "btn-light border") fw-bold rounded-pill mb-1">@(isAuthorized ? "Update" : "View")</a> 
+                                            }
+                                            else if (isAuthorized) { 
+                                                <a asp-action="SubmitResults" asp-route-id="@ev.Id" class="btn btn-sm w-100 btn-primary fw-bold rounded-pill text-white mb-1" style="background-color: var(--deped-blue, #0033A0); border: none;">Submit Results</a> 
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        
+                        <div id="noEventsRow" class="text-center py-5 bg-white rounded mt-3" style="display: none;">
+                            <p class="mb-0 text-muted fw-bold">No results found matching your filtered criteria.</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Right Side Updates Panel -->
+        <div class="col-12 col-lg-4">
+            <div class="glass-card h-100 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0 fw-bold" style="font-family: var(--font-header);">Recent Updates</h4>
+                    <span class="badge bg-light text-primary border rounded-pill px-2 py-1" style="font-size: 0.7rem; font-weight: 700;">Results Feed</span>
+                </div>
+                
+                <div style="max-height: 550px; overflow-y: auto; padding-right: 5px;">
+                    @if (!completedGames.Any()) {
+                        <div class="text-center py-4 text-muted border border-dashed rounded" style="background: #f8f9fa">
+                            <small>Awaiting updates from active venue fields...</small>
+                        </div>
+                    } else {
+                        foreach (var ev in completedGames) {
+                            if (ev == null) continue;
+                            <div class="feed-item">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="feed-title mb-0">@ev.Title</h6>
+                                    <small class="feed-time">@FormatToPst(ev.UpdatedAt, "h:mm tt")</small>
+                                </div>
+                                <div class="feed-div">@ev.Division</div>
+                                
+                                <div class="d-flex flex-column gap-1">
+                                    @if(ev.GoldTeamId.HasValue && teamAcronymsLookup.ContainsKey(ev.GoldTeamId.Value)) {
+                                        <div class="medal-text"><span class="medal-icon">🥇</span> <span class="fw-bold">@teamAcronymsLookup[ev.GoldTeamId.Value]</span></div>
+                                        @if(!string.IsNullOrEmpty(ev.GoldWinnerName)){ <div class="individual-winner">@ev.GoldWinnerName</div> }
+                                    }
+                                    @if(ev.SilverTeamId.HasValue && teamAcronymsLookup.ContainsKey(ev.SilverTeamId.Value)) {
+                                        <div class="medal-text"><span class="medal-icon">🥈</span> <span class="fw-bold">@teamAcronymsLookup[ev.SilverTeamId.Value]</span></div>
+                                        @if(!string.IsNullOrEmpty(ev.SilverWinnerName)){ <div class="individual-winner">@ev.SilverWinnerName</div> }
+                                    }
+                                    @if(ev.BronzeTeamId.HasValue && teamAcronymsLookup.ContainsKey(ev.BronzeTeamId.Value)) {
+                                        <div class="medal-text"><span class="medal-icon">🥉</span> <span class="fw-bold">@teamAcronymsLookup[ev.BronzeTeamId.Value]</span></div>
+                                        @if(!string.IsNullOrEmpty(ev.BronzeWinnerName)){ <div class="individual-winner">@ev.BronzeWinnerName</div> }
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let currentDivisionFilter = 'All';
+    let viewAssignedOnly = false;
+
+    function toggleAssignedEvents() {
+        viewAssignedOnly = !viewAssignedOnly;
+        
+        let btn = document.getElementById('btnViewAssigned');
+        if (viewAssignedOnly) {
+            btn.style.backgroundColor = 'var(--deped-blue, #0033A0)';
+            btn.style.color = 'white';
+            btn.innerHTML = '<i class="bi bi-collection-fill"></i> View All Events';
+        } else {
+            btn.style.backgroundColor = 'transparent';
+            btn.style.color = 'var(--deped-blue, #0033A0)';
+            btn.innerHTML = '<i class="bi bi-person-lines-fill"></i> View Assigned Events';
+        }
+        
+        applyFilters();
+    }
+
+    function setDivisionFilter(division, btnElement) {
+        $('.filter-btn').removeClass('active-filter');
+        $(btnElement).addClass('active-filter');
+        currentDivisionFilter = division;
+        applyFilters();
+    }
+
+    function applyFilters() {
+        var searchText = document.getElementById('searchInput').value.toLowerCase().trim();
+        var sport = document.getElementById('sportFilter').value.toLowerCase().trim();
+        var status = document.getElementById('statusFilter').value.toLowerCase().trim();
+        var visibleCount = 0;
+
+        $('.event-row').each(function() {
+            var title = $(this).find('.event-title-display').text().toLowerCase();
+            var rowSport = ($(this).attr('data-sport') || '').toLowerCase().trim();
+            var rowDivision = ($(this).attr('data-division') || '').toLowerCase().trim();
+            var rowStatus = ($(this).attr('data-status') || '').toLowerCase().trim();
+            
+            var isAssigned = $(this).attr('data-is-assigned') === 'true';
+
+            // 1. Search Check
+            var matchSearch = title.indexOf(searchText) > -1;
+
+            // 2. Sport Check
+            var matchSport = sport === "" || rowSport === sport;
+
+            // 3. Division Check
+            var currentDiv = currentDivisionFilter.toLowerCase().trim();
+            var matchDivision = currentDiv === 'all' || rowDivision === currentDiv;
+
+            // 4. Status Check
+            var isCompleted = rowStatus === "completed";
+            var matchStatus = true;
+            if (status === "completed") {
+                matchStatus = isCompleted;
+            } else if (status === "pending") {
+                matchStatus = !isCompleted;
+            }
+
+            // 5. Assigned Filter Check
+            var matchAssigned = !viewAssignedOnly || isAssigned;
+
+            // Combine all filter criteria
+            if (matchSearch && matchSport && matchDivision && matchStatus && matchAssigned) {
+                $(this).show();
+                visibleCount++;
+            } else {
+                $(this).hide();
+            }
+        });
+
+        // Dynamic Desktop Zebra Striping
+        if ($(window).width() > 768) {
+            $('.event-row:visible').each(function(index) {
+                $(this).css('background-color', (index % 2 === 1) ? 'rgba(0, 51, 160, 0.04)' : '#ffffff');
+            });
+        } else {
+            $('.event-row').css('background-color', '');
+        }
+
+        if (visibleCount === 0) {
+            $('#noEventsRow').show();
+            $('#eventsTable').hide();
+        } else {
+            $('#noEventsRow').hide();
+            $('#eventsTable').show();
+        }
+    }
+</script>
+}

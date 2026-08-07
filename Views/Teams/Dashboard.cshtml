@@ -1,0 +1,139 @@
+@model IEnumerable<SubcongMeet.Models.Team>
+@{
+    ViewData["Title"] = "Participating Schools";
+}
+
+<style>
+    .school-card {
+        /* Updated secondary gradient color from #001f4d to #004e92 for a richer blue */
+        background: linear-gradient(135deg, var(--deped-blue) 0%, #004e92 100%);
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        text-decoration: none;
+        display: block;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    /* Modern Shine/Sweep Animation */
+    .school-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 100%);
+        transform: skewX(-25deg);
+        transition: all 0.6s ease;
+        z-index: -1;
+    }
+
+    .school-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0, 51, 102, 0.4);
+        border-color: rgba(255, 255, 255, 0.3);
+        /* Added the hover gradient depth shift to perfectly match Details.cshtml */
+        background: linear-gradient(135deg, var(--deped-blue) 0%, #003366 100%);
+    }
+
+    /* Trigger the shine sweep on hover */
+    .school-card:hover::before {
+        left: 125%;
+    }
+
+    .acronym-badge {
+        background: var(--golden-yellow);
+        color: #000;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 5px;
+        font-size: 0.75rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        display: inline-block;
+        transition: transform 0.3s ease;
+    }
+
+    .school-card:hover .acronym-badge {
+        transform: scale(1.05);
+    }
+
+    .filter-btn {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn.active {
+        background-color: var(--deped-blue);
+        color: white;
+        border-color: var(--deped-blue);
+    }
+</style>
+
+<div class="container py-5">
+    <h2 class="mb-4 text-center" style="font-family: var(--font-header); color: var(--deped-blue);">
+        <i class="bi bi-mortarboard-fill text-warning me-2"></i>PARTICIPATING SCHOOLS
+    </h2>
+
+    <!-- Division Filter Selection -->
+    <div class="d-flex justify-content-center mb-5">
+        <div class="btn-group shadow-sm" role="group" aria-label="Division Filter">
+            <button type="button" class="btn btn-outline-primary active filter-btn" data-filter="Secondary">Secondary</button>
+            <button type="button" class="btn btn-outline-primary filter-btn" data-filter="Elementary">Elementary</button>
+            <button type="button" class="btn btn-outline-primary filter-btn" data-filter="All">All Divisions</button>
+        </div>
+    </div>
+
+    <div class="row g-4" id="schoolsContainer">
+        @foreach (var team in Model) {
+            <div class="col-md-4 col-lg-3 team-item" data-division="@team.Division">
+                <a asp-action="Details" asp-route-id="@team.Id" class="school-card h-100">
+                    <span class="acronym-badge">@team.Acronym</span>
+                    <h5 class="mt-3 mb-1 fw-bold text-white" style="font-family: var(--font-header);">@team.Name</h5>
+                    <small class="text-white-50 fw-bold text-uppercase" style="font-size: 0.75rem;">@team.Division</small>
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const buttons = document.querySelectorAll('.filter-btn');
+            const items = document.querySelectorAll('.team-item');
+
+            function filterItems(filterValue) {
+                items.forEach(item => {
+                    const division = item.getAttribute('data-division') || "";
+                    
+                    // Show item if filter is "All" or if the division text includes the filter keyword
+                    if (filterValue === 'All' || division.toLowerCase().includes(filterValue.toLowerCase())) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    // Update active button state
+                    buttons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Filter the cards
+                    filterItems(this.getAttribute('data-filter'));
+                });
+            });
+
+            // Set default view to Secondary on page load
+            filterItems('Secondary');
+        });
+    </script>
+}

@@ -1,0 +1,276 @@
+@model IEnumerable<SubcongMeet.Models.EventQualifier>
+@{
+    var eventDetails = ViewBag.Event as SubcongMeet.Models.Event;
+    var teams = ViewBag.Teams as List<SubcongMeet.Models.Team> ?? new List<SubcongMeet.Models.Team>();
+    ViewData["Title"] = "Manage Delegation - " + eventDetails?.Title;
+
+    var tShirtSizes = new[] { "12", "14", "16", "18", "20", "XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL" };
+}
+
+<style>
+    .glass-card { 
+        background: white; 
+        border-radius: 8px; 
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
+        border-top: 5px solid var(--deped-blue); 
+    }
+    
+    .form-control-custom { 
+        border: 1px solid #dee2e6; 
+        border-radius: 6px; 
+        font-family: var(--font-body);
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-control-custom:focus { 
+        border-color: var(--deped-blue); 
+        box-shadow: 0 0 0 0.2rem rgba(0, 51, 160, 0.15); 
+    }
+
+    .table-edit-custom th {
+        background: linear-gradient(135deg, #0056b3 0%, #0033A0 100%);
+        color: #ffffff;
+        font-family: var(--font-header, 'Poppins', sans-serif);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        padding: 12px 10px;
+        border: none;
+        vertical-align: middle;
+    }
+
+    .table-edit-custom td {
+        padding: 10px;
+        vertical-align: middle;
+        font-family: var(--font-body, 'Inter', sans-serif);
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    /* Mobile Responsive Card Transformation */
+    @@media (max-width: 768px) {
+        .edit-table thead { display: none; }
+        
+        .edit-table tbody tr {
+            display: flex;
+            flex-direction: column;
+            background: #ffffff !important;
+            border: 1px solid #dee2e6;
+            border-left: 5px solid var(--deped-blue, #0033A0) !important;
+            border-radius: 12px;
+            margin-bottom: 1.25rem;
+            padding: 1.25rem;
+            box-shadow: 0 4px 15px rgba(0, 51, 160, 0.1);
+            gap: 0.75rem;
+        }
+        
+        .edit-table tbody td {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            border: none !important;
+            padding: 0 !important;
+            text-align: left !important;
+        }
+        
+        .edit-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--deped-blue, #0033A0);
+            margin-bottom: 3px;
+        }
+
+        .edit-table tbody td.mobile-select-row {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 51, 160, 0.04);
+            padding: 8px 12px !important;
+            border-radius: 8px;
+        }
+        
+        .edit-table tbody td.mobile-select-row::before {
+            content: "Select Row";
+            margin-bottom: 0;
+        }
+    }
+</style>
+
+<div class="container py-4 py-md-5">
+    <div class="mb-4">
+        <a asp-controller="Events" asp-action="SubmitResults" asp-route-id="@eventDetails?.Id" class="text-decoration-none text-muted fw-bold" style="font-size: 0.85rem;">
+            <i class="bi bi-arrow-left"></i> Back to Official Results
+        </a>
+    </div>
+
+    <div class="glass-card p-4 p-md-5">
+        <div class="mb-4">
+            <h2 style="font-family: var(--font-header); color: var(--deped-blue);">
+                <i class="bi bi-people-fill text-warning me-2"></i> DELEGATION: @eventDetails?.Title
+            </h2>
+            <p class="text-muted fw-bold">Manage athletes, coaches, and chaperons for this event.</p>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <!-- Add Participant Form (Retained) -->
+        <div class="card mb-4 border-0 bg-light p-3">
+            <div class="card-body">
+                <h5 class="mb-3" style="font-family: var(--font-header); color: var(--deped-blue);">
+                    <i class="bi bi-person-plus-fill me-1"></i> Add New Participant
+                </h5>
+                <form asp-action="SaveQualifier" method="post" id="participantForm">
+                    <input type="hidden" name="EventId" value="@eventDetails?.Id" />
+                    <input type="hidden" name="Id" value="@Guid.Empty" />
+                    
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <input type="text" name="ParticipantName" class="form-control form-control-custom" placeholder="Full Name" required />
+                        </div>
+                        <div class="col-md-2">
+                            <select name="Role" class="form-select form-control-custom" required>
+                                <option value="Athlete">Athlete</option>
+                                <option value="Coach">Coach</option>
+                                <option value="Chaperon">Chaperon</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="SchoolName" class="form-select form-control-custom" required>
+                                <option value="">Select School</option>
+                                @foreach (var team in teams) {
+                                    <option value="@team.Name">@team.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="TshirtSize" class="form-select form-control-custom" required>
+                                <option value="">T-Shirt Size</option>
+                                @foreach (var size in tShirtSizes) {
+                                    <option value="@size">@size</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100 fw-bold" style="padding: 0.75rem; background-color: var(--deped-blue);">
+                                <i class="bi bi-plus-lg"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Inline Editable Grid Form for Existing Participants -->
+        <form method="post" id="bulkActionForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="eventId" value="@eventDetails?.Id" />
+
+            <!-- Action Toolbar -->
+            <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-3 rounded border">
+                <span class="fw-bold text-dark" style="font-size: 0.85rem;">
+                    <i class="bi bi-info-circle text-primary"></i> Edit participants directly in the table below, then click <strong>Save All Changes</strong>.
+                </span>
+                <div class="d-flex gap-2">
+                    <button type="submit" formaction="@Url.Action("BulkDelete", new { eventId = eventDetails?.Id })" class="btn btn-outline-danger fw-bold btn-sm px-3" onclick="return confirm('Are you sure you want to delete all selected participants?');">
+                        <i class="bi bi-trash"></i> Delete Selected
+                    </button>
+                    <button type="submit" formaction="@Url.Action("BulkSave", new { eventId = eventDetails?.Id })" class="btn text-white fw-bold btn-sm px-4" style="background-color: var(--deped-blue);">
+                        <i class="bi bi-save"></i> Save All Changes
+                    </button>
+                </div>
+            </div>
+
+            <!-- List of Qualifiers (Inline Editable) -->
+            <div class="table-responsive">
+                <table class="table table-edit-custom edit-table w-100 mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 35px; min-width: 35px;">
+                                <input type="checkbox" id="selectAll" class="form-check-input" onclick="toggleSelectAll(this)" />
+                            </th>
+                            <th style="width: 32%;">Participant Name</th>
+                            <th style="width: 25%;">School</th>
+                            <th style="width: 22%;">Role</th>
+                            <th style="width: 18%;">T-Shirt Size</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model == null || !Model.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted fw-bold">No participants added yet.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            int index = 0;
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="text-center mobile-select-row" style="width: 35px;">
+                                        <input type="checkbox" name="selectedIds" value="@item.Id" class="form-check-input row-checkbox" />
+                                        <input type="hidden" name="qualifiers[@index].Id" value="@item.Id" />
+                                        <input type="hidden" name="qualifiers[@index].EventId" value="@item.EventId" />
+                                    </td>
+                                    <td data-label="Participant Name">
+                                        <input type="text" name="qualifiers[@index].ParticipantName" value="@item.ParticipantName" class="form-control form-control-sm fw-bold" required placeholder="Full Name" />
+                                    </td>
+                                    <td data-label="School">
+                                        <select name="qualifiers[@index].SchoolName" class="form-select form-select-sm" required>
+                                            <option value="">Select School</option>
+                                            @foreach (var team in teams)
+                                            {
+                                                if (item.SchoolName == team.Name) { <option value="@team.Name" selected>@team.Name</option> }
+                                                else { <option value="@team.Name">@team.Name</option> }
+                                            }
+                                        </select>
+                                    </td>
+                                    <td data-label="Role">
+                                        <select name="qualifiers[@index].Role" class="form-select form-select-sm" required>
+                                            @if (item.Role?.ToLower() == "athlete") { <option value="Athlete" selected>Athlete</option> } else { <option value="Athlete">Athlete</option> }
+                                            @if (item.Role?.ToLower() == "coach") { <option value="Coach" selected>Coach</option> } else { <option value="Coach">Coach</option> }
+                                            @if (item.Role?.ToLower() == "chaperon" || item.Role?.ToLower() == "chaperone") { <option value="Chaperon" selected>Chaperon</option> } else { <option value="Chaperon">Chaperon</option> }
+                                        </select>
+                                    </td>
+                                    <td data-label="T-Shirt Size">
+                                        <select name="qualifiers[@index].TshirtSize" class="form-select form-select-sm" required>
+                                            <option value="">Size</option>
+                                            @foreach (var size in tShirtSizes)
+                                            {
+                                                if (item.TshirtSize == size) { <option value="@size" selected>@size</option> }
+                                                else { <option value="@size">@size</option> }
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                                index++;
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleSelectAll(source) {
+        let checkboxes = document.querySelectorAll('.row-checkbox');
+        for (let i = 0, n = checkboxes.length; i < n; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+    }
+</script>

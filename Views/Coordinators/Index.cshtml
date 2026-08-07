@@ -1,0 +1,89 @@
+@model IEnumerable<SubcongMeet.Models.Coordinator>
+@{
+    ViewData["Title"] = "Coordinator Directory";
+}
+
+<style>
+    .page-header {
+        border-bottom: 3px solid var(--golden-yellow);
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .table-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border-top: 5px solid var(--deped-blue);
+    }
+
+    .minimalist-table th {
+        background-color: var(--bg-light);
+        padding: 1.25rem 1rem;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    /* Mobile Responsive Card View */
+    @@media (max-width: 768px) {
+        .minimalist-table thead { display: none; }
+        .minimalist-table tbody tr { 
+            display: flex; flex-direction: column;
+            margin-bottom: 1rem; padding: 1rem; 
+            background: white; border: 1px solid #dee2e6;
+            border-left: 4px solid var(--deped-blue); border-radius: 8px;
+        }
+        .minimalist-table tbody td { display: flex; justify-content: space-between; padding: 0.25rem 0 !important; }
+        .minimalist-table tbody td::before { content: attr(data-label); font-weight: bold; color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; }
+    }
+</style>
+
+<div class="container py-4 py-md-5">
+    
+    <div class="page-header d-flex justify-content-between align-items-end">
+        <div>
+            <h1 class="display-6 fw-bold mb-1" style="font-family: var(--font-header); color: var(--deped-blue);">
+                <i class="bi bi-people-fill text-warning"></i> COORDINATOR DIRECTORY
+            </h1>
+            <p class="fs-6 text-muted mb-0 fw-bold">Manage system access credentials</p>
+        </div>
+        <a asp-action="Create" class="btn-athletic shadow-sm"><span><i class="bi bi-plus-lg"></i> Add New</span></a>
+    </div>
+
+    <div class="table-card p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="minimalist-table w-100">
+                <thead>
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Username</th>
+                        <th>Access Level</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model) {
+                        <tr>
+                            <td data-label="Full Name" class="fw-bold">@item.FullName</td>
+                            <td data-label="Username"><code>@item.Username</code></td>
+                            <td data-label="Access Level">
+                                @if (item.IsAdmin) { 
+                                    <span class="badge bg-danger rounded-pill px-3">Administrator</span> 
+                                } else { 
+                                    <span class="badge bg-secondary rounded-pill px-3">Manager</span> 
+                                }
+                            </td>
+                            <td class="text-end" data-label="Action">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3">Edit</a>
+                                
+                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete user @item.Username?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger fw-bold rounded-pill px-3">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

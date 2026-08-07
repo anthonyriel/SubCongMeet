@@ -1,0 +1,257 @@
+@model IEnumerable<SubcongMeet.Models.Event>
+@{
+    var team = ViewBag.Team as SubcongMeet.Models.Team;
+    ViewData["Title"] = $"{team?.Name} - Records";
+
+    // Filter and group events by medals won by THIS team
+    var goldEvents = Model.Where(e => e.GoldTeamId == team?.Id).ToList();
+    var silverEvents = Model.Where(e => e.SilverTeamId == team?.Id).ToList();
+    var bronzeEvents = Model.Where(e => e.BronzeTeamId == team?.Id).ToList();
+    
+    // Sort from Gold to Bronze for the default 'All' view
+    var allWonEvents = goldEvents.Concat(silverEvents).Concat(bronzeEvents).ToList();
+
+    int totalMedals = allWonEvents.Count;
+}
+
+<style>
+    /* Aesthetic School Header */
+    .school-header {
+        /* Lightened the secondary color from #001f4d to #004e92 for a cleaner blue */
+        background: linear-gradient(135deg, var(--deped-blue) 0%, #004e92 100%);
+        border-bottom: 5px solid var(--golden-yellow);
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .school-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.05) 10%, transparent 60%);
+        pointer-events: none;
+    }
+
+    /* Medal Cards (Filters) */
+    .medal-card {
+        background: linear-gradient(135deg, var(--deped-blue) 0%, #004e92 100%);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        color: white;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem 1rem;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    /* Modern Shine/Sweep Animation */
+    .medal-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 100%);
+        transform: skewX(-25deg);
+        transition: all 0.6s ease;
+        z-index: -1;
+    }
+
+    /* Shadow effects to make it pop */
+    .medal-card:hover, .medal-card.active {
+        transform: translateY(-8px);
+        border-color: var(--golden-yellow);
+        box-shadow: 0 15px 30px rgba(0, 31, 77, 0.4), 0 0 15px rgba(255, 215, 0, 0.3);
+        /* Changed from #001133 to #003366 to keep it blue instead of black on hover */
+        background: linear-gradient(135deg, var(--deped-blue) 0%, #003366 100%);
+    }
+
+    /* Trigger the shine sweep on hover */
+    .medal-card:hover::before {
+        left: 125%;
+    }
+
+    .medal-count {
+        font-size: 2rem;
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+    
+    .medal-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: rgba(255,255,255,0.8);
+    }
+
+    .medal-card.active .medal-label {
+        color: var(--golden-yellow);
+    }
+
+    /* Table Header Gradient */
+    .table-gradient-header {
+        background: linear-gradient(135deg, var(--deped-blue) 0%, #004e92 100%);
+    }
+
+    .table-gradient-header th {
+        background: transparent !important; /* Overrides default bootstrap table headers */
+        color: white !important;
+        border-bottom: none;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="mb-4">
+        <a asp-action="Dashboard" class="text-muted fw-bold text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Back to Schools
+        </a>
+    </div>
+
+    <!-- Aesthetic Header -->
+    <div class="school-header p-4 p-md-5 shadow-lg mb-5 text-center text-md-start text-white">
+        <div class="position-relative z-1 d-flex flex-column flex-md-row align-items-center justify-content-between">
+            <div>
+                <!-- Added text-white to ensure the school name pops against the dark background -->
+                <h1 class="fw-black mb-2 text-white" style="font-family: var(--font-header); letter-spacing: 1px;">@team?.Name</h1>
+                <div class="d-flex gap-2 justify-content-center justify-content-md-start">
+                    <span class="badge bg-light text-dark shadow-sm">@team?.Division</span>
+                    <span class="badge shadow-sm" style="background: var(--golden-yellow); color: #000;">@team?.Acronym</span>
+                </div>
+            </div>
+            <div class="mt-4 mt-md-0 text-center">
+                <div class="display-4 fw-bold text-warning mb-0">@totalMedals</div>
+                <div class="text-uppercase small fw-bold" style="letter-spacing: 1px;">Total Medals</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Medal Filter Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="medal-card active" data-filter="all">
+                <div class="medal-count text-white">@totalMedals</div>
+                <div class="medal-label">All Medals</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="medal-card" data-filter="gold">
+                <div class="medal-count text-warning">@goldEvents.Count</div>
+                <div class="medal-label">🥇 Gold</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="medal-card" data-filter="silver">
+                <div class="medal-count text-light">@silverEvents.Count</div>
+                <div class="medal-label">🥈 Silver</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="medal-card" data-filter="bronze">
+                <div class="medal-count" style="color: #cd7f32;">@bronzeEvents.Count</div>
+                <div class="medal-label">🥉 Bronze</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Records Table -->
+    <div class="bg-white p-4 rounded shadow-sm border-top border-4 border-primary">
+        <h4 class="mb-4" style="font-family: var(--font-header); color: var(--deped-blue);">
+            <i class="bi bi-trophy-fill text-warning me-2"></i>Achievement Records
+        </h4>
+        
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <!-- Applied the gradient class here -->
+                <thead class="table-gradient-header">
+                    <tr>
+                        <th class="text-uppercase small py-3">Event Title</th>
+                        <th class="text-uppercase small py-3">Medal Won</th>
+                        <th class="text-uppercase small py-3">Winners</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsBody">
+                    @if (!allWonEvents.Any())
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-muted">No medals recorded yet.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var ev in allWonEvents) 
+                        {
+                            string medalType = "";
+                            string medalBadge = "";
+                            string winnerName = "";
+                            
+                            if(ev.GoldTeamId == team?.Id) { 
+                                medalType = "gold"; 
+                                medalBadge = "<span class='text-warning fw-bold fs-5'>🥇 Gold</span>"; 
+                                winnerName = ev.GoldWinnerName ?? "Not specified";
+                            }
+                            else if(ev.SilverTeamId == team?.Id) { 
+                                medalType = "silver"; 
+                                medalBadge = "<span class='text-secondary fw-bold fs-5'>🥈 Silver</span>";
+                                winnerName = ev.SilverWinnerName ?? "Not specified";
+                            }
+                            else if(ev.BronzeTeamId == team?.Id) { 
+                                medalType = "bronze"; 
+                                medalBadge = "<span class='fw-bold fs-5' style='color: #cd7f32;'>🥉 Bronze</span>"; 
+                                winnerName = ev.BronzeWinnerName ?? "Not specified";
+                            }
+
+                            <tr class="record-row" data-medal="@medalType">
+                                <td class="fw-semibold">@ev.Title</td>
+                                <td>@Html.Raw(medalBadge)</td>
+                                <td class="fw-bold text-dark">@winnerName</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const cards = document.querySelectorAll('.medal-card');
+            const rows = document.querySelectorAll('.record-row');
+
+            cards.forEach(card => {
+                card.addEventListener('click', function () {
+                    // Update active state on cards
+                    cards.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.getAttribute('data-filter');
+                    
+                    // Filter table rows
+                    rows.forEach(row => {
+                        if (filter === 'all' || row.getAttribute('data-medal') === filter) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,518 @@
+@model IEnumerable<SubcongMeet.Models.MedalTally>
+@{
+    ViewData["Title"] = "Home";
+    
+    // Core Variables
+    var recentResults = ViewBag.RecentResults as List<SubcongMeet.Models.Event> ?? new List<SubcongMeet.Models.Event>();
+    
+    // Time Formatting & Last Updated
+    DateTime phTime = DateTime.UtcNow.AddHours(8);
+    string GetRelativeTime(DateTime? dt) {
+        if (!dt.HasValue) return "N/A";
+        var dtUtc = DateTime.SpecifyKind(dt.Value, DateTimeKind.Utc);
+        var span = DateTime.UtcNow - dtUtc;
+        if (span.TotalMinutes < 1) return "Just now";
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes} min ago";
+        if (span.TotalHours < 24) return $"{(int)span.TotalHours} hr ago";
+        return $"{(int)span.TotalDays} days ago";
+    }
+
+    DateTime? lastUpdateUtc = recentResults.Any() ? recentResults.Max(r => r.UpdatedAt) : null;
+    string relativeUpdatedString = GetRelativeTime(lastUpdateUtc);
+
+    // Group tallies defensively without dropping records if Team mapping has anomalies
+    var teamTallies = Model
+        .GroupBy(m => new { 
+            Id = m.Team?.Id ?? m.TeamId, 
+            Name = m.Team?.Name ?? $"Team ID: {m.TeamId} (Unmapped)", 
+            Division = m.Team?.Division ?? "Unknown" 
+        })
+        .Select(g => new {
+            TeamId = g.Key.Id, 
+            TeamName = g.Key.Name,
+            Division = g.Key.Division,
+            Gold = g.Sum(x => x.Gold),
+            Silver = g.Sum(x => x.Silver),
+            Bronze = g.Sum(x => x.Bronze),
+            TotalMedals = g.Sum(x => x.Gold + x.Silver + x.Bronze)
+        })
+        .ToList();
+
+    int overallTotalMedals = teamTallies.Sum(m => m.TotalMedals);
+
+    var overallLeader = overallTotalMedals > 0
+        ? teamTallies.OrderByDescending(m => m.Gold)
+            .ThenByDescending(m => m.Silver)
+            .ThenByDescending(m => m.Bronze)
+            .FirstOrDefault()
+        : null;
+        
+    int completedEventsCount = recentResults.Count;
+    int totalEventsCount = ViewBag.TotalEvents ?? 0;
+    double progressPercent = totalEventsCount > 0 ? ((double)completedEventsCount / totalEventsCount) * 100 : 0;
+    
+    // Server-side Fallback Countdown (Set to August 15, 2026 at 7:30 AM)
+    DateTime openingDate = new DateTime(2026, 8, 15, 7, 30, 0); 
+    TimeSpan timeToGo = openingDate - phTime;
+    
+    string countdownLabel = "";
+    string countdownValue;
+    if (timeToGo.TotalDays >= 2) {
+        countdownValue = $"{(int)timeToGo.TotalDays} DAYS TO GO";
+    } else if (timeToGo.TotalDays >= 1) {
+        countdownValue = "1 DAY TO GO";
+    } else if (timeToGo.TotalSeconds > 0) {
+        countdownLabel = "Opening ceremony in:";
+        countdownValue = $"{timeToGo.Hours} hours {timeToGo.Minutes} minutes {timeToGo.Seconds} seconds";
+    } else if (timeToGo.TotalHours > -24) {
+        countdownValue = "TODAY";
+    } else {
+        countdownValue = "EVENT STARTED";
+    }
+    
+    // Pass robust epoch milliseconds for JS to digest flawlessly
+    long targetDateMs = new DateTimeOffset(2026, 8, 15, 7, 30, 0, new TimeSpan(8, 0, 0)).ToUnixTimeMilliseconds();
+
+    var top3Elementary = teamTallies.Where(m => m.Division.Equals("Elementary", StringComparison.OrdinalIgnoreCase) && m.TotalMedals > 0)
+                                  .OrderByDescending(m => m.Gold).ThenByDescending(m => m.Silver).ThenByDescending(m => m.Bronze)
+                                  .Take(3).ToList();
+                                  
+    var top3Secondary = teamTallies.Where(m => m.Division.Equals("Secondary", StringComparison.OrdinalIgnoreCase) && m.TotalMedals > 0)
+                                 .OrderByDescending(m => m.Gold).ThenByDescending(m => m.Silver).ThenByDescending(m => m.Bronze)
+                                 .Take(3).ToList();
+
+    var elementaryLeader = top3Elementary.FirstOrDefault();
+    var secondaryLeader = top3Secondary.FirstOrDefault();
+}
+
+<style>
+    /* Hero Banner & Card Animations */
+    @@keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @@keyframes titleFloat {
+        0% { transform: translateY(0px); text-shadow: 0px 4px 15px rgba(0,0,0,0.3); }
+        50% { transform: translateY(-8px); text-shadow: 0px 12px 25px rgba(0,0,0,0.5); }
+        100% { transform: translateY(0px); text-shadow: 0px 4px 15px rgba(0,0,0,0.3); }
+    }
+
+    /* Hero Banner */
+    .hero-banner {
+        background: linear-gradient(-45deg, var(--deped-blue) 0%, #004aad 25%, var(--deped-blue) 50%, #002a7a 75%, var(--deped-blue) 100%);
+        background-size: 300% 300%;
+        animation: gradientMove 8s ease-in-out infinite;
+        padding: 4rem 2rem;
+        border-radius: 16px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 34, 122, 0.2);
+        margin-bottom: 3rem;
+    }
+    
+    .hero-title {
+        font-family: var(--font-header);
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #ffffff;
+        text-shadow: 0px 4px 15px rgba(0,0,0,0.3); 
+        margin-bottom: 0.5rem;
+        animation: titleFloat 4s ease-in-out infinite;
+    }
+    
+    .hero-description {
+        font-family: var(--font-body);
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 1rem auto;
+        opacity: 0.9;
+        line-height: 1.6;
+    }
+
+    /* Countdown Responsive Container Styles */
+    .countdown-pill {
+        background: white;
+        color: var(--text-dark);
+        border-radius: 16px;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 2rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        font-family: var(--font-header);
+    }
+    .countdown-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6c757d;
+        font-weight: 700;
+        margin-bottom: 0.15rem;
+    }
+    .countdown-value {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--deped-blue);
+        letter-spacing: 0.5px;
+    }
+
+    /* Dynamic Glass Cards */
+    .glass-card, .btn-glass {
+        --card-text: #ffffff;
+        --card-muted: rgba(255, 255, 255, 0.75);
+        --pill-bg: rgba(255, 255, 255, 0.1);
+        --pill-border: rgba(255, 255, 255, 0.2);
+        
+        background: linear-gradient(-45deg, var(--deped-blue) 0%, #004aad 25%, var(--deped-blue) 50%, #002a7a 75%, var(--deped-blue) 100%);
+        background-size: 300% 300%;
+        animation: gradientMove 8s ease-in-out infinite;
+        
+        border-radius: 12px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .glass-card:hover, .btn-glass:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,34,122,0.4) !important; 
+    }
+
+    /* Glass Card Layout */
+    .glass-card {
+        padding: 1.5rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        border-top: 4px solid var(--golden-yellow);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    /* Typography inside cards */
+    .stat-header { display: flex; justify-content: space-between; align-items: flex-start; font-size: 0.85rem; color: var(--card-muted); font-family: var(--font-header); text-transform: uppercase; margin-bottom: 0.5rem; transition: color 0.3s ease; }
+    .stat-header i { color: var(--golden-yellow); font-size: 1.2rem; }
+    
+    .stat-value-prominent { font-size: 1.75rem; font-weight: 800; font-family: var(--font-header); color: var(--card-text); margin-bottom: 0.25rem; transition: color 0.3s ease; }
+    .stat-subtext { font-size: 0.75rem; color: var(--card-muted); font-weight: 600; transition: color 0.3s ease; }
+
+    /* Custom sizing adjustments for leaderboard item integration */
+    .small-leader-font {
+        font-size: 1.2rem !important;
+        line-height: 1.3;
+        margin-top: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    .leader-slide {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+    }
+
+    .top3-team-name { font-family: var(--font-header); font-size: 1.2rem; color: var(--card-text); transition: color 0.3s ease; }
+
+    /* Medal Text and Pills */
+    .medal-text-gold { color: #FFDF00; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .medal-text-silver { color: #E0E0E0; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .medal-text-bronze { color: #FFA07A; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+
+    .medal-pill {
+        background: var(--pill-bg);
+        border: 1px solid var(--pill-border);
+        transition: all 0.3s ease;
+    }
+
+    /* Quick Access Buttons Layout */
+    .btn-glass { 
+        padding: 1rem 0.5rem; 
+        font-weight: 700; 
+        font-family: var(--font-header); 
+        text-decoration: none; 
+        border-top: 3px solid var(--golden-yellow);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center; 
+        gap: 8px; 
+        text-align: center; 
+        height: 100%; 
+        min-height: 100px; 
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2); 
+    }
+    .btn-glass i { font-size: 1.75rem; color: var(--card-text); transition: color 0.3s ease; } 
+    .btn-glass span { color: var(--card-text); transition: color 0.3s ease; }
+
+    /* Section Titles */
+    .section-title {
+        font-family: var(--font-header);
+        color: var(--deped-blue);
+        font-weight: 800;
+        margin-bottom: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Division Buttons */
+    .division-filters { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+    .filter-btn {
+        background: white; border: 2px solid var(--deped-blue, #0033A0); color: var(--deped-blue, #0033A0);
+        font-family: var(--font-header); font-weight: 700; text-transform: uppercase;
+        padding: 8px 20px; border-radius: 50px; transition: all 0.3s ease; font-size: 0.85rem;
+    }
+    .filter-btn:hover { background: rgba(0, 51, 160, 0.08); border-color: var(--deped-blue, #0033A0); color: var(--deped-blue, #0033A0); }
+    .filter-btn.active-filter { background: var(--deped-blue, #0033A0); border-color: var(--deped-blue, #0033A0); color: white; box-shadow: 0 4px 15px rgba(0, 51, 160, 0.2); }
+
+    /* Progress Bar */
+    .progress-bar-glass { height: 20px; background: rgba(0,0,0,0.4); border-radius: 10px; overflow: hidden; margin-top: auto; width: 100%; position: relative; }
+    .progress-fill { height: 100%; background: var(--golden-yellow); transition: width 1.5s ease-in-out; }
+    .progress-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; color: #ffffff; text-shadow: 0px 1px 3px rgba(0,0,0,0.8); transition: color 0.3s ease; pointer-events: none; }
+
+    @@media (max-width: 768px) {
+        .hero-title { font-size: 2.2rem; }
+        .stat-value-prominent { font-size: 1.5rem; }
+        .countdown-value { font-size: 1.05rem; }
+    }
+</style>
+
+<div class="container py-4 py-md-5">
+    
+    <!-- 1. Hero Banner -->
+    <div class="hero-banner">
+        <h1 class="hero-title">CALAPE DISTRICT MEET 2026</h1>
+        <h4 class="fw-semibold text-white" style="font-family: var(--font-body); letter-spacing: 0.5px;">August 15, 2026</h4>
+        
+        <p class="hero-description">
+            "Sports: Building Bridges, Breaking Barriers"
+        </p>
+
+        <div class="countdown-pill">
+            <div id="countdown-label" class="countdown-label" style="@(string.IsNullOrEmpty(countdownLabel) ? "display: none;" : "")">
+                <i class="bi bi-calendar-check text-warning me-1"></i> @countdownLabel
+            </div>
+            <div id="countdown-timer" class="countdown-value" data-target="@targetDateMs">
+                @countdownValue
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Quick Statistics Section -->
+    <h3 class="section-title"><i class="bi bi-bar-chart-fill text-warning"></i> Quick Statistics</h3>
+    <div class="row g-3 mb-5">
+        <div class="col-6 col-md-3">
+            <div class="glass-card">
+                <!-- Slide 1: Overall Leader -->
+                <div class="leader-slide">
+                    <div class="stat-header"><span>Leading Team</span><i class="bi bi-trophy-fill"></i></div>
+                    <div class="stat-value-prominent text-truncate small-leader-font">@(overallLeader?.TeamName ?? "TBD")</div>
+                    <div class="stat-subtext">Overall Leader</div>
+                </div>
+                <!-- Slide 2: Elementary Leader -->
+                <div class="leader-slide" style="display: none;">
+                    <div class="stat-header"><span>Elem Leader</span><i class="bi bi-trophy-fill text-warning"></i></div>
+                    <div class="stat-value-prominent text-truncate small-leader-font">@(elementaryLeader?.TeamName ?? "TBD")</div>
+                    <div class="stat-subtext">Elementary Division</div>
+                </div>
+                <!-- Slide 3: Secondary Leader -->
+                <div class="leader-slide" style="display: none;">
+                    <div class="stat-header"><span>Sec Leader</span><i class="bi bi-trophy-fill text-info"></i></div>
+                    <div class="stat-value-prominent text-truncate small-leader-font">@(secondaryLeader?.TeamName ?? "TBD")</div>
+                    <div class="stat-subtext">Secondary Division</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="glass-card">
+                <div class="stat-header"><span>Finished</span><i class="bi bi-check-circle-fill text-success"></i></div>
+                <div class="stat-value-prominent text-center mt-1 mb-2">@completedEventsCount / @totalEventsCount</div>
+                <div class="progress-bar-glass">
+                    <div class="progress-fill" style="width: @progressPercent%"></div>
+                    <div class="progress-text">@progressPercent.ToString("F0")%</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="glass-card">
+                <div class="stat-header"><span>Medals Won</span><i class="bi bi-award-fill"></i></div>
+                <div class="stat-value-prominent">@overallTotalMedals</div>
+                <div class="stat-subtext">awarded so far</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="glass-card">
+                <div class="stat-header"><span>Last Update</span><i class="bi bi-clock-history text-primary"></i></div>
+                <div class="stat-value-prominent fs-4 mt-2">
+                    @relativeUpdatedString
+                </div>
+                <div class="stat-subtext">Live Data</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Top 3 Teams Section -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+        <h3 class="section-title mb-0"><i class="bi bi-star-fill text-warning"></i> Top 3 Teams</h3>
+        
+        <!-- Division Buttons -->
+        <div class="division-filters mt-3 mt-md-0 mb-0">
+            <button class="filter-btn active-filter" onclick="toggleTop3('Elementary', this)">Elementary</button>
+            <button class="filter-btn" onclick="toggleTop3('Secondary', this)">Secondary</button>
+        </div>
+    </div>
+    
+    <div id="top3-container" class="mb-5">
+        <!-- Elementary Top 3 -->
+        <div class="row g-3 top3-view" id="top3-Elementary">
+            @if(!top3Elementary.Any())
+            {
+                <div class="col-12"><div class="glass-card text-center fw-bold" style="color: var(--card-muted); padding: 3rem 1rem;">No results recorded yet for Elementary.</div></div>
+            }
+            @foreach(var team in top3Elementary)
+            {
+                <div class="col-12 col-md-4">
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@team.TeamId" class="text-decoration-none d-block h-100">
+                        <div class="glass-card p-3 p-md-4 d-flex flex-row flex-md-column justify-content-between align-items-center text-center h-100">
+                            <span class="fw-bold mb-0 mb-md-3 top3-team-name">@(team.TeamName ?? "N/A")</span>
+                            <div class="d-flex gap-3 fw-bold px-3 py-2 rounded-pill shadow-sm medal-pill" style="font-size: 1.1rem;">
+                                <span class="medal-text-gold">@team.Gold<small class="ms-1 fs-6" style="opacity: 0.7;">G</small></span>
+                                <span class="medal-text-silver">@team.Silver<small class="ms-1 fs-6" style="opacity: 0.7;">S</small></span>
+                                <span class="medal-text-bronze">@team.Bronze<small class="ms-1 fs-6" style="opacity: 0.7;">B</small></span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+
+        <!-- Secondary Top 3 -->
+        <div class="row g-3 top3-view" id="top3-Secondary" style="display: none;">
+            @if(!top3Secondary.Any())
+            {
+                <div class="col-12"><div class="glass-card text-center fw-bold" style="color: var(--card-muted); padding: 3rem 1rem;">No results recorded yet for Secondary.</div></div>
+            }
+            @foreach(var team in top3Secondary)
+            {
+                <div class="col-12 col-md-4">
+                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@team.TeamId" class="text-decoration-none d-block h-100">
+                        <div class="glass-card p-3 p-md-4 d-flex flex-row flex-md-column justify-content-between align-items-center text-center h-100">
+                            <span class="fw-bold mb-0 mb-md-3 top3-team-name">@(team.TeamName ?? "N/A")</span>
+                            <div class="d-flex gap-3 fw-bold px-3 py-2 rounded-pill shadow-sm medal-pill" style="font-size: 1.1rem;">
+                                <span class="medal-text-gold">@team.Gold<small class="ms-1 fs-6" style="opacity: 0.7;">G</small></span>
+                                <span class="medal-text-silver">@team.Silver<small class="ms-1 fs-6" style="opacity: 0.7;">S</small></span>
+                                <span class="medal-text-bronze">@team.Bronze<small class="ms-1 fs-6" style="opacity: 0.7;">B</small></span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 4. Quick Access Section -->
+    <h3 class="section-title"><i class="bi bi-grid-fill text-warning"></i> Quick Access</h3>
+    <div class="row g-3">
+        <div class="col-6 col-md-3">
+            <a asp-controller="Rankings" asp-action="Index" class="btn-glass">
+                <i class="bi bi-trophy-fill"></i><span>Rankings</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a asp-controller="Events" asp-action="Index" class="btn-glass">
+                <i class="bi bi-calendar-event-fill"></i><span>Results</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a asp-controller="Teams" asp-action="Dashboard" class="btn-glass">
+                <i class="bi bi-people-fill"></i><span>Schools</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a asp-controller="Home" asp-action="GeneralOfficialReport" class="btn-glass">
+                <i class="bi bi-file-earmark-bar-graph-fill"></i><span>Reports</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function toggleTop3(division, btnElement) {
+        // Update active button styling
+        $('.filter-btn').removeClass('active-filter');
+        $(btnElement).addClass('active-filter');
+
+        // Toggle the specific Top 3 views
+        $('.top3-view').hide();
+        $('#top3-' + division).fadeIn(200);
+    }
+
+    // Vanilla Javascript for Real-Time Timer
+    document.addEventListener("DOMContentLoaded", function () {
+        const timerElement = document.getElementById('countdown-timer');
+        const labelElement = document.getElementById('countdown-label');
+        
+        if (timerElement) {
+            const targetDateStr = timerElement.getAttribute('data-target');
+            const targetDate = parseInt(targetDateStr, 10);
+            
+            function updateCountdown() {
+                const now = new Date().getTime();
+                const distance = targetDate - now;
+
+                if (distance > 86400000) { // More than 24 hours
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    if (labelElement) labelElement.style.display = "none";
+                    timerElement.innerText = days > 1 ? `${days} DAYS TO GO` : "1 DAY TO GO";
+                } 
+                else if (distance > 0 && distance <= 86400000) { // Less than 24 hours (Real-time ticking)
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    
+                    if (labelElement) labelElement.style.display = "block";
+                    timerElement.innerText = `${hours} hours ${minutes} minutes ${seconds} seconds`;
+                } 
+                else if (distance <= 0 && distance > -86400000) { // The day of the event
+                    if (labelElement) labelElement.style.display = "none";
+                    timerElement.innerText = "TODAY";
+                } 
+                else { // After the event has passed
+                    if (labelElement) labelElement.style.display = "none";
+                    timerElement.innerText = "EVENT STARTED";
+                }
+            }
+            
+            // Execute immediately to prevent flicker, then tick every second live
+            updateCountdown(); 
+            setInterval(updateCountdown, 1000);
+        }
+    });
+
+    // jQuery for Swapping Slider
+    $(document).ready(function () {
+        let currentSlide = 0;
+        const slides = $('.leader-slide');
+        
+        if (slides.length > 1) {
+            setInterval(function () {
+                $(slides[currentSlide]).fadeOut(300, function () {
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    $(slides[currentSlide]).fadeIn(300);
+                });
+            }, 3000);
+        }
+    });
+</script>
+}

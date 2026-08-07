@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Calape District Meet</title>
+    
+    <link rel="shortcut icon" href="~/favicon.ico" asp-append-version="true" type="image/x-icon" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/SubcongMeet.styles.css" asp-append-version="true" />
+    
+    <style>
+        :root { 
+            --bs-body-font-family: var(--font-body); 
+            /* Force light mode regardless of OS settings */
+            color-scheme: light;
+        }
+
+        /* OVERRIDE ASP.NET DEFAULT MARGINS */
+        html, body {
+            margin: 0 !important; 
+            padding: 0 !important;
+            height: 100%;
+        }
+
+        body { 
+            background-color: var(--bg-light); 
+            font-family: var(--font-body); 
+            color: var(--text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6, .brand-title { 
+            font-family: var(--font-header) !important; 
+            text-transform: uppercase; 
+        }
+
+        .offcanvas-title {
+            font-family: var(--font-header) !important;
+            text-transform: none !important;
+            font-weight: 700;
+            font-size: 1.8rem;
+        }
+
+        /* Animated Gradient Setup */
+        @@keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Navbar with Dynamic Moving Gradient */
+        .navbar-custom { 
+            background: linear-gradient(-45deg, #0033A0 0%, #004aad 25%, #0033A0 50%, #002a7a 75%, #0033A0 100%) !important; 
+            background-size: 300% 300% !important;
+            animation: gradientMove 8s ease-in-out infinite;
+            border-bottom: 4px solid var(--golden-yellow) !important; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
+        }
+
+        /* PURE PNG LOGO STYLING */
+        .navbar-logo { 
+            height: 50px; 
+            width: auto; 
+            background-color: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            object-fit: contain; /* Ensures the image scaling stays sharp */
+        }
+
+        .brand-title { 
+            color: white; 
+            font-size: 1.4rem; 
+            letter-spacing: 2px; 
+            font-weight: 800;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            margin-bottom: 0; 
+            line-height: 1; 
+        }
+
+        .brand-subtitle { 
+            font-family: var(--font-body); 
+            color: rgba(255,255,255,0.9); 
+            font-size: 0.75rem; 
+            letter-spacing: 0.5px; 
+        }
+
+        /* Offcanvas Drawer */
+        .offcanvas-custom { 
+            background-color: var(--bg-light); 
+            border-left: none; 
+            box-shadow: -5px 0 25px rgba(0,0,0,0.15); 
+            max-width: 320px; 
+        }
+
+        /* ULTRA SMOOTH OFFCANVAS TRANSITION */
+        .offcanvas {
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        .drawer-section-title { 
+            color: var(--deped-blue); 
+            font-family: var(--font-header); 
+            font-size: 1.0rem; 
+            letter-spacing: 1px; 
+            margin-bottom: 0.5rem; 
+            margin-top: 1.5rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+        
+        .drawer-link { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 8px 10px; /*riel adjust*/
+            color: var(--deped-blue); 
+            text-decoration: none; 
+            border-radius: 8px; 
+            margin-bottom: 4px; 
+            font-weight: 600;
+            font-size: 1.0rem; /* Adjusted to be clean and compact */
+            transition: all 0.2s ease; 
+        }
+
+        .drawer-link:hover { 
+            background-color: white; 
+            color: var(--text-main); 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03); 
+            transform: translateX(4px); 
+        }
+
+        .drawer-link .icon-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .drawer-link i { 
+            color: var(--deped-blue); 
+            font-size: 1.2rem; 
+        }
+
+        .drawer-link .chevron { 
+            color: var(--text-muted); 
+            font-size: 0.9rem;
+            transition: transform 0.2s ease;
+        }
+
+        /* Click Expandable Dropdown styling inside Drawer */
+        .drawer-dropdown-container {
+            position: relative;
+        }
+
+        .drawer-submenu {
+            display: none;
+            padding-left: 2.2rem;
+            list-style: none;
+            margin: 0 0 4px 0;
+        }
+
+        .drawer-dropdown-container.show-submenu .drawer-submenu {
+            display: block;
+        }
+
+        .drawer-dropdown-container.show-submenu > .drawer-link .chevron {
+            transform: rotate(90deg);
+        }
+
+        .drawer-sub-link {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .drawer-sub-link:hover {
+            background-color: white;
+            color: var(--deped-blue);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            transform: translateX(4px);
+        }
+
+        /* Footer - Optimized and Compact Spatial Layout */
+        .footer-custom { 
+            background-color: white; 
+            padding: 0.8rem 0; 
+            border-top: 3px solid var(--deped-blue); 
+            margin-top: auto; /* Pushes footer to the bottom naturally via Flexbox */
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.03); 
+        }
+
+        .footer-text { 
+            margin: 0 !important; 
+            font-family: var(--font-body); 
+            font-weight: 600; 
+            color: var(--text-muted); 
+            font-size: 0.85rem; 
+            line-height: 1.4;
+        }
+
+        /* ========================================== */
+        /* MOBILE RESPONSIVENESS FIX FOR HEADER ONLY  */
+        /* ========================================== */
+        @@media (max-width: 575.98px) {
+            .navbar-logo {
+                height: 35px; /* Shrinks the logos */
+            }
+            .brand-title {
+                font-size: 1.05rem; /* Shrinks the main title */
+                letter-spacing: 1px; /* Reduces letter spacing to save width */
+            }
+            .brand-subtitle {
+                font-size: 0.65rem; /* Shrinks the subtitle */
+            }
+            /* Overrides the Bootstrap gap utility classes to tighten spacing on mobile */
+            .navbar-brand.gap-3 {
+                gap: 0.5rem !important; 
+            }
+            .navbar-brand .gap-2 {
+                gap: 0.25rem !important; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="sticky-top">
+        <nav class="navbar navbar-custom">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center gap-3 text-decoration-none" asp-controller="Home" asp-action="Index">
+                    <div class="d-flex gap-2">
+                        <img src="~/images/deped_logo.png" alt="DepEd Logo" class="navbar-logo" />
+                        <img src="~/images/bohol_logo.png" alt="Bohol Logo" class="navbar-logo" />
+                    </div>
+                    <div class="d-flex flex-column">
+                        <span class="brand-subtitle">Division of Bohol</span>
+                        <span class="brand-title">CALAPE DISTRICT</span>
+                    </div>
+                </a>
+                
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMenu">
+                    <i class="bi bi-list" style="font-size: 2rem; color: white;"></i>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="offcanvas offcanvas-end offcanvas-custom" tabindex="-1" id="offcanvasMenu">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title d-flex align-items-center" style="color: var(--deped-blue);">
+                <i class="bi bi-list me-3" style="font-size: 1.75rem; color: var(--deped-blue);"></i> Menu
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        
+        <div class="offcanvas-body">
+            <a asp-controller="Home" asp-action="Index" class="drawer-link">
+                <div class="icon-container"><i class="bi bi-house-fill"></i> Home</div>
+                <i class="bi bi-chevron-right chevron"></i>
+            </a>
+            <a asp-controller="Rankings" asp-action="Index" class="drawer-link">
+                <div class="icon-container"><i class="bi bi-trophy-fill"></i> Rankings</div>
+                <i class="bi bi-chevron-right chevron"></i>
+            </a>
+            <a asp-controller="Events" asp-action="Index" class="drawer-link">
+                <div class="icon-container"><i class="bi bi-calendar-event-fill"></i> Events</div>
+                <i class="bi bi-chevron-right chevron"></i>
+            </a>
+            <a asp-controller="Teams" asp-action="Dashboard" class="drawer-link">
+                <div class="icon-container"><i class="bi bi-people-fill"></i> Schools</div>
+                <i class="bi bi-chevron-right chevron"></i>
+            </a>
+
+            <div class="drawer-section-title"><i class="bi bi-shield-lock-fill"></i> Account</div>
+            
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="px-3 mb-2 small text-muted">Logged in as: <strong style="color: var(--deped-blue);">@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</strong></div>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Coordinators" asp-action="Index" class="drawer-link">
+                        <div class="icon-container"><i class="bi bi-person-badge-fill"></i> Coordinators</div>
+                        <i class="bi bi-chevron-right chevron"></i>
+                    </a>
+                    <a asp-controller="Events" asp-action="ManageEvents" class="drawer-link">
+                        <div class="icon-container"><i class="bi bi-sliders"></i> Manage Events</div>
+                        <i class="bi bi-chevron-right chevron"></i>
+                    </a>
+                    
+                    <!-- Click Expandable Official Reports Menu -->
+                    <div class="drawer-dropdown-container">
+                        <a href="javascript:void(0);" class="drawer-link" onclick="this.parentElement.classList.toggle('show-submenu')">
+                            <div class="icon-container"><i class="bi bi-file-earmark-text-fill"></i> Official Reports</div>
+                            <i class="bi bi-chevron-right chevron"></i>
+                        </a>
+                        <ul class="drawer-submenu">
+                            <li>
+                                <a asp-controller="Home" asp-action="GeneralOfficialReport" class="drawer-sub-link">
+                                    <i class="bi bi-bar-chart-line-fill me-2" style="color: var(--deped-blue);"></i> General Official Report
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Home" asp-action="AllEventsResultsReport" class="drawer-sub-link">
+                                    <i class="bi bi-list-check me-2" style="color: var(--deped-blue);"></i> All Events Results Report
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Home" asp-action="DistrictQualifierReport" class="drawer-sub-link">
+                                    <i class="bi bi-award-fill me-2" style="color: var(--deped-blue);"></i> District Qualifier Report
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                <form asp-controller="Account" asp-action="Logout" method="post" class="m-0 mt-2">
+                    <button type="submit" class="drawer-link w-100 bg-transparent border-0 text-start">
+                        <div class="icon-container"><i class="bi bi-box-arrow-right"></i> Sign Out</div>
+                    </button>
+                </form>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" class="drawer-link">
+                    <div class="icon-container"><i class="bi bi-box-arrow-in-right"></i> Login</div>
+                    <i class="bi bi-chevron-right chevron"></i>
+                </a>
+            }
+        </div>
+    </div>
+    
+    <div class="container-fluid px-0 flex-grow-1">
+        <main role="main">@RenderBody()</main>
+    </div>
+
+    <footer class="footer-custom text-center">
+        <div class="container px-3">
+            <p class="footer-text">&copy; 2026 Anthony Riel C. Diango CpE, LPT</p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

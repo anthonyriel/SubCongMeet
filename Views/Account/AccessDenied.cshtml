@@ -1,0 +1,27 @@
+@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-6 text-center">
+            <div class="glass-card p-5" style="border-top: 5px solid #dc3545; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                <div class="mb-4">
+                    <i class="bi bi-shield-x text-danger" style="font-size: 4rem;"></i>
+                </div>
+                <h2 class="fw-bold text-danger mb-3" style="font-family: var(--font-header);">ACCESS DENIED</h2>
+                <p class="text-muted fw-bold mb-4" style="font-family: var(--font-body);">
+                    You do not have permission to access or modify this resource. If you believe this is an error, please contact the administrator.
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary px-4 py-2 fw-bold">
+                        <i class="bi bi-house-door me-1"></i> Return Home
+                    </a>
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-primary px-4 py-2 fw-bold" style="background-color: var(--deped-blue); border-color: var(--deped-blue);">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Switch Account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
