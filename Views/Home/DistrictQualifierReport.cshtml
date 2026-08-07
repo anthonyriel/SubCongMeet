@@ -246,7 +246,7 @@
                     <div class="report-header-text">Republic of the Philippines</div>
                     <div class="report-header-text">Department of Education</div>
                     <div class="report-header-text">Division of Bohol</div>
-                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">CALAPE DISTRICT</div>
+                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">(LOCATU) SUB-CONGRESSIONAL MEET</div>
                     <div class="report-header-text" style="font-weight: normal;">Calape, Bohol</div>
                 </div>
 
@@ -301,7 +301,7 @@
                 <h5 class="fw-bold mb-2 mt-4" style="font-size: 1.05rem; letter-spacing: 0.5px;">CERTIFICATION</h5>
                 <p class="cert-text">
                     This official report lists all confirmed athletes, coaches, and chaperones qualified for the district meet, 
-                    verified and recorded through the Calape District Meet Management System.
+                    verified and recorded through the LoCaTu Sub-Congressional Meet Management System.
                 </p>
 
                 <div class="report-divider" style="margin-bottom: 25px;"></div>
@@ -417,7 +417,7 @@
             addCenterText('Republic of the Philippines', 9, false);
             addCenterText('Department of Education', 9, false);
             addCenterText('Division of Bohol', 9, false);
-            addCenterText('CALAPE DISTRICT MEET', 12, true);
+            addCenterText('LOCATU SUB-CONGRESSIONAL MEET', 12, true);
             addCenterText('Calape, Bohol', 9, false);
             worksheet.addRow();
 
@@ -461,7 +461,7 @@
             const certTitle = worksheet.addRow(['CERTIFICATION']);
             certTitle.font = { bold: true, size: 11 };
             
-            const certText = worksheet.addRow(['This official report lists all confirmed athletes, coaches, and chaperones qualified for the district meet, verified and recorded through the Calape District Meet Management System.']);
+            const certText = worksheet.addRow(['This official report lists all confirmed athletes, coaches, and chaperones qualified for the district meet, verified and recorded through the loCaTu Sub-Congressional Meet Management System.']);
             worksheet.mergeCells(`A${certText.number}:${lastCol}${certText.number}`);
             certText.getCell(1).alignment = { wrapText: true, horizontal: 'left', vertical: 'top' };
             certText.getCell(1).font = { bold: false };

@@ -507,7 +507,7 @@
 
                 <h5 class="fw-bold mb-2 mt-4" style="font-size: 1.05rem; letter-spacing: 0.5px; color: #000000;">CERTIFICATION</h5>
                 <p class="cert-text">
-                    This report is generated from the official Calape District Meet Management System and reflects the 
+                    This report is generated from the official LoCaTu Sub-Congressional Meet Management System and reflects the 
                     finalized event standings and results recorded at the time of generation.
                 </p>
 
@@ -732,7 +732,7 @@
             addCenterText('Republic of the Philippines', 9, false);
             addCenterText('Department of Education', 9, false);
             addCenterText('Division of Bohol', 9, false);
-            addCenterText('CALAPE DISTRICT MEET', 12, true);
+            addCenterText('SUB-CONGRESSIONAL MEET', 12, true);
             const divText = document.getElementById('report-division-text').innerText;
             if(divText) addCenterText(divText, 11, true);
             addCenterText('Calape, Bohol', 9, false);
@@ -819,7 +819,7 @@
             const certTitle = worksheet.addRow(['CERTIFICATION']);
             certTitle.font = { bold: true, size: 11 };
             
-            const certText = worksheet.addRow(['This report is generated from the official Calape District Meet Management System and reflects the finalized event standings and results recorded at the time of generation.']);
+            const certText = worksheet.addRow(['This report is generated from the official LoCaTu Sub-Congressional Meet Management System and reflects the finalized event standings and results recorded at the time of generation.']);
             worksheet.mergeCells(`A${certText.number}:${lastCol}${certText.number}`);
             certText.getCell(1).alignment = { wrapText: true, horizontal: 'left' };
             certText.getCell(1).font = { bold: false };
