@@ -52,7 +52,7 @@
     double progressPercent = totalEventsCount > 0 ? ((double)completedEventsCount / totalEventsCount) * 100 : 0;
     
     // Server-side Fallback Countdown (Set to August 15, 2026 at 7:30 AM)
-    DateTime openingDate = new DateTime(2026, 8, 15, 7, 30, 0); 
+    DateTime openingDate = new DateTime(2026, 9, 5, 7, 30, 0); 
     TimeSpan timeToGo = openingDate - phTime;
     
     string countdownLabel = "";
@@ -71,7 +71,7 @@
     }
     
     // Pass robust epoch milliseconds for JS to digest flawlessly
-    long targetDateMs = new DateTimeOffset(2026, 8, 15, 7, 30, 0, new TimeSpan(8, 0, 0)).ToUnixTimeMilliseconds();
+    long targetDateMs = new DateTimeOffset(2026, 9, 5, 7, 30, 0, new TimeSpan(8, 0, 0)).ToUnixTimeMilliseconds();
 
     var top3Elementary = teamTallies.Where(m => m.Division.Equals("Elementary", StringComparison.OrdinalIgnoreCase) && m.TotalMedals > 0)
                                   .OrderByDescending(m => m.Gold).ThenByDescending(m => m.Silver).ThenByDescending(m => m.Bronze)
@@ -86,130 +86,201 @@
 }
 
 <style>
-    /* Hero Banner & Card Animations */
+    /* ========================================== */
+    /* MASTER OPACITY CONTROL FOR CARDS & HERO    */
+    /* Adjust this single value (0.0 to 1.0)      */
+    /* to change the transparency of all cards.   */
+    :root {
+        --card-opacity: 1.0; 
+    }
+    /* ========================================== */
+
+    body {
+        background-color: var(--cc-background) !important; 
+    }
+
     @@keyframes gradientMove {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
-
-    @@keyframes titleFloat {
-        0% { transform: translateY(0px); text-shadow: 0px 4px 15px rgba(0,0,0,0.3); }
-        50% { transform: translateY(-8px); text-shadow: 0px 12px 25px rgba(0,0,0,0.5); }
-        100% { transform: translateY(0px); text-shadow: 0px 4px 15px rgba(0,0,0,0.3); }
+    
+    @@keyframes shineSweep {
+        0% { left: -100%; opacity: 0; }
+        20% { opacity: 0.3; }
+        100% { left: 200%; opacity: 0; }
     }
 
-    /* Hero Banner */
+    /* Hero Banner with Opacity Control */
     .hero-banner {
-        background: linear-gradient(-45deg, var(--deped-blue) 0%, #004aad 25%, var(--deped-blue) 50%, #002a7a 75%, var(--deped-blue) 100%);
+        background: linear-gradient(-45deg, 
+            rgba(16, 42, 67, var(--card-opacity)) 0%, 
+            rgba(11, 31, 51, var(--card-opacity)) 40%, 
+            rgba(122, 31, 43, var(--card-opacity)) 80%, 
+            rgba(16, 42, 67, var(--card-opacity)) 100%);
         background-size: 300% 300%;
-        animation: gradientMove 8s ease-in-out infinite;
-        padding: 4rem 2rem;
-        border-radius: 16px;
-        color: white;
+        animation: gradientMove 12s ease-in-out infinite;
+        padding: 3rem 2rem; 
+        border-radius: var(--cc-radius-lg);
+        color: var(--cc-white);
         text-align: center;
-        box-shadow: 0 10px 30px rgba(0, 34, 122, 0.2);
-        margin-bottom: 3rem;
+        box-shadow: 0 12px 32px rgba(16, 42, 67, 0.2);
+        margin-bottom: 2rem;
+        border-bottom: 4px solid var(--cc-gold);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
     
-    .hero-title {
-        font-family: var(--font-header);
-        font-size: 3.5rem;
-        font-weight: 800;
-        letter-spacing: 1px;
+    .hero-banner::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%);
+        transform: skewX(-25deg);
+        animation: shineSweep 8s infinite 2s;
+        pointer-events: none;
+    }
+    
+    .hero-subtitle {
+        font-family: var(--font-body);
+        font-size: clamp(1.3rem, 2.5vw, 2rem);
+        font-weight: 700;
+        letter-spacing: 2px;
         text-transform: uppercase;
-        color: #ffffff;
-        text-shadow: 0px 4px 15px rgba(0,0,0,0.3); 
+        color: var(--cc-white);
+        margin-bottom: 0.2rem;
+        line-height: 1.2;
+        text-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+
+    .hero-title-main {
+        font-family: var(--font-body);
+        font-size: clamp(2.8rem, 6vw, 5rem);
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--cc-white);
         margin-bottom: 0.5rem;
-        animation: titleFloat 4s ease-in-out infinite;
+        line-height: 1;
+        text-shadow: 0 6px 16px rgba(0,0,0,0.5);
+        padding: 1rem;
     }
     
     .hero-description {
-        font-family: var(--font-body);
         font-size: 1.1rem;
         max-width: 600px;
-        margin: 1rem auto;
-        opacity: 0.9;
-        line-height: 1.6;
+        margin: 1.2rem auto 0.8rem;
+        color: var(--cc-gold-light);
+        font-weight: 600;
+        line-height: 1.5;
+        letter-spacing: 0.5px;
     }
 
-    /* Countdown Responsive Container Styles */
     .countdown-pill {
-        background: white;
-        color: var(--text-dark);
-        border-radius: 16px;
+        background: rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--cc-white);
+        border-radius: var(--cc-radius-lg);
         display: inline-flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         padding: 0.75rem 2rem;
-        margin-top: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        font-family: var(--font-header);
+        margin-top: 1.2rem;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
     }
     .countdown-label {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        color: #6c757d;
+        color: var(--cc-gold-light);
         font-weight: 700;
-        margin-bottom: 0.15rem;
+        margin-bottom: 0.2rem;
     }
     .countdown-value {
-        font-size: 1.25rem;
+        font-size: clamp(1rem, 2.5vw, 1.25rem);
         font-weight: 800;
-        color: var(--deped-blue);
-        letter-spacing: 0.5px;
+        color: var(--cc-white);
+        letter-spacing: 1px;
     }
 
-    /* Dynamic Glass Cards */
+    /* ALL CARDS & SHORTCUT BUTTONS WITH GRADIENT & OPACITY */
     .glass-card, .btn-glass {
-        --card-text: #ffffff;
-        --card-muted: rgba(255, 255, 255, 0.75);
-        --pill-bg: rgba(255, 255, 255, 0.1);
-        --pill-border: rgba(255, 255, 255, 0.2);
-        
-        background: linear-gradient(-45deg, var(--deped-blue) 0%, #004aad 25%, var(--deped-blue) 50%, #002a7a 75%, var(--deped-blue) 100%);
-        background-size: 300% 300%;
-        animation: gradientMove 8s ease-in-out infinite;
-        
-        border-radius: 12px;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background: linear-gradient(135deg, 
+            rgba(16, 42, 67, var(--card-opacity)) 0%, 
+            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(16, 42, 67, var(--card-opacity)) 100%);
+        background-size: 200% 100%;
+        background-position: 0% 0%;
+        border: 1px solid rgba(255,255,255,0.12);
+        box-shadow: 0 8px 24px rgba(16, 42, 67, 0.15);
+        border-radius: var(--cc-radius-lg);
+        transition: background-position 0.5s ease-in-out, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        position: relative;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
     }
 
-    .glass-card:hover, .btn-glass:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0,34,122,0.4) !important; 
-    }
-
-    /* Glass Card Layout */
     .glass-card {
-        padding: 1.5rem;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        border-top: 4px solid var(--golden-yellow);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.25rem;
         height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: center;
     }
 
-    /* Typography inside cards */
-    .stat-header { display: flex; justify-content: space-between; align-items: flex-start; font-size: 0.85rem; color: var(--card-muted); font-family: var(--font-header); text-transform: uppercase; margin-bottom: 0.5rem; transition: color 0.3s ease; }
-    .stat-header i { color: var(--golden-yellow); font-size: 1.2rem; }
-    
-    .stat-value-prominent { font-size: 1.75rem; font-weight: 800; font-family: var(--font-header); color: var(--card-text); margin-bottom: 0.25rem; transition: color 0.3s ease; }
-    .stat-subtext { font-size: 0.75rem; color: var(--card-muted); font-weight: 600; transition: color 0.3s ease; }
+    .glass-card:hover, .btn-glass:hover {
+        transform: translateY(-5px);
+        background-position: 100% 0%; 
+        box-shadow: 0 14px 28px rgba(122, 31, 43, 0.25); 
+        border-color: rgba(255,255,255,0.25);
+    }
 
-    /* Custom sizing adjustments for leaderboard item integration */
+    /* High Contrast Typography inside dark cards */
+    .stat-header { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: flex-start; 
+        font-size: 0.7rem; 
+        color: rgba(255,255,255,0.75); 
+        font-weight: 700;
+        text-transform: uppercase; 
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem; 
+    }
+    .stat-header i { color: var(--cc-white); font-size: 1.15rem; opacity: 1.0; }
+    .stat-header i.bi-trophy-fill { color: var(--cc-gold-light); } 
+    .stat-header i.bi-check-circle-fill { color: #4ade80; } 
+    
+    .stat-value-prominent { 
+        font-size: 1.6rem; 
+        font-weight: 800; 
+        color: var(--cc-white); 
+        margin-bottom: 0.2rem; 
+        line-height: 1.2;
+    }
+    .stat-subtext { 
+        font-size: 0.75rem; 
+        color: rgba(255,255,255,0.65); 
+        font-weight: 600; 
+    }
+
     .small-leader-font {
         font-size: 1.2rem !important;
-        line-height: 1.3;
-        margin-top: 0.25rem;
-        margin-bottom: 0.25rem;
+        margin-top: 0.2rem;
+        margin-bottom: 0.2rem;
     }
+    
     .leader-slide {
         display: flex;
         flex-direction: column;
@@ -218,230 +289,294 @@
         width: 100%;
     }
 
-    .top3-team-name { font-family: var(--font-header); font-size: 1.2rem; color: var(--card-text); transition: color 0.3s ease; }
+    .top3-team-name { font-weight: 800; font-size: 1.15rem; color: var(--cc-white); }
 
-    /* Medal Text and Pills */
-    .medal-text-gold { color: #FFDF00; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-    .medal-text-silver { color: #E0E0E0; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-    .medal-text-bronze { color: #FFA07A; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    .medal-text-gold { color: var(--cc-gold-light); font-weight: 800; }
+    .medal-text-silver { color: #E2E8F0; font-weight: 800; } 
+    .medal-text-bronze { color: #FDBA74; font-weight: 800; } 
 
     .medal-pill {
-        background: var(--pill-bg);
-        border: 1px solid var(--pill-border);
-        transition: all 0.3s ease;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    /* Quick Access Buttons Layout */
+    /* SHORTCUTS / QUICK ACCESS BUTTONS */
     .btn-glass { 
-        padding: 1rem 0.5rem; 
-        font-weight: 700; 
-        font-family: var(--font-header); 
+        padding: 1.1rem 0.5rem; 
+        font-weight: 600; 
         text-decoration: none; 
-        border-top: 3px solid var(--golden-yellow);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
         display: flex; 
         flex-direction: column; 
         align-items: center; 
         justify-content: center; 
-        gap: 8px; 
+        gap: 10px; 
         text-align: center; 
         height: 100%; 
         min-height: 100px; 
-        box-shadow: 0 8px 25px rgba(0,0,0,0.2); 
+        color: var(--cc-white) !important;
     }
-    .btn-glass i { font-size: 1.75rem; color: var(--card-text); transition: color 0.3s ease; } 
-    .btn-glass span { color: var(--card-text); transition: color 0.3s ease; }
+    .btn-glass i { font-size: 1.7rem; color: var(--cc-white) !important; transition: transform 0.3s ease; } 
+    .btn-glass span { font-size: 0.9rem; font-weight: 700; color: var(--cc-white); }
+    
+    .btn-glass:hover i {
+        transform: scale(1.1);
+    }
 
     /* Section Titles */
     .section-title {
-        font-family: var(--font-header);
-        color: var(--deped-blue);
-        font-weight: 800;
-        margin-bottom: 1.2rem;
+        color: var(--cc-primary);
+        font-weight: 900;
+        font-size: 1.15rem;
+        margin-bottom: 1rem;
+        margin-top: 0.5rem;
         display: flex;
         align-items: center;
         gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .section-title i {
+        color: var(--cc-secondary);
     }
 
     /* Division Buttons */
-    .division-filters { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+    .division-filters { display: flex; gap: 8px; margin-bottom: 1.2rem; flex-wrap: wrap; }
     .filter-btn {
-        background: white; border: 2px solid var(--deped-blue, #0033A0); color: var(--deped-blue, #0033A0);
-        font-family: var(--font-header); font-weight: 700; text-transform: uppercase;
-        padding: 8px 20px; border-radius: 50px; transition: all 0.3s ease; font-size: 0.85rem;
+        background: var(--cc-white); 
+        border: 1px solid rgba(16, 42, 67, 0.15); 
+        color: var(--cc-text-secondary);
+        font-weight: 700; 
+        padding: 7px 18px; 
+        border-radius: 50px; 
+        transition: var(--cc-transition); 
+        font-size: 0.8rem;
+        box-shadow: 0 2px 6px rgba(16, 42, 67, 0.04);
     }
-    .filter-btn:hover { background: rgba(0, 51, 160, 0.08); border-color: var(--deped-blue, #0033A0); color: var(--deped-blue, #0033A0); }
-    .filter-btn.active-filter { background: var(--deped-blue, #0033A0); border-color: var(--deped-blue, #0033A0); color: white; box-shadow: 0 4px 15px rgba(0, 51, 160, 0.2); }
+    .filter-btn:hover { 
+        background: var(--cc-background); 
+        color: var(--cc-primary); 
+        border-color: var(--cc-primary); 
+    }
+    .filter-btn.active-filter { 
+        background: var(--cc-primary); 
+        border-color: var(--cc-primary); 
+        color: var(--cc-white); 
+        box-shadow: 0 6px 15px rgba(16, 42, 67, 0.25); 
+    }
 
     /* Progress Bar */
-    .progress-bar-glass { height: 20px; background: rgba(0,0,0,0.4); border-radius: 10px; overflow: hidden; margin-top: auto; width: 100%; position: relative; }
-    .progress-fill { height: 100%; background: var(--golden-yellow); transition: width 1.5s ease-in-out; }
-    .progress-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; color: #ffffff; text-shadow: 0px 1px 3px rgba(0,0,0,0.8); transition: color 0.3s ease; pointer-events: none; }
+    .progress-bar-glass { 
+        height: 20px; 
+        background: rgba(0, 0, 0, 0.3); 
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px; 
+        overflow: hidden; 
+        margin-top: auto; 
+        width: 100%; 
+        position: relative; 
+    }
+    .progress-fill { 
+        height: 100%; 
+        background: var(--cc-gold-light);
+        transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1); 
+    }
+    .progress-text { 
+        position: absolute; 
+        top: 0; left: 0; width: 100%; height: 100%; 
+        display: flex; align-items: center; justify-content: center; 
+        font-size: 0.7rem; font-weight: 800; 
+        color: var(--cc-gold-light);
+        pointer-events: none; 
+    }
 
-    @@media (max-width: 768px) {
-        .hero-title { font-size: 2.2rem; }
-        .stat-value-prominent { font-size: 1.5rem; }
-        .countdown-value { font-size: 1.05rem; }
+    @@media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            transition-duration: 0.01ms !important;
+            animation-duration: 0.01ms !important;
+        }
     }
 </style>
 
 <div class="container py-4 py-md-5">
     
-    <!-- 1. Hero Banner -->
-    <div class="hero-banner">
-        <h1 class="hero-title">SUB-CONGRESSIONAL MEET 2026<br>LOCATU</></h1>
-        <h4 class="fw-semibold text-white" style="font-family: var(--font-body); letter-spacing: 0.5px;">August 15, 2026</h4>
+    <!-- DASHBOARD GRID LAYOUT FOR DESKTOP -->
+    <div class="row g-4 align-items-start">
         
-        <p class="hero-description">
-            "Sports: Building Bridges, Breaking Barriers"
-        </p>
+        <!-- LEFT COLUMN: Hero & Top 3 -->
+        <div class="col-12 col-xl-7 d-flex flex-column gap-4">
+            
+            <!-- 1. Hero Banner -->
+            <div class="hero-banner">
+                <h2 class="hero-subtitle">SUB-CONGRESSIONAL<br>DISTRICT MEET 2026</h2>
+                <h1 class="hero-title-main">LOCATU</h1>
+                <h4 class="fw-semibold" style="font-family: var(--font-body); letter-spacing: 0.5px; color: rgba(255,255,255,0.9); font-size: 1.1rem;">September 5, 2026</h4>
+                
+                <p class="hero-description">
+                    "Sports: Building Bridges, Breaking Barriers"
+                </p>
 
-        <div class="countdown-pill">
-            <div id="countdown-label" class="countdown-label" style="@(string.IsNullOrEmpty(countdownLabel) ? "display: none;" : "")">
-                <i class="bi bi-calendar-check text-warning me-1"></i> @countdownLabel
+                <div>
+                    <div class="countdown-pill">
+                        <div id="countdown-label" class="countdown-label" style="@(string.IsNullOrEmpty(countdownLabel) ? "display: none;" : "")">
+                            <i class="bi bi-calendar-check me-1"></i> @countdownLabel
+                        </div>
+                        <div id="countdown-timer" class="countdown-value" data-target="@targetDateMs">
+                            @countdownValue
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="countdown-timer" class="countdown-value" data-target="@targetDateMs">
-                @countdownValue
-            </div>
-        </div>
-    </div>
 
-    <!-- 2. Quick Statistics Section -->
-    <h3 class="section-title"><i class="bi bi-bar-chart-fill text-warning"></i> Quick Statistics</h3>
-    <div class="row g-3 mb-5">
-        <div class="col-6 col-md-3">
-            <div class="glass-card">
-                <!-- Slide 1: Overall Leader -->
-                <div class="leader-slide">
-                    <div class="stat-header"><span>Leading Team</span><i class="bi bi-trophy-fill"></i></div>
-                    <div class="stat-value-prominent text-truncate small-leader-font">@(overallLeader?.TeamName ?? "TBD")</div>
-                    <div class="stat-subtext">Overall Leader</div>
+            <!-- 3. Top 3 Teams Section -->
+            <div>
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+                    <h3 class="section-title mb-0"><i class="bi bi-star-fill"></i> Top 3 Teams</h3>
+                    
+                    <!-- Division Buttons -->
+                    <div class="division-filters mt-3 mt-md-0 mb-0">
+                        <button class="filter-btn active-filter" onclick="toggleTop3('Elementary', this)">Elementary</button>
+                        <button class="filter-btn" onclick="toggleTop3('Secondary', this)">Secondary</button>
+                    </div>
                 </div>
-                <!-- Slide 2: Elementary Leader -->
-                <div class="leader-slide" style="display: none;">
-                    <div class="stat-header"><span>Elem Leader</span><i class="bi bi-trophy-fill text-warning"></i></div>
-                    <div class="stat-value-prominent text-truncate small-leader-font">@(elementaryLeader?.TeamName ?? "TBD")</div>
-                    <div class="stat-subtext">Elementary Division</div>
-                </div>
-                <!-- Slide 3: Secondary Leader -->
-                <div class="leader-slide" style="display: none;">
-                    <div class="stat-header"><span>Sec Leader</span><i class="bi bi-trophy-fill text-info"></i></div>
-                    <div class="stat-value-prominent text-truncate small-leader-font">@(secondaryLeader?.TeamName ?? "TBD")</div>
-                    <div class="stat-subtext">Secondary Division</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="glass-card">
-                <div class="stat-header"><span>Finished</span><i class="bi bi-check-circle-fill text-success"></i></div>
-                <div class="stat-value-prominent text-center mt-1 mb-2">@completedEventsCount / @totalEventsCount</div>
-                <div class="progress-bar-glass">
-                    <div class="progress-fill" style="width: @progressPercent%"></div>
-                    <div class="progress-text">@progressPercent.ToString("F0")%</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="glass-card">
-                <div class="stat-header"><span>Medals Won</span><i class="bi bi-award-fill"></i></div>
-                <div class="stat-value-prominent">@overallTotalMedals</div>
-                <div class="stat-subtext">awarded so far</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="glass-card">
-                <div class="stat-header"><span>Last Update</span><i class="bi bi-clock-history text-primary"></i></div>
-                <div class="stat-value-prominent fs-4 mt-2">
-                    @relativeUpdatedString
-                </div>
-                <div class="stat-subtext">Live Data</div>
-            </div>
-        </div>
-    </div>
+                
+                <div id="top3-container">
+                    <!-- Elementary Top 3 -->
+                    <div class="row g-3 top3-view" id="top3-Elementary">
+                        @if(!top3Elementary.Any())
+                        {
+                            <div class="col-12"><div class="glass-card text-center fw-bold" style="color: rgba(255,255,255,0.7); padding: 2.5rem 1rem;">No results recorded yet for Elementary.</div></div>
+                        }
+                        @foreach(var team in top3Elementary)
+                        {
+                            <div class="col-12 col-md-4">
+                                <a asp-controller="Teams" asp-action="Details" asp-route-id="@team.TeamId" class="text-decoration-none d-block h-100">
+                                    <div class="glass-card p-3 d-flex flex-row flex-md-column justify-content-between align-items-center text-center h-100">
+                                        <span class="fw-bold mb-0 mb-md-2 top3-team-name text-truncate w-100">@(team.TeamName ?? "N/A")</span>
+                                        <div class="d-flex gap-2 fw-bold px-3 py-1.5 rounded-pill medal-pill" style="font-size: 0.95rem;">
+                                            <span class="medal-text-gold">@team.Gold<small class="ms-0.5 fs-7" style="opacity: 0.7;">G</small></span>
+                                            <span class="medal-text-silver">@team.Silver<small class="ms-0.5 fs-7" style="opacity: 0.7;">S</small></span>
+                                            <span class="medal-text-bronze">@team.Bronze<small class="ms-0.5 fs-7" style="opacity: 0.7;">B</small></span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
 
-    <!-- 3. Top 3 Teams Section -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
-        <h3 class="section-title mb-0"><i class="bi bi-star-fill text-warning"></i> Top 3 Teams</h3>
-        
-        <!-- Division Buttons -->
-        <div class="division-filters mt-3 mt-md-0 mb-0">
-            <button class="filter-btn active-filter" onclick="toggleTop3('Elementary', this)">Elementary</button>
-            <button class="filter-btn" onclick="toggleTop3('Secondary', this)">Secondary</button>
+                    <!-- Secondary Top 3 -->
+                    <div class="row g-3 top3-view" id="top3-Secondary" style="display: none;">
+                        @if(!top3Secondary.Any())
+                        {
+                            <div class="col-12"><div class="glass-card text-center fw-bold" style="color: rgba(255,255,255,0.7); padding: 2.5rem 1rem;">No results recorded yet for Secondary.</div></div>
+                        }
+                        @foreach(var team in top3Secondary)
+                        {
+                            <div class="col-12 col-md-4">
+                                <a asp-controller="Teams" asp-action="Details" asp-route-id="@team.TeamId" class="text-decoration-none d-block h-100">
+                                    <div class="glass-card p-3 d-flex flex-row flex-md-column justify-content-between align-items-center text-center h-100">
+                                        <span class="fw-bold mb-0 mb-md-2 top3-team-name text-truncate w-100">@(team.TeamName ?? "N/A")</span>
+                                        <div class="d-flex gap-2 fw-bold px-3 py-1.5 rounded-pill medal-pill" style="font-size: 0.95rem;">
+                                            <span class="medal-text-gold">@team.Gold<small class="ms-0.5 fs-7" style="opacity: 0.7;">G</small></span>
+                                            <span class="medal-text-silver">@team.Silver<small class="ms-0.5 fs-7" style="opacity: 0.7;">S</small></span>
+                                            <span class="medal-text-bronze">@team.Bronze<small class="ms-0.5 fs-7" style="opacity: 0.7;">B</small></span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            
         </div>
-    </div>
-    
-    <div id="top3-container" class="mb-5">
-        <!-- Elementary Top 3 -->
-        <div class="row g-3 top3-view" id="top3-Elementary">
-            @if(!top3Elementary.Any())
-            {
-                <div class="col-12"><div class="glass-card text-center fw-bold" style="color: var(--card-muted); padding: 3rem 1rem;">No results recorded yet for Elementary.</div></div>
-            }
-            @foreach(var team in top3Elementary)
-            {
-                <div class="col-12 col-md-4">
-                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@team.TeamId" class="text-decoration-none d-block h-100">
-                        <div class="glass-card p-3 p-md-4 d-flex flex-row flex-md-column justify-content-between align-items-center text-center h-100">
-                            <span class="fw-bold mb-0 mb-md-3 top3-team-name">@(team.TeamName ?? "N/A")</span>
-                            <div class="d-flex gap-3 fw-bold px-3 py-2 rounded-pill shadow-sm medal-pill" style="font-size: 1.1rem;">
-                                <span class="medal-text-gold">@team.Gold<small class="ms-1 fs-6" style="opacity: 0.7;">G</small></span>
-                                <span class="medal-text-silver">@team.Silver<small class="ms-1 fs-6" style="opacity: 0.7;">S</small></span>
-                                <span class="medal-text-bronze">@team.Bronze<small class="ms-1 fs-6" style="opacity: 0.7;">B</small></span>
+
+        <!-- RIGHT COLUMN: Stats & Access -->
+        <div class="col-12 col-xl-5 d-flex flex-column gap-4">
+            
+            <!-- 2. Quick Statistics Section -->
+            <div>
+                <h3 class="section-title" style="padding-top: 15px;"><i class="bi bi-bar-chart-fill"></i> Statistics</h3>
+                <!-- Maintained col-6 so statistics remain a 2x2 grid even on very small mobile screens -->
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="glass-card">
+                            <!-- Slide 1: Overall Leader -->
+                            <div class="leader-slide">
+                                <div class="stat-header"><span>Leading Team</span><i class="bi bi-trophy-fill"></i></div>
+                                <div class="stat-value-prominent text-truncate small-leader-font">@(overallLeader?.TeamName ?? "TBD")</div>
+                                <div class="stat-subtext">Overall Leader</div>
+                            </div>
+                            <!-- Slide 2: Elementary Leader -->
+                            <div class="leader-slide" style="display: none;">
+                                <div class="stat-header"><span>Elem Leader</span><i class="bi bi-trophy-fill"></i></div>
+                                <div class="stat-value-prominent text-truncate small-leader-font">@(elementaryLeader?.TeamName ?? "TBD")</div>
+                                <div class="stat-subtext">Elementary Division</div>
+                            </div>
+                            <!-- Slide 3: Secondary Leader -->
+                            <div class="leader-slide" style="display: none;">
+                                <div class="stat-header"><span>Sec Leader</span><i class="bi bi-trophy-fill"></i></div>
+                                <div class="stat-value-prominent text-truncate small-leader-font">@(secondaryLeader?.TeamName ?? "TBD")</div>
+                                <div class="stat-subtext">Secondary Division</div>
                             </div>
                         </div>
-                    </a>
-                </div>
-            }
-        </div>
-
-        <!-- Secondary Top 3 -->
-        <div class="row g-3 top3-view" id="top3-Secondary" style="display: none;">
-            @if(!top3Secondary.Any())
-            {
-                <div class="col-12"><div class="glass-card text-center fw-bold" style="color: var(--card-muted); padding: 3rem 1rem;">No results recorded yet for Secondary.</div></div>
-            }
-            @foreach(var team in top3Secondary)
-            {
-                <div class="col-12 col-md-4">
-                    <a asp-controller="Teams" asp-action="Details" asp-route-id="@team.TeamId" class="text-decoration-none d-block h-100">
-                        <div class="glass-card p-3 p-md-4 d-flex flex-row flex-md-column justify-content-between align-items-center text-center h-100">
-                            <span class="fw-bold mb-0 mb-md-3 top3-team-name">@(team.TeamName ?? "N/A")</span>
-                            <div class="d-flex gap-3 fw-bold px-3 py-2 rounded-pill shadow-sm medal-pill" style="font-size: 1.1rem;">
-                                <span class="medal-text-gold">@team.Gold<small class="ms-1 fs-6" style="opacity: 0.7;">G</small></span>
-                                <span class="medal-text-silver">@team.Silver<small class="ms-1 fs-6" style="opacity: 0.7;">S</small></span>
-                                <span class="medal-text-bronze">@team.Bronze<small class="ms-1 fs-6" style="opacity: 0.7;">B</small></span>
+                    </div>
+                    <div class="col-6">
+                        <div class="glass-card">
+                            <div class="stat-header"><span>Finished</span><i class="bi bi-check-circle-fill"></i></div>
+                            <div class="stat-value-prominent text-center mt-1 mb-2" style="font-size: 1.4rem;">@completedEventsCount / @totalEventsCount</div>
+                            <div class="progress-bar-glass">
+                                <div class="progress-fill" style="width: @progressPercent%"></div>
+                                <div class="progress-text">@progressPercent.ToString("F0")%</div>
                             </div>
                         </div>
-                    </a>
+                    </div>
+                    <div class="col-6">
+                        <div class="glass-card">
+                            <div class="stat-header"><span>Medals Won</span><i class="bi bi-award-fill"></i></div>
+                            <div class="stat-value-prominent">@overallTotalMedals</div>
+                            <div class="stat-subtext">awarded so far</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="glass-card">
+                            <div class="stat-header"><span>Last Update</span><i class="bi bi-clock-history"></i></div>
+                            <div class="stat-value-prominent text-truncate fs-5 mt-1">
+                                @relativeUpdatedString
+                            </div>
+                            <div class="stat-subtext">Live Data</div>
+                        </div>
+                    </div>
                 </div>
-            }
-        </div>
-    </div>
+            </div>
 
-    <!-- 4. Quick Access Section -->
-    <h3 class="section-title"><i class="bi bi-grid-fill text-warning"></i> Quick Access</h3>
-    <div class="row g-3">
-        <div class="col-6 col-md-3">
-            <a asp-controller="Rankings" asp-action="Index" class="btn-glass">
-                <i class="bi bi-trophy-fill"></i><span>Rankings</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a asp-controller="Events" asp-action="Index" class="btn-glass">
-                <i class="bi bi-calendar-event-fill"></i><span>Results</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a asp-controller="Teams" asp-action="Dashboard" class="btn-glass">
-                <i class="bi bi-people-fill"></i><span>Schools</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a asp-controller="Home" asp-action="GeneralOfficialReport" class="btn-glass">
-                <i class="bi bi-file-earmark-bar-graph-fill"></i><span>Reports</span>
-            </a>
+            <!-- 4. Quick Access Section -->
+            <div>
+                <h3 class="section-title" style="padding-top:19px"><i class="bi bi-grid-fill"></i> Shortcuts</h3>
+                <div class="row g-3">
+                    <div class="col-6" style="padding: 0px, 10px;">
+                        <a asp-controller="Rankings" asp-action="Index" class="btn-glass">
+                            <i class="bi bi-trophy-fill"></i><span>Rankings</span>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a asp-controller="Events" asp-action="Index" class="btn-glass">
+                            <i class="bi bi-calendar-event-fill"></i><span>Results</span>
+                        </a>
+                    </div>
+                    <div class="col-6" style="padding: 0px, 10px;">
+                        <a asp-controller="Teams" asp-action="Dashboard" class="btn-glass">
+                            <i class="bi bi-people-fill"></i><span>Areas</span>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a asp-controller="Home" asp-action="GeneralOfficialReport" class="btn-glass">
+                            <i class="bi bi-file-earmark-bar-graph-fill"></i><span>Reports</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -482,7 +617,7 @@
                     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
                     
                     if (labelElement) labelElement.style.display = "block";
-                    timerElement.innerText = `${hours} hours ${minutes} minutes ${seconds} seconds`;
+                    timerElement.innerText = `${hours}h ${minutes}m ${seconds}s`;
                 } 
                 else if (distance <= 0 && distance > -86400000) { // The day of the event
                     if (labelElement) labelElement.style.display = "none";

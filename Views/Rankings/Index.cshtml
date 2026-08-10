@@ -27,12 +27,19 @@
     string lastUpdatedString = lastUpdateUtc.HasValue ? FormatToPst(lastUpdateUtc.Value, "MM/dd/yy • h:mm tt") : FormatToPst(DateTime.UtcNow, "MM/dd/yy • h:mm tt");
 
     string GetHouseText(string name) {
-        if(string.IsNullOrEmpty(name)) return "var(--deped-blue, #0033A0)";
-        if(name.Contains("Lannister", StringComparison.OrdinalIgnoreCase)) return "#b8860b"; 
-        if(name.Contains("Baratheon", StringComparison.OrdinalIgnoreCase)) return "#744210"; 
-        if(name.Contains("Targaryen", StringComparison.OrdinalIgnoreCase)) return "#c2410c"; 
-        if(name.Contains("Stark", StringComparison.OrdinalIgnoreCase)) return "#4a5568";     
-        return "var(--deped-blue, #0033A0)";
+        if(string.IsNullOrEmpty(name)) return "var(--cc-primary, #102A43)";
+        if(name.Contains("Loon", StringComparison.OrdinalIgnoreCase)) return "#C9A227"; 
+        if(name.Contains("Calape", StringComparison.OrdinalIgnoreCase)) return "#102A43"; 
+        if(name.Contains("Tubigon", StringComparison.OrdinalIgnoreCase)) return "#7A1F2B"; 
+        return "var(--cc-primary, #102A43)";
+    }
+
+    // Helper to map schools to LoCaTu municipalities for Overall standings
+    string GetLocatuMunicipality(string name) {
+        if (string.IsNullOrEmpty(name)) return "Calape";
+        if (name.Contains("Loon", StringComparison.OrdinalIgnoreCase)) return "Loon";
+        if (name.Contains("Tubigon", StringComparison.OrdinalIgnoreCase)) return "Tubigon";
+        return "Calape";
     }
 
     // Build a lookup dictionary for acronyms based on the Model
@@ -53,22 +60,52 @@
         return acronymMap.ContainsKey(fullName) ? acronymMap[fullName] : fullName;
     }
 
-    // FIX: Pre-sort the standings by Gold, Silver, Bronze, and then Alphabetically by Team Name for ties
+    // Pre-sort the standings by Gold, Silver, Bronze, and then Alphabetically by Team Name for ties (Secondary/Elementary)
     var sortedStandings = Model
         .OrderByDescending(t => t.Gold)
         .ThenByDescending(t => t.Silver)
         .ThenByDescending(t => t.Bronze)
         .ThenBy(t => t.Team?.Name ?? "")
         .ToList();
+
+    // Compute Combined Overall Standings grouped by Municipality (LoCaTu)
+    var overallStandings = Model
+        .GroupBy(t => GetLocatuMunicipality(t.Team?.Name ?? string.Empty))
+        .Select(g => new {
+            Municipality = g.Key,
+            Gold = g.Sum(x => x.Gold),
+            Silver = g.Sum(x => x.Silver),
+            Bronze = g.Sum(x => x.Bronze),
+            Total = g.Sum(x => x.Gold + x.Silver + x.Bronze)
+        })
+        .OrderByDescending(x => x.Gold)
+        .ThenByDescending(x => x.Silver)
+        .ThenByDescending(x => x.Bronze)
+        .ThenBy(x => x.Municipality)
+        .ToList();
 }
 
 <style>
-    /* Clean Page Header */
+    /* ========================================== */
+    /* MASTER OPACITY & COLOR CONTROL             */
+    :root {
+        --card-opacity: 1.0; 
+    }
+    /* ========================================== */
+
+    body {
+        background-color: var(--cc-background) !important; 
+    }
+
+    /* Themed Page Header */
     .page-header {
-        color: var(--deped-blue, #0033A0);
-        border-bottom: 3px solid var(--golden-yellow, #FFD700);
+        color: var(--cc-primary, #102A43);
+        border-bottom: 3px solid var(--cc-gold, #C9A227);
         padding-bottom: 1rem;
         margin-bottom: 2rem;
+    }
+    .page-header h1 {
+        color: var(--cc-primary, #102A43);
     }
 
     /* Animated Gradient Core Setup */
@@ -78,24 +115,32 @@
         100% { background-position: 0% 50%; }
     }
 
-    /* Uniform Cards Styling with Moving Gradient */
-    .stat-card-clean, .feed-item {
-        background: linear-gradient(-45deg, #0033A0 0%, #004aad 25%, #0033A0 50%, #002a7a 75%, #0033A0 100%);
-        background-size: 300% 300%;
-        animation: gradientMove 8s ease-in-out infinite;
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    /* Uniform Cards Styling matching Home Page Design System */
+    .stat-card-clean {
+        background: linear-gradient(135deg, 
+            rgba(16, 42, 67, var(--card-opacity)) 0%, 
+            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(16, 42, 67, var(--card-opacity)) 100%);
+        background-size: 200% 100%;
+        background-position: 0% 0%;
+        animation: gradientMove 12s ease-in-out infinite;
+        border-radius: var(--cc-radius-lg, 14px);
+        box-shadow: 0 8px 24px rgba(16, 42, 67, 0.15);
+        transition: background-position 0.5s ease-in-out, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
         color: #ffffff;
+        border: 1px solid rgba(255,255,255,0.2);
+        position: relative;
     }
 
-    .stat-card-clean:hover, .feed-item:hover {
+    .stat-card-clean:hover {
         transform: translateY(-3px);
-        box-shadow: 0 12px 25px rgba(0, 34, 122, 0.35) !important; 
+        background-position: 100% 0%; 
+        box-shadow: 0 14px 28px rgba(122, 31, 43, 0.3) !important; 
+        border-color: rgba(255,255,255,0.35);
     }
 
     .stat-card-clean {
-        border-left: 5px solid rgba(255, 255, 255, 0.4);
+        border-left: 5px solid var(--cc-gold-light, #E5D28A);
         padding: 1rem 1.25rem;
         display: flex;
         flex-direction: column;
@@ -107,56 +152,59 @@
     }
 
     .stat-title {
-        font-family: var(--font-header, 'Poppins', sans-serif);
-        color: rgba(255, 255, 255, 0.85);
+        font-family: var(--font-body, 'Inter', sans-serif);
+        color: rgba(255, 255, 255, 0.8);
         font-size: 0.72rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         text-align: center;
+        font-weight: 700;
     }
 
     .stat-value {
-        font-family: var(--font-header, 'Poppins', sans-serif);
+        font-family: var(--font-body, 'Inter', sans-serif);
         color: #ffffff;
         font-size: 0.98rem; 
-        font-weight: 700;
+        font-weight: 800;
         margin-top: 4px;
         line-height: 1.2;
         text-align: center;
     }
 
-    /* Division Filter Tabs */
+    /* Division Filter Tabs matching Home Page */
     .division-filters {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         margin-bottom: 1.5rem;
         flex-wrap: wrap;
     }
 
     .filter-btn {
-        background: white;
-        border: 2px solid var(--deped-blue, #0033A0);
-        color: var(--deped-blue, #0033A0);
-        font-family: var(--font-header, 'Poppins', sans-serif);
+        background: linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%);
+        border: 1px solid rgba(16, 42, 67, 0.15); 
+        color: var(--cc-primary, #102A43);
+        font-family: var(--font-body, 'Inter', sans-serif);
         font-weight: 700;
         text-transform: uppercase;
-        padding: 6px 18px;
-        font-size: 0.85rem;
+        padding: 7px 18px;
+        font-size: 0.8rem;
         border-radius: 50px;
-        transition: all 0.2s ease;
+        transition: var(--cc-transition, all 0.25s ease);
+        box-shadow: 0 2px 6px rgba(16, 42, 67, 0.04);
+        backdrop-filter: blur(4px);
     }
 
-    .filter-btn:hover {
-        background: rgba(0, 51, 160, 0.08);
-        border-color: var(--deped-blue, #0033A0);
-        color: var(--deped-blue, #0033A0);
+    .filter-btn:hover { 
+        background: linear-gradient(135deg, rgba(226, 232, 240, 1) 0%, rgba(203, 213, 225, 1) 100%);
+        color: var(--cc-primary-dark, #0B1F33); 
     }
 
-    .filter-btn.active-filter {
-        background: var(--deped-blue, #0033A0);
-        border-color: var(--deped-blue, #0033A0);
-        color: white;
-        box-shadow: 0 4px 10px rgba(0, 51, 160, 0.2);
+    .filter-btn.active-filter { 
+        background: linear-gradient(135deg, var(--cc-primary, #102A43) 0%, var(--cc-secondary, #7A1F2B) 100%);
+        background-size: 200% 100%;
+        border-color: rgba(255,255,255,0.2); 
+        color: var(--cc-white, #FFFFFF); 
+        box-shadow: 0 4px 12px rgba(122, 31, 43, 0.25); 
     }
 
     /* Minimalist Rankings Table Layout */
@@ -169,8 +217,8 @@
     }
     
     .minimalist-table th {
-        font-family: var(--font-header, 'Poppins', sans-serif);
-        background: linear-gradient(135deg, #0056b3 0%, #0033A0 100%);
+        font-family: var(--font-body, 'Inter', sans-serif);
+        background: linear-gradient(135deg, var(--cc-primary, #102A43) 0%, var(--cc-secondary, #7A1F2B) 100%);
         color: #ffffff;
         font-weight: 700;
         text-transform: uppercase;
@@ -190,54 +238,74 @@
         white-space: nowrap;
     }
 
-    /* Dynamic Alternating Zebra Contrast Settings */
+    /* Dynamic Alternating Zebra Contrast with Theme Tint */
     .minimalist-table tbody tr {
         background-color: #ffffff;
     }
 
     .minimalist-table tbody tr:nth-child(even) {
-        background-color: rgba(0, 51, 160, 0.04);
+        background-color: rgba(122, 31, 43, 0.03); /* Slight burgundy/navy theme tint for rows */
     }
 
     .minimalist-table tbody tr:hover {
-        background-color: rgba(0, 51, 160, 0.08) !important;
+        background-color: rgba(16, 42, 67, 0.06) !important;
     }
 
     /* Blue Glow Shadow Effect for Table Container */
     .table-shadow-blue {
-        border: 1px solid rgba(0, 51, 160, 0.18) !important;
-        box-shadow: 0 10px 30px rgba(0, 51, 160, 0.12) !important;
+        border: 1px solid rgba(16, 42, 67, 0.15) !important;
+        box-shadow: 0 10px 30px rgba(16, 42, 67, 0.08) !important;
+        border-radius: var(--cc-radius-lg, 14px);
     }
 
     /* Medal Text Colors */
-    .medal-text-gold { color: #D4AF37; font-weight: 700; }
-    .medal-text-silver { color: #9E9E9E; font-weight: 700; }
-    .medal-text-bronze { color: #CD7F32; font-weight: 700; }
+    .medal-text-gold { color: var(--cc-gold, #C9A227); font-weight: 800; }
+    .medal-text-silver { color: #64748B; font-weight: 800; }
+    .medal-text-bronze { color: #C2410C; font-weight: 800; }
 
-    /* Glass Sidebar Panel - Solid White Background */
-    .glass-card {
-        padding: 1.5rem;
+    /* Solid White Sidebar Container Card */
+    .updates-sidebar-card {
         background: #ffffff !important;
-        border: 1px solid #dee2e6 !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
-        border-top: 4px solid var(--golden-yellow, #FFD700) !important;
-        border-radius: 12px;
-        color: #212529 !important;
+        border: 1px solid rgba(16, 42, 67, 0.12) !important;
+        box-shadow: 0 8px 24px rgba(16, 42, 67, 0.08) !important;
+        border-top: 4px solid var(--cc-gold, #C9A227) !important;
+        border-radius: var(--cc-radius-lg, 14px);
+        color: var(--cc-text, #17202A) !important;
+        padding: 1.5rem;
+        height: 100%;
     }
 
-    /* Feed Layout Itemization Adjustments */
+    /* Gradient Feed Item Cards that Pop-up on White Background */
     .feed-item {
-        border-left: 5px solid var(--golden-yellow, #FFD700) !important;
+        background: linear-gradient(135deg, 
+            rgba(16, 42, 67, var(--card-opacity)) 0%, 
+            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(16, 42, 67, var(--card-opacity)) 100%);
+        background-size: 200% 100%;
+        background-position: 0% 0%;
+        animation: gradientMove 12s ease-in-out infinite;
+        border-radius: var(--cc-radius-md, 10px);
+        border-left: 5px solid var(--cc-gold, #C9A227) !important;
         padding: 1.15rem; 
-        box-shadow: 0 4px 15px rgba(0, 51, 160, 0.12);
+        box-shadow: 0 6px 18px rgba(16, 42, 67, 0.18);
         margin-bottom: 1.15rem;
+        color: #ffffff;
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: background-position 0.5s ease-in-out, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+    }
+
+    .feed-item:hover {
+        transform: translateY(-3px);
+        background-position: 100% 0%; 
+        box-shadow: 0 12px 24px rgba(122, 31, 43, 0.3) !important; 
+        border-color: rgba(255,255,255,0.35);
     }
     
     .feed-title { 
-        font-family: var(--font-header, 'Poppins', sans-serif); 
+        font-family: var(--font-body, 'Inter', sans-serif); 
         color: #ffffff !important; 
         font-size: 0.9rem; 
-        font-weight: 600;
+        font-weight: 700;
         margin-bottom: 3px; 
     }
 
@@ -249,7 +317,7 @@
 
     .feed-div { 
         font-size: 0.72rem; 
-        color: var(--golden-yellow, #FFD700) !important; 
+        color: var(--cc-gold-light, #E5D28A) !important; 
         font-weight: 700; 
         text-transform: uppercase;
         margin-bottom: 8px; 
@@ -283,7 +351,6 @@
         .stat-title { font-size: 0.65rem; letter-spacing: 0px; }
         .stat-card-clean { padding: 0.75rem; border-left-width: 4px; max-width: 100%; }
         
-        /* Table Compact Settings for Tight Screen Real Estate */
         .minimalist-table th, .minimalist-table td {
             padding: 10px 4px !important;
             font-size: 0.78rem !important;
@@ -293,10 +360,9 @@
         }
     }
 
-    /* Dedicated Filter Balancing for Mobile Screen Widths */
     @@media (max-width: 576px) {
         .division-filters {
-            justify-content: flex-start; /* Changed to left-aligned */
+            justify-content: flex-start;
         }
         .filter-btn {
             text-align: center;
@@ -322,33 +388,34 @@
         <!-- Main Standings Board Section -->
         <div class="col-12 col-lg-8 d-flex flex-column">
             
-            <!-- Dashboard Status Cards (Centered Relative to the Table Layout) -->
+            <!-- Dashboard Status Cards -->
             <div class="d-flex justify-content-center gap-2 gap-md-3 mb-4 w-100">
                 <div class="stat-card-clean">
                     <div class="stat-title">Last Update</div>
                     <div class="stat-value">@lastUpdatedString</div>
                 </div>
-                <div class="stat-card-clean" style="border-left-color: var(--golden-yellow, #FFD700);">
+                <div class="stat-card-clean" style="border-left-color: var(--cc-gold, #C9A227);">
                     <div class="stat-title">Events Done</div>
                     <div class="stat-value">@eventsRecorded <span class="fw-normal opacity-75" style="font-size: 0.85em;">/ @totalEvents Games</span></div>
                 </div>
             </div>
             
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="mb-0" style="font-family: var(--font-header); color: var(--deped-blue);">Leaderboard</h4>
+                <h4 class="mb-0 fw-bold" style="font-family: var(--font-body); color: var(--cc-primary);">Leaderboard</h4>
             </div>
 
-            <!-- Division Selection Tabs (Left Aligned on Mobile) -->
+            <!-- Division & Overall Selection Tabs -->
             <div class="division-filters">
                 <button class="filter-btn active-filter" onclick="setDivisionFilter('Secondary', this)">Secondary</button>
                 <button class="filter-btn" onclick="setDivisionFilter('Elementary', this)">Elementary</button>
+                <button class="filter-btn" onclick="setDivisionFilter('Overall', this)">Overall</button>
             </div>
 
             <div class="flex-grow-1 p-0 bg-transparent border-0 shadow-none">
                 @if(!Model.Any())
                 {
                     <div class="text-center py-5 bg-white rounded shadow-sm">
-                        <i class="bi bi-trophy" style="font-size: 3rem; color: var(--text-muted);"></i>
+                        <i class="bi bi-trophy" style="font-size: 3rem; color: var(--cc-text-muted);"></i>
                         <p class="mt-3 text-muted fw-bold">No recorded entries yet. The games have not started.</p>
                     </div>
                 }
@@ -359,7 +426,7 @@
                             <thead>
                                 <tr>
                                     <th class="text-center" style="width: 14%;">Rank</th>
-                                    <th style="width: 32%;">School</th>
+                                    <th style="width: 32%;">School / Area</th>
                                     <th class="text-center" style="width: 13%;">🥇 G</th>
                                     <th class="text-center" style="width: 13%;">🥈 S</th>
                                     <th class="text-center" style="width: 13%;">🥉 B</th>
@@ -367,20 +434,17 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- FIX: Using the strictly ordered variable here -->
+                                <!-- Secondary & Elementary Rows -->
                                 @foreach (var tally in sortedStandings)
                                 {
                                     int totalMedals = tally.Gold + tally.Silver + tally.Bronze;
                                     string fullTeamName = tally.Team?.Name ?? "Unknown Team";
-                                    
-                                    // Use Acronym out of the database structure to guarantee small viewport scaling footprint
                                     string displaySchoolName = !string.IsNullOrEmpty(tally.Team?.Acronym) ? tally.Team.Acronym : fullTeamName;
-                                    
                                     string teamColor = GetHouseText(fullTeamName);
                                     string rowDivision = tally.Team?.Division ?? "Secondary";
 
                                     <tr class="ranking-row" data-division="@rowDivision" data-gold="@tally.Gold" data-silver="@tally.Silver" data-bronze="@tally.Bronze">
-                                        <td class="text-center fw-bold rank-cell" style="color: var(--deped-blue); font-size: 1rem;"></td>
+                                        <td class="text-center fw-bold rank-cell" style="color: var(--cc-primary); font-size: 1rem;"></td>
                                         <td>
                                             <span class="fw-bold school-name-text" data-default-color="@teamColor" style="color: @teamColor; font-size: 0.95rem;">
                                                 @displaySchoolName
@@ -389,32 +453,52 @@
                                         <td class="text-center fw-bold medal-text-gold">@tally.Gold</td>
                                         <td class="text-center fw-bold medal-text-silver">@tally.Silver</td>
                                         <td class="text-center fw-bold medal-text-bronze">@tally.Bronze</td>
-                                        <td class="text-center fw-bold" style="color: var(--deped-blue); font-size: 0.95rem;">@totalMedals</td>
+                                        <td class="text-center fw-bold" style="color: var(--cc-primary); font-size: 0.95rem;">@totalMedals</td>
+                                    </tr>
+                                }
+
+                                <!-- Overall Combined Municipality Rows -->
+                                @foreach (var overall in overallStandings)
+                                {
+                                    int totalMedals = overall.Total;
+                                    string teamColor = GetHouseText(overall.Municipality);
+
+                                    <tr class="ranking-row" data-division="Overall" data-gold="@overall.Gold" data-silver="@overall.Silver" data-bronze="@overall.Bronze" style="display: none;">
+                                        <td class="text-center fw-bold rank-cell" style="color: var(--cc-primary); font-size: 1rem;"></td>
+                                        <td>
+                                            <span class="fw-bold school-name-text" data-default-color="@teamColor" style="color: @teamColor; font-size: 0.95rem;">
+                                                @overall.Municipality
+                                            </span>
+                                        </td>
+                                        <td class="text-center fw-bold medal-text-gold">@overall.Gold</td>
+                                        <td class="text-center fw-bold medal-text-silver">@overall.Silver</td>
+                                        <td class="text-center fw-bold medal-text-bronze">@overall.Bronze</td>
+                                        <td class="text-center fw-bold" style="color: var(--cc-primary); font-size: 0.95rem;">@totalMedals</td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
                         
                         <div id="noRankingsRow" class="text-center py-5 bg-white mt-2" style="display: none;">
-                            <p class="mb-0 text-muted fw-bold">No ranking statistics recorded for this division yet.</p>
+                            <p class="mb-0 text-muted fw-bold">No ranking statistics recorded for this category yet.</p>
                         </div>
                     </div>
                 }
             </div>
         </div>
 
-        <!-- Sidebar Updates Feed Section -->
+        <!-- Sidebar Updates Feed Section (Solid White Background Container) -->
         <div class="col-12 col-lg-4">
-            <div class="glass-card h-100 p-4">
+            <div class="updates-sidebar-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="mb-0 fw-bold" style="font-family: var(--font-header); color: var(--deped-blue);">Recent Updates</h4>
+                    <h4 class="mb-0 fw-bold" style="font-family: var(--font-body); color: var(--cc-primary);">Recent Updates</h4>
                     <span class="badge bg-light text-primary border rounded-pill px-2 py-1" style="font-size: 0.7rem; font-weight: 700;">Latest Results</span>
                 </div>
                 
                 <div style="max-height: 550px; overflow-y: auto; padding-right: 5px;">
                     @if (!recentResults.Any())
                     {
-                        <div class="text-center py-4 text-muted border border-dashed rounded" style="background: #f8f9fa">
+                        <div class="text-center py-4 text-muted border border-dashed rounded bg-light">
                             <small>Awaiting news from ongoing match events...</small>
                         </div>
                     }
@@ -499,11 +583,11 @@
                 let defaultColor = nameElement.data('default-color');
                 
                 if (displayRank === 1) {
-                    nameElement.css('color', '#996515'); 
+                    nameElement.css('color', '#D4AF37'); 
                 } else if (displayRank === 2) {
-                    nameElement.css('color', '#5A626A'); 
+                    nameElement.css('color', '#64748B'); 
                 } else if (displayRank === 3) {
-                    nameElement.css('color', '#965119'); 
+                    nameElement.css('color', '#C2410C'); 
                 } else {
                     nameElement.css('color', defaultColor); 
                 }
@@ -519,9 +603,9 @@
             }
         });
 
-        // Dynamic Striping Fix for Visibility Shifts
+        // Dynamic Striping Fix for Visibility Shifts matching theme tint
         $('.ranking-row:visible').each(function(index) {
-            $(this).css('background-color', (index % 2 === 1) ? 'rgba(0, 51, 160, 0.04)' : '#ffffff');
+            $(this).css('background-color', (index % 2 === 1) ? 'rgba(122, 31, 43, 0.03)' : '#ffffff');
         });
 
         if (visibleCount === 0) {

@@ -1,87 +1,92 @@
 @model IEnumerable<SubcongMeet.Models.Event>
 @{
     var team = ViewBag.Team as SubcongMeet.Models.Team;
+    var teamIds = ViewBag.TeamIds as List<int> ?? new List<int> { team?.Id ?? 0 };
+    bool isOverall = ViewBag.IsOverall ?? false;
+    
     ViewData["Title"] = $"{team?.Name} - Records";
 
-    // Filter and group events by medals won by THIS team
-    var goldEvents = Model.Where(e => e.GoldTeamId == team?.Id).ToList();
-    var silverEvents = Model.Where(e => e.SilverTeamId == team?.Id).ToList();
-    var bronzeEvents = Model.Where(e => e.BronzeTeamId == team?.Id).ToList();
-    
-    // Sort from Gold to Bronze for the default 'All' view
-    var allWonEvents = goldEvents.Concat(silverEvents).Concat(bronzeEvents).ToList();
+    // Filter and group events based on teamIds, sorted by Gold -> Silver -> Bronze (Secondary then Elementary)
+    var goldEvents = Model.Where(e => teamIds.Contains(e.GoldTeamId ?? 0))
+                          .OrderByDescending(e => e.Division == "Secondary")
+                          .ThenBy(e => e.Division)
+                          .ToList();
 
+    var silverEvents = Model.Where(e => teamIds.Contains(e.SilverTeamId ?? 0))
+                            .OrderByDescending(e => e.Division == "Secondary")
+                            .ThenBy(e => e.Division)
+                            .ToList();
+
+    var bronzeEvents = Model.Where(e => teamIds.Contains(e.BronzeTeamId ?? 0))
+                            .OrderByDescending(e => e.Division == "Secondary")
+                            .ThenBy(e => e.Division)
+                            .ToList();
+    
+    var allWonEvents = goldEvents.Concat(silverEvents).Concat(bronzeEvents).ToList();
     int totalMedals = allWonEvents.Count;
 }
 
 <style>
-    /* Aesthetic School Header */
-    .school-header {
-        /* Lightened the secondary color from #001f4d to #004e92 for a cleaner blue */
-        background: linear-gradient(135deg, var(--deped-blue) 0%, #004e92 100%);
-        border-bottom: 5px solid var(--golden-yellow);
-        border-radius: 12px;
-        position: relative;
-        overflow: hidden;
+    /* ========================================== */
+    /* MASTER OPACITY & COLOR CONTROL             */
+    :root {
+        --card-opacity: 1.0; 
     }
-    
-    .school-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.05) 10%, transparent 60%);
-        pointer-events: none;
+    /* ========================================== */
+
+    body {
+        background-color: var(--cc-background) !important; 
     }
 
-    /* Medal Cards (Filters) */
+    /* Animated Gradient Core Setup */
+    @@keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .school-header {
+        background: linear-gradient(135deg, 
+            rgba(16, 42, 67, var(--card-opacity)) 0%, 
+            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(16, 42, 67, var(--card-opacity)) 100%);
+        background-size: 200% 100%;
+        background-position: 0% 0%;
+        animation: gradientMove 12s ease-in-out infinite;
+        border-bottom: 5px solid var(--cc-gold, #C9A227);
+        border-radius: var(--cc-radius-lg, 14px);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(16, 42, 67, 0.15);
+    }
+    
     .medal-card {
-        background: linear-gradient(135deg, var(--deped-blue) 0%, #004e92 100%);
-        border: 2px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        background: linear-gradient(135deg, 
+            rgba(16, 42, 67, var(--card-opacity)) 0%, 
+            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(16, 42, 67, var(--card-opacity)) 100%);
+        background-size: 200% 100%;
+        background-position: 0% 0%;
+        animation: gradientMove 12s ease-in-out infinite;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--cc-radius-lg, 14px);
+        box-shadow: 0 8px 20px rgba(16, 42, 67, 0.12);
         color: white;
         cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition: background-position 0.5s ease-in-out, transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease, border-color 0.3s ease;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         padding: 1.25rem 1rem;
         height: 100%;
-        position: relative;
-        overflow: hidden;
-        z-index: 1;
     }
 
-    /* Modern Shine/Sweep Animation */
-    .medal-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 50%;
-        height: 100%;
-        background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0) 100%);
-        transform: skewX(-25deg);
-        transition: all 0.6s ease;
-        z-index: -1;
-    }
-
-    /* Shadow effects to make it pop */
     .medal-card:hover, .medal-card.active {
         transform: translateY(-8px);
-        border-color: var(--golden-yellow);
-        box-shadow: 0 15px 30px rgba(0, 31, 77, 0.4), 0 0 15px rgba(255, 215, 0, 0.3);
-        /* Changed from #001133 to #003366 to keep it blue instead of black on hover */
-        background: linear-gradient(135deg, var(--deped-blue) 0%, #003366 100%);
-    }
-
-    /* Trigger the shine sweep on hover */
-    .medal-card:hover::before {
-        left: 125%;
+        background-position: 100% 0%;
+        border-color: var(--cc-gold, #C9A227);
+        box-shadow: 0 15px 30px rgba(122, 31, 43, 0.35), 0 0 15px rgba(201, 162, 39, 0.3);
     }
 
     .medal-count {
@@ -89,6 +94,7 @@
         font-weight: 900;
         line-height: 1;
         margin-bottom: 0.25rem;
+        font-family: var(--font-body, 'Inter', sans-serif);
     }
     
     .medal-label {
@@ -97,45 +103,88 @@
         font-weight: 700;
         letter-spacing: 1px;
         color: rgba(255,255,255,0.8);
+        font-family: var(--font-body, 'Inter', sans-serif);
     }
 
     .medal-card.active .medal-label {
-        color: var(--golden-yellow);
+        color: var(--cc-gold-light, #E5D28A);
     }
 
-    /* Table Header Gradient */
     .table-gradient-header {
-        background: linear-gradient(135deg, var(--deped-blue) 0%, #004e92 100%);
+        background: linear-gradient(135deg, var(--cc-primary, #102A43) 0%, var(--cc-secondary, #7A1F2B) 100%);
     }
 
     .table-gradient-header th {
-        background: transparent !important; /* Overrides default bootstrap table headers */
+        background: transparent !important;
         color: white !important;
         border-bottom: none;
+        font-family: var(--font-body, 'Inter', sans-serif);
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    /* Balanced and compact mobile-friendly medal badges */
+    .table-medal-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    /* Table Container Grid Configuration */
+    .table-container-card {
+        background: white !important;
+        border: 1px solid rgba(16, 42, 67, 0.15) !important;
+        box-shadow: 0 10px 30px rgba(16, 42, 67, 0.08) !important;
+        border-radius: var(--cc-radius-lg, 14px);
+    }
+
+    /* Dynamic Alternating Zebra Contrast with Theme Tint */
+    @@media (min-width: 769px) {
+        .record-row {
+            background-color: #ffffff;
+        }
+        .record-row:nth-child(even) {
+            background-color: rgba(122, 31, 43, 0.03);
+        }
+        .record-row:hover {
+            background-color: rgba(16, 42, 67, 0.06) !important;
+        }
     }
 </style>
 
 <div class="container py-5">
     <div class="mb-4">
         <a asp-action="Dashboard" class="text-muted fw-bold text-decoration-none">
-            <i class="bi bi-arrow-left"></i> Back to Schools
+            <i class="bi bi-arrow-left"></i> Back to Areas
         </a>
     </div>
 
-    <!-- Aesthetic Header -->
+    <!-- Aesthetic Header with Enhanced Prominent Badges -->
     <div class="school-header p-4 p-md-5 shadow-lg mb-5 text-center text-md-start text-white">
         <div class="position-relative z-1 d-flex flex-column flex-md-row align-items-center justify-content-between">
-            <div>
-                <!-- Added text-white to ensure the school name pops against the dark background -->
-                <h1 class="fw-black mb-2 text-white" style="font-family: var(--font-header); letter-spacing: 1px;">@team?.Name</h1>
-                <div class="d-flex gap-2 justify-content-center justify-content-md-start">
-                    <span class="badge bg-light text-dark shadow-sm">@team?.Division</span>
-                    <span class="badge shadow-sm" style="background: var(--golden-yellow); color: #000;">@team?.Acronym</span>
+            <div class="mb-3 mb-md-0">
+                <h1 class="fw-black mb-3 text-white" style="font-family: var(--font-body); font-weight: 800; letter-spacing: 1px;">@team?.Name</h1>
+                <div class="d-flex gap-2 justify-content-center justify-content-md-start align-items-center flex-wrap">
+                    @if (isOverall)
+                    {
+                        <span class="badge bg-warning text-dark px-3 py-2 fs-6 fw-bold shadow">⭐ OVERALL VIEW</span>
+                        <span class="badge bg-dark text-warning px-3 py-2 fs-6 fw-bold border border-warning shadow">🏆 Overall Rank: @ViewBag.Rank</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-light text-dark px-3 py-2 fs-6 fw-bold shadow">@team?.Division Division</span>
+                        <span class="badge bg-secondary text-white px-3 py-2 fs-6 fw-bold shadow">Rank: @ViewBag.Rank</span>
+                    }
+                    <span class="badge px-3 py-2 fs-6 fw-bold shadow" style="background: var(--cc-gold, #C9A227); color: var(--cc-primary, #102A43);">@team?.Acronym</span>
                 </div>
             </div>
-            <div class="mt-4 mt-md-0 text-center">
-                <div class="display-4 fw-bold text-warning mb-0">@totalMedals</div>
-                <div class="text-uppercase small fw-bold" style="letter-spacing: 1px;">Total Medals</div>
+            <div class="text-center bg-white bg-opacity-10 p-3 rounded-3 border border-light border-opacity-25">
+                <div class="display-4 fw-bold mb-0" style="color: var(--cc-gold-light, #E5D28A);">@totalMedals</div>
+                <div class="text-uppercase small fw-bold text-white-50" style="letter-spacing: 1px;">Total Medals</div>
             </div>
         </div>
     </div>
@@ -150,7 +199,7 @@
         </div>
         <div class="col-6 col-md-3">
             <div class="medal-card" data-filter="gold">
-                <div class="medal-count text-warning">@goldEvents.Count</div>
+                <div class="medal-count" style="color: var(--cc-gold-light, #E5D28A);">@goldEvents.Count</div>
                 <div class="medal-label">🥇 Gold</div>
             </div>
         </div>
@@ -162,24 +211,24 @@
         </div>
         <div class="col-6 col-md-3">
             <div class="medal-card" data-filter="bronze">
-                <div class="medal-count" style="color: #cd7f32;">@bronzeEvents.Count</div>
+                <div class="medal-count" style="color: #EA580C;">@bronzeEvents.Count</div>
                 <div class="medal-label">🥉 Bronze</div>
             </div>
         </div>
     </div>
 
     <!-- Achievement Records Table -->
-    <div class="bg-white p-4 rounded shadow-sm border-top border-4 border-primary">
-        <h4 class="mb-4" style="font-family: var(--font-header); color: var(--deped-blue);">
+    <div class="bg-white p-4 rounded shadow-sm border-top border-4 border-primary table-container-card">
+        <h4 class="mb-4 fw-bold" style="font-family: var(--font-body); color: var(--cc-primary, #102A43);">
             <i class="bi bi-trophy-fill text-warning me-2"></i>Achievement Records
         </h4>
         
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <!-- Applied the gradient class here -->
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-gradient-header">
                     <tr>
                         <th class="text-uppercase small py-3">Event Title</th>
+                        <th class="text-uppercase small py-3">Division</th>
                         <th class="text-uppercase small py-3">Medal Won</th>
                         <th class="text-uppercase small py-3">Winners</th>
                     </tr>
@@ -188,7 +237,7 @@
                     @if (!allWonEvents.Any())
                     {
                         <tr>
-                            <td colspan="3" class="text-center py-4 text-muted">No medals recorded yet.</td>
+                            <td colspan="4" class="text-center py-4 text-muted">No medals recorded yet.</td>
                         </tr>
                     }
                     else
@@ -199,24 +248,25 @@
                             string medalBadge = "";
                             string winnerName = "";
                             
-                            if(ev.GoldTeamId == team?.Id) { 
+                            if(teamIds.Contains(ev.GoldTeamId ?? 0)) { 
                                 medalType = "gold"; 
-                                medalBadge = "<span class='text-warning fw-bold fs-5'>🥇 Gold</span>"; 
+                                medalBadge = "<span class='table-medal-badge text-dark fw-bold' style='background-color: var(--cc-gold, #C9A227);'>🥇 Gold</span>"; 
                                 winnerName = ev.GoldWinnerName ?? "Not specified";
                             }
-                            else if(ev.SilverTeamId == team?.Id) { 
+                            else if(teamIds.Contains(ev.SilverTeamId ?? 0)) { 
                                 medalType = "silver"; 
-                                medalBadge = "<span class='text-secondary fw-bold fs-5'>🥈 Silver</span>";
+                                medalBadge = "<span class='table-medal-badge bg-secondary text-white'>🥈 Silver</span>";
                                 winnerName = ev.SilverWinnerName ?? "Not specified";
                             }
-                            else if(ev.BronzeTeamId == team?.Id) { 
+                            else if(teamIds.Contains(ev.BronzeTeamId ?? 0)) { 
                                 medalType = "bronze"; 
-                                medalBadge = "<span class='fw-bold fs-5' style='color: #cd7f32;'>🥉 Bronze</span>"; 
+                                medalBadge = "<span class='table-medal-badge text-white' style='background-color: #EA580C;'>🥉 Bronze</span>"; 
                                 winnerName = ev.BronzeWinnerName ?? "Not specified";
                             }
 
                             <tr class="record-row" data-medal="@medalType">
-                                <td class="fw-semibold">@ev.Title</td>
+                                <td class="fw-semibold" style="font-family: var(--font-body); color: var(--cc-primary, #102A43);">@ev.Title</td>
+                                <td><span class="badge bg-light text-dark border">@ev.Division</span></td>
                                 <td>@Html.Raw(medalBadge)</td>
                                 <td class="fw-bold text-dark">@winnerName</td>
                             </tr>
@@ -236,13 +286,11 @@
 
             cards.forEach(card => {
                 card.addEventListener('click', function () {
-                    // Update active state on cards
                     cards.forEach(c => c.classList.remove('active'));
                     this.classList.add('active');
                     
                     const filter = this.getAttribute('data-filter');
                     
-                    // Filter table rows
                     rows.forEach(row => {
                         if (filter === 'all' || row.getAttribute('data-medal') === filter) {
                             row.style.display = '';

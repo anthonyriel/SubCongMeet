@@ -1,25 +1,52 @@
 @model IEnumerable<SubcongMeet.Models.Team>
 @{
     ViewData["Title"] = "Participating Schools";
+
+    // Group teams by their base name to create the 3 Overall cards
+    var overallGroups = Model.GroupBy(t => t.Name.Trim()).ToList();
 }
 
 <style>
+    /* ========================================== */
+    /* MASTER OPACITY & COLOR CONTROL             */
+    :root {
+        --card-opacity: 1.0; 
+    }
+    /* ========================================== */
+
+    body {
+        background-color: var(--cc-background) !important; 
+    }
+
+    /* Animated Gradient Core Setup */
+    @@keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
     .school-card {
-        /* Updated secondary gradient color from #001f4d to #004e92 for a richer blue */
-        background: linear-gradient(135deg, var(--deped-blue) 0%, #004e92 100%);
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        background: linear-gradient(135deg, 
+            rgba(16, 42, 67, var(--card-opacity)) 0%, 
+            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(16, 42, 67, var(--card-opacity)) 100%);
+        background-size: 200% 100%;
+        background-position: 0% 0%;
+        animation: gradientMove 12s ease-in-out infinite;
+        border-radius: var(--cc-radius-lg, 14px);
+        box-shadow: 0 10px 25px rgba(16, 42, 67, 0.15);
+        transition: background-position 0.5s ease-in-out, transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease;
         text-decoration: none;
         display: block;
-        padding: 1.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 2rem 1.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
         position: relative;
         overflow: hidden;
         z-index: 1;
+        min-height: 160px;
+        color: #ffffff;
     }
 
-    /* Modern Shine/Sweep Animation */
     .school-card::before {
         content: '';
         position: absolute;
@@ -35,24 +62,22 @@
 
     .school-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 15px 30px rgba(0, 51, 102, 0.4);
-        border-color: rgba(255, 255, 255, 0.3);
-        /* Added the hover gradient depth shift to perfectly match Details.cshtml */
-        background: linear-gradient(135deg, var(--deped-blue) 0%, #003366 100%);
+        background-position: 100% 0%;
+        box-shadow: 0 18px 35px rgba(122, 31, 43, 0.35);
+        border-color: rgba(255, 255, 255, 0.35);
     }
 
-    /* Trigger the shine sweep on hover */
     .school-card:hover::before {
         left: 125%;
     }
 
     .acronym-badge {
-        background: var(--golden-yellow);
-        color: #000;
-        font-weight: 700;
-        padding: 4px 10px;
-        border-radius: 5px;
-        font-size: 0.75rem;
+        background: var(--cc-gold, #C9A227);
+        color: var(--cc-primary, #102A43);
+        font-weight: 800;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         display: inline-block;
         transition: transform 0.3s ease;
@@ -62,40 +87,79 @@
         transform: scale(1.05);
     }
 
-    .filter-btn {
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        transition: all 0.3s ease;
+    /* Division Filter Tabs matching application design system */
+    .division-filters {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 2.5rem;
+        flex-wrap: wrap;
     }
-    
+
+    .filter-btn {
+        background: linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%);
+        border: 1px solid rgba(16, 42, 67, 0.15); 
+        color: var(--cc-primary, #102A43);
+        font-family: var(--font-body, 'Inter', sans-serif);
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 8px 22px;
+        border-radius: 50px;
+        transition: var(--cc-transition, all 0.25s ease);
+        font-size: 0.85rem;
+        box-shadow: 0 2px 6px rgba(16, 42, 67, 0.04);
+        backdrop-filter: blur(4px);
+    }
+
+    .filter-btn:hover {
+        background: linear-gradient(135deg, rgba(226, 232, 240, 1) 0%, rgba(203, 213, 225, 1) 100%);
+        color: var(--cc-primary-dark, #0B1F33);
+        border-color: rgba(16, 42, 67, 0.25);
+    }
+
     .filter-btn.active {
-        background-color: var(--deped-blue);
+        background: linear-gradient(135deg, var(--cc-primary, #102A43) 0%, var(--cc-secondary, #7A1F2B) 100%);
+        background-size: 200% 100%;
+        border-color: rgba(255,255,255,0.2);
         color: white;
-        border-color: var(--deped-blue);
+        box-shadow: 0 4px 12px rgba(122, 31, 43, 0.25);
     }
 </style>
 
 <div class="container py-5">
-    <h2 class="mb-4 text-center" style="font-family: var(--font-header); color: var(--deped-blue);">
-        <i class="bi bi-mortarboard-fill text-warning me-2"></i>PARTICIPATING SCHOOLS
+    <h2 class="mb-4 text-center fw-bold" style="font-family: var(--font-body); color: var(--cc-primary, #102A43);">
+        <i class="bi bi-mortarboard-fill text-warning me-2"></i>PARTICIPATING AREAS
     </h2>
 
     <!-- Division Filter Selection -->
-    <div class="d-flex justify-content-center mb-5">
-        <div class="btn-group shadow-sm" role="group" aria-label="Division Filter">
-            <button type="button" class="btn btn-outline-primary active filter-btn" data-filter="Secondary">Secondary</button>
-            <button type="button" class="btn btn-outline-primary filter-btn" data-filter="Elementary">Elementary</button>
-            <button type="button" class="btn btn-outline-primary filter-btn" data-filter="All">All Divisions</button>
-        </div>
+    <div class="division-filters" role="group" aria-label="Division Filter">
+        <button type="button" class="btn filter-btn active" data-filter="Secondary">Secondary</button>
+        <button type="button" class="btn filter-btn" data-filter="Elementary">Elementary</button>
+        <button type="button" class="btn filter-btn" data-filter="All">Overall</button>
     </div>
 
-    <div class="row g-4" id="schoolsContainer">
+    <!-- Centered Grid Container -->
+    <div class="row g-4 justify-content-center" id="schoolsContainer">
+        <!-- 1. Individual Division Cards (Elementary & Secondary) -->
         @foreach (var team in Model) {
-            <div class="col-md-4 col-lg-3 team-item" data-division="@team.Division">
+            <div class="col-md-6 col-lg-4 team-item" data-division="@team.Division">
                 <a asp-action="Details" asp-route-id="@team.Id" class="school-card h-100">
                     <span class="acronym-badge">@team.Acronym</span>
-                    <h5 class="mt-3 mb-1 fw-bold text-white" style="font-family: var(--font-header);">@team.Name</h5>
-                    <small class="text-white-50 fw-bold text-uppercase" style="font-size: 0.75rem;">@team.Division</small>
+                    <h4 class="mt-3 mb-2 fw-bold text-white" style="font-family: var(--font-body);">@team.Name</h4>
+                    <small class="text-white-50 fw-bold text-uppercase" style="font-size: 0.8rem;">@team.Division</small>
+                </a>
+            </div>
+        }
+
+        <!-- 2. Overall Cards (Shown only when All Divisions is clicked - Exactly 3 cards) -->
+        @foreach (var group in overallGroups) {
+            var sampleTeam = group.First();
+            <div class="col-md-6 col-lg-4 team-item overall-item" data-division="All" style="display: none;">
+                <!-- Pass the team name or grouped IDs to Details -->
+                <a asp-action="Details" asp-route-name="@sampleTeam.Name" class="school-card h-100">
+                    <span class="acronym-badge">@sampleTeam.Acronym</span>
+                    <h4 class="mt-3 mb-2 fw-bold text-white" style="font-family: var(--font-body);">@sampleTeam.Name</h4>
+                    <small class="text-warning fw-bold text-uppercase" style="font-size: 0.8rem; color: var(--cc-gold-light, #E5D28A) !important;">OVERALL</small>
                 </a>
             </div>
         }
@@ -106,33 +170,35 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const buttons = document.querySelectorAll('.filter-btn');
-            const items = document.querySelectorAll('.team-item');
+            const divisionItems = document.querySelectorAll('.team-item:not(.overall-item)');
+            const overallItems = document.querySelectorAll('.overall-item');
 
             function filterItems(filterValue) {
-                items.forEach(item => {
-                    const division = item.getAttribute('data-division') || "";
-                    
-                    // Show item if filter is "All" or if the division text includes the filter keyword
-                    if (filterValue === 'All' || division.toLowerCase().includes(filterValue.toLowerCase())) {
-                        item.style.display = 'block';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
+                if (filterValue === 'All') {
+                    divisionItems.forEach(item => item.style.display = 'none');
+                    overallItems.forEach(item => item.style.display = 'block');
+                } else {
+                    overallItems.forEach(item => item.style.display = 'none');
+                    divisionItems.forEach(item => {
+                        const division = item.getAttribute('data-division') || "";
+                        if (division.toLowerCase().includes(filterValue.toLowerCase())) {
+                            item.style.display = 'block';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                }
             }
 
             buttons.forEach(btn => {
                 btn.addEventListener('click', function () {
-                    // Update active button state
                     buttons.forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
-                    
-                    // Filter the cards
                     filterItems(this.getAttribute('data-filter'));
                 });
             });
 
-            // Set default view to Secondary on page load
+            // Default view set to Secondary on page load
             filterItems('Secondary');
         });
     </script>
