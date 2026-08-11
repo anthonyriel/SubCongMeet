@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
-    <!-- Updated to Inter for modern, highly readable typography -->
+    <!-- Modern, highly readable typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -61,15 +61,15 @@
             color-scheme: light;
         }
 
-        /* OVERRIDE ASP.NET DEFAULT MARGINS & SETUP BACKGROUND */
-        html, body {
+        /* BASE CANVAS BACKGROUND */
+        html {
+            background-color: var(--cc-background);
             margin: 0 !important; 
             padding: 0 !important;
             height: 100%;
         }
 
         body { 
-            background-color: var(--cc-background); 
             font-family: var(--font-body); 
             color: var(--cc-text); 
             min-height: 100vh; 
@@ -108,12 +108,12 @@
             animation: gradientMove 12s ease-in-out infinite !important;
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border-bottom: 3px solid var(--cc-gold) !important; /* Gold Accent matching Hero Banner */
+            border-bottom: 3px solid var(--cc-gold) !important;
             box-shadow: var(--cc-shadow-md); 
             transition: var(--cc-transition);
         }
 
-        /* PURE PNG LOGO STYLING */
+        /* LOGO STYLING */
         .navbar-logo { 
             height: 48px; 
             width: auto; 
@@ -158,7 +158,6 @@
             border-bottom-left-radius: var(--cc-radius-lg);
         }
 
-        /* ULTRA SMOOTH OFFCANVAS TRANSITION */
         .offcanvas {
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
         }
@@ -188,7 +187,7 @@
             align-items: center; 
             justify-content: space-between; 
             padding: 10px 14px; 
-            color: var(--cc-primary); /* Navy Default */
+            color: var(--cc-primary);
             text-decoration: none; 
             border-radius: var(--cc-radius-md); 
             margin-bottom: 4px; 
@@ -200,7 +199,7 @@
 
         .drawer-link:hover, .drawer-link:focus-visible { 
             background-color: var(--cc-background); 
-            color: var(--cc-secondary); /* Maroon Hover */
+            color: var(--cc-secondary); 
             border-color: var(--cc-border);
             transform: translateX(4px); 
         }
@@ -212,26 +211,26 @@
         }
 
         .drawer-link i { 
-            color: var(--cc-primary); /* Navy Default */
+            color: var(--cc-primary); 
             font-size: 1.15rem; 
             transition: color var(--cc-transition);
         }
 
         .drawer-link:hover i {
-            color: var(--cc-secondary); /* Maroon Hover */
+            color: var(--cc-secondary); 
         }
 
         .drawer-link .chevron { 
-            color: var(--cc-primary); /* Navy Default */
+            color: var(--cc-primary); 
             font-size: 0.8rem;
             transition: transform var(--cc-transition), color var(--cc-transition);
         }
         
         .drawer-link:hover .chevron {
-            color: var(--cc-secondary); /* Maroon Hover */
+            color: var(--cc-secondary); 
         }
 
-        /* Click Expandable Dropdown styling inside Drawer */
+        /* Expandable Dropdown styling */
         .drawer-dropdown-container {
             position: relative;
         }
@@ -255,19 +254,19 @@
 
         .drawer-dropdown-container.show-submenu > .drawer-link .chevron {
             transform: rotate(90deg);
-            color: var(--cc-secondary); /* Maroon Active */
+            color: var(--cc-secondary); 
         }
         
         .drawer-dropdown-container.show-submenu > .drawer-link,
         .drawer-dropdown-container.show-submenu > .drawer-link i {
-            color: var(--cc-secondary); /* Maroon Active */
+            color: var(--cc-secondary); 
         }
 
         .drawer-sub-link {
             display: flex;
             align-items: center;
             padding: 8px 12px;
-            color: var(--cc-primary); /* Navy Default */
+            color: var(--cc-primary); 
             text-decoration: none;
             border-radius: var(--cc-radius-md);
             font-size: 0.85rem;
@@ -277,20 +276,20 @@
 
         .drawer-sub-link:hover {
             background-color: var(--cc-background);
-            color: var(--cc-secondary); /* Maroon Hover */
+            color: var(--cc-secondary); 
             transform: translateX(4px);
         }
 
         .drawer-sub-link i {
-            color: var(--cc-primary); /* Navy Default */
+            color: var(--cc-primary); 
             transition: color var(--cc-transition);
         }
         
         .drawer-sub-link:hover i {
-            color: var(--cc-secondary) !important; /* Maroon Hover */
+            color: var(--cc-secondary) !important; 
         }
 
-        /* Footer - Clean, Structured */
+        /* Footer */
         .footer-custom { 
             background-color: var(--cc-white); 
             padding: 1.2rem 0; 
@@ -306,7 +305,7 @@
             font-size: 0.85rem; 
         }
 
-        /* Respect Reduced Motion */
+        /* Reduced Motion */
         @@media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -316,9 +315,7 @@
             }
         }
 
-        /* ========================================== */
-        /* MOBILE RESPONSIVENESS FIX FOR HEADER       */
-        /* ========================================== */
+        /* Mobile Header Fixes */
         @@media (max-width: 575.98px) {
             .navbar-logo {
                 height: 38px;
@@ -336,7 +333,7 @@
             .offcanvas-custom {
                 border-top-left-radius: 0;
                 border-bottom-left-radius: 0;
-                max-width: 85vw; /* Adaptive drawer width */
+                max-width: 85vw;
             }
             .navbar-toggler i {
                 font-size: 1.75rem !important;
@@ -412,7 +409,6 @@
                         <i class="bi bi-chevron-right chevron"></i>
                     </a>
                     
-                    <!-- Click Expandable Official Reports Menu -->
                     <div class="drawer-dropdown-container">
                         <a href="javascript:void(0);" class="drawer-link" onclick="this.parentElement.classList.toggle('show-submenu')">
                             <div class="icon-container"><i class="bi bi-file-earmark-bar-graph-fill"></i> Official Reports</div>
