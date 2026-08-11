@@ -117,29 +117,21 @@
 
     /* Uniform Cards Styling matching Home Page Design System */
     .stat-card-clean {
-        background: linear-gradient(135deg, 
+        background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
-            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
             rgba(16, 42, 67, var(--card-opacity)) 100%);
-        background-size: 200% 100%;
-        background-position: 0% 0%;
+        background-size: 300% 300%;
         animation: gradientMove 12s ease-in-out infinite;
         border-radius: var(--cc-radius-lg, 14px);
         box-shadow: 0 8px 24px rgba(16, 42, 67, 0.15);
-        transition: background-position 0.5s ease-in-out, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
         color: #ffffff;
-        border: 1px solid rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.12);
         position: relative;
-    }
-
-    .stat-card-clean:hover {
-        transform: translateY(-3px);
-        background-position: 100% 0%; 
-        box-shadow: 0 14px 28px rgba(122, 31, 43, 0.3) !important; 
-        border-color: rgba(255,255,255,0.35);
-    }
-
-    .stat-card-clean {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         border-left: 5px solid var(--cc-gold-light, #E5D28A);
         padding: 1rem 1.25rem;
         display: flex;
@@ -149,6 +141,12 @@
         flex: 1;
         min-width: 140px;
         max-width: 260px;
+    }
+
+    .stat-card-clean:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 28px rgba(122, 31, 43, 0.3) !important; 
+        border-color: rgba(255,255,255,0.35);
     }
 
     .stat-title {
@@ -216,9 +214,16 @@
         table-layout: fixed;
     }
     
+    /* Table Headers now share the animated gradient card styles */
     .minimalist-table th {
         font-family: var(--font-body, 'Inter', sans-serif);
-        background: linear-gradient(135deg, var(--cc-primary, #102A43) 0%, var(--cc-secondary, #7A1F2B) 100%);
+        background: linear-gradient(-45deg, 
+            rgba(16, 42, 67, var(--card-opacity)) 0%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
+            rgba(16, 42, 67, var(--card-opacity)) 100%);
+        background-size: 300% 300%;
+        animation: gradientMove 12s ease-in-out infinite;
         color: #ffffff;
         font-weight: 700;
         text-transform: uppercase;
@@ -226,6 +231,8 @@
         padding: 12px 8px;
         border-bottom: 2px solid rgba(0, 0, 0, 0.1);
         letter-spacing: 0.3px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
 
     .minimalist-table td {
@@ -256,6 +263,7 @@
         border: 1px solid rgba(16, 42, 67, 0.15) !important;
         box-shadow: 0 10px 30px rgba(16, 42, 67, 0.08) !important;
         border-radius: var(--cc-radius-lg, 14px);
+        overflow: hidden;
     }
 
     /* Medal Text Colors */
@@ -277,12 +285,12 @@
 
     /* Gradient Feed Item Cards that Pop-up on White Background */
     .feed-item {
-        background: linear-gradient(135deg, 
+        background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
-            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
             rgba(16, 42, 67, var(--card-opacity)) 100%);
-        background-size: 200% 100%;
-        background-position: 0% 0%;
+        background-size: 300% 300%;
         animation: gradientMove 12s ease-in-out infinite;
         border-radius: var(--cc-radius-md, 10px);
         border-left: 5px solid var(--cc-gold, #C9A227) !important;
@@ -290,13 +298,14 @@
         box-shadow: 0 6px 18px rgba(16, 42, 67, 0.18);
         margin-bottom: 1.15rem;
         color: #ffffff;
-        border: 1px solid rgba(255,255,255,0.2);
-        transition: background-position 0.5s ease-in-out, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.12);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
 
     .feed-item:hover {
         transform: translateY(-3px);
-        background-position: 100% 0%; 
         box-shadow: 0 12px 24px rgba(122, 31, 43, 0.3) !important; 
         border-color: rgba(255,255,255,0.35);
     }
@@ -421,12 +430,12 @@
                 }
                 else
                 {
-                    <div class="table-responsive bg-white rounded table-shadow-blue p-2 p-md-3">
-                        <table class="minimalist-table w-100" id="rankingsTable">
+                    <div class="table-responsive bg-white rounded table-shadow-blue p-0 p-md-0">
+                        <table class="minimalist-table w-100 mb-0" id="rankingsTable">
                             <thead>
                                 <tr>
                                     <th class="text-center" style="width: 14%;">Rank</th>
-                                    <th style="width: 32%;">School / Area</th>
+                                    <th style="width: 32%;">Area</th>
                                     <th class="text-center" style="width: 13%;">🥇 G</th>
                                     <th class="text-center" style="width: 13%;">🥈 S</th>
                                     <th class="text-center" style="width: 13%;">🥉 B</th>
@@ -479,7 +488,7 @@
                             </tbody>
                         </table>
                         
-                        <div id="noRankingsRow" class="text-center py-5 bg-white mt-2" style="display: none;">
+                        <div id="noRankingsRow" class="text-center py-5 bg-white mt-0" style="display: none;">
                             <p class="mb-0 text-muted fw-bold">No ranking statistics recorded for this category yet.</p>
                         </div>
                     </div>

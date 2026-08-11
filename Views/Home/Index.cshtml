@@ -111,12 +111,12 @@
         100% { left: 200%; opacity: 0; }
     }
 
-    /* Hero Banner with Opacity Control */
+    /* Hero Banner with Opacity Control & Navy-Dominant Gradient */
     .hero-banner {
         background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
-            rgba(11, 31, 51, var(--card-opacity)) 40%, 
-            rgba(122, 31, 43, var(--card-opacity)) 80%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
             rgba(16, 42, 67, var(--card-opacity)) 100%);
         background-size: 300% 300%;
         animation: gradientMove 12s ease-in-out infinite;
@@ -214,21 +214,22 @@
         letter-spacing: 1px;
     }
 
-    /* ALL CARDS & SHORTCUT BUTTONS WITH GRADIENT & OPACITY */
+    /* ALL CARDS & SHORTCUT BUTTONS - MATCHING HERO ANIMATED GRADIENT */
     .glass-card, .btn-glass {
-        background: linear-gradient(135deg, 
+        background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
-            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
             rgba(16, 42, 67, var(--card-opacity)) 100%);
-        background-size: 200% 100%;
-        background-position: 0% 0%;
+        background-size: 300% 300%;
+        animation: gradientMove 12s ease-in-out infinite;
         border: 1px solid rgba(255,255,255,0.12);
         box-shadow: 0 8px 24px rgba(16, 42, 67, 0.15);
         border-radius: var(--cc-radius-lg);
-        transition: background-position 0.5s ease-in-out, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
         position: relative;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
 
     .glass-card {
@@ -241,7 +242,6 @@
 
     .glass-card:hover, .btn-glass:hover {
         transform: translateY(-5px);
-        background-position: 100% 0%; 
         box-shadow: 0 14px 28px rgba(122, 31, 43, 0.25); 
         border-color: rgba(255,255,255,0.25);
     }

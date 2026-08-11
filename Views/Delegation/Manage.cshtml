@@ -5,44 +5,126 @@
     ViewData["Title"] = "Manage Delegation - " + eventDetails?.Title;
 
     var tShirtSizes = new[] { "12", "14", "16", "18", "20", "XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL" };
+
+    // Sort participants: Gold winners first, then Silver, then Bronze, followed by others
+    var sortedModel = Model?.OrderBy(q => {
+        if (!string.IsNullOrEmpty(eventDetails?.GoldWinnerName) && eventDetails.GoldWinnerName.Contains(q.ParticipantName)) return 1;
+        if (!string.IsNullOrEmpty(eventDetails?.SilverWinnerName) && eventDetails.SilverWinnerName.Contains(q.ParticipantName)) return 2;
+        if (!string.IsNullOrEmpty(eventDetails?.BronzeWinnerName) && eventDetails.BronzeWinnerName.Contains(q.ParticipantName)) return 3;
+        return 4;
+    }).ThenBy(q => q.ParticipantName).ToList() ?? new List<SubcongMeet.Models.EventQualifier>();
 }
 
 <style>
+    /* ========================================== */
+    /* MASTER OPACITY & COLOR CONTROL             */
+    :root {
+        --card-opacity: 1.0; 
+    }
+    /* ========================================== */
+
+    body {
+        background-color: var(--cc-background) !important; 
+    }
+
+    /* Animated Gradient Core Setup */
+    @@keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
     .glass-card { 
         background: white; 
-        border-radius: 8px; 
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
-        border-top: 5px solid var(--deped-blue); 
+        border-radius: var(--cc-radius-lg, 14px); 
+        box-shadow: 0 10px 30px rgba(16, 42, 67, 0.08); 
+        border: 1px solid rgba(16, 42, 67, 0.15);
+        border-top: 5px solid var(--cc-gold, #C9A227); 
     }
     
     .form-control-custom { 
-        border: 1px solid #dee2e6; 
+        border: 1px solid var(--cc-border, #D9DEE5); 
         border-radius: 6px; 
-        font-family: var(--font-body);
+        font-family: var(--font-body, 'Inter', sans-serif);
         padding: 0.75rem 1rem;
     }
     
     .form-control-custom:focus { 
-        border-color: var(--deped-blue); 
-        box-shadow: 0 0 0 0.2rem rgba(0, 51, 160, 0.15); 
+        border-color: var(--cc-primary, #102A43); 
+        box-shadow: 0 0 0 0.2rem rgba(16, 42, 67, 0.15); 
     }
 
     .table-edit-custom th {
-        background: linear-gradient(135deg, #0056b3 0%, #0033A0 100%);
+        font-family: var(--font-body, 'Inter', sans-serif);
+        background: linear-gradient(-45deg, 
+            rgba(16, 42, 67, var(--card-opacity)) 0%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
+            rgba(16, 42, 67, var(--card-opacity)) 100%);
+        background-size: 300% 300%;
+        animation: gradientMove 12s ease-in-out infinite;
         color: #ffffff;
-        font-family: var(--font-header, 'Poppins', sans-serif);
-        font-size: 0.78rem;
+        font-weight: 700;
         text-transform: uppercase;
-        padding: 12px 10px;
+        font-size: 0.8rem;
+        padding: 14px 16px;
+        letter-spacing: 0.5px;
         border: none;
         vertical-align: middle;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
 
     .table-edit-custom td {
-        padding: 10px;
+        padding: 12px 16px;
         vertical-align: middle;
         font-family: var(--font-body, 'Inter', sans-serif);
         border-bottom: 1px solid #dee2e6;
+    }
+
+    /* Strict Desktop View Alternating Rows with Theme Tint */
+    @@media (min-width: 769px) {
+        .edit-table tbody tr {
+            background-color: #ffffff;
+        }
+        .edit-table tbody tr:nth-child(even) {
+            background-color: rgba(122, 31, 43, 0.03);
+        }
+        .edit-table tbody tr:hover {
+            background-color: rgba(16, 42, 67, 0.06) !important;
+        }
+    }
+
+    .btn-custom-primary {
+        background: linear-gradient(135deg, var(--cc-primary, #102A43) 0%, var(--cc-secondary, #7A1F2B) 100%);
+        border: none;
+        color: white;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(16, 42, 67, 0.2);
+    }
+
+    .btn-custom-primary:hover {
+        opacity: 0.95;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(122, 31, 43, 0.3);
+        color: white;
+    }
+
+    /* Progress Overlay Styling */
+    #progressOverlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.85);
+        z-index: 9999;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(4px);
     }
 
     /* Mobile Responsive Card Transformation */
@@ -52,14 +134,23 @@
         .edit-table tbody tr {
             display: flex;
             flex-direction: column;
-            background: #ffffff !important;
-            border: 1px solid #dee2e6;
-            border-left: 5px solid var(--deped-blue, #0033A0) !important;
-            border-radius: 12px;
+            background: linear-gradient(-45deg, 
+                rgba(16, 42, 67, var(--card-opacity)) 0%, 
+                rgba(11, 31, 51, var(--card-opacity)) 65%, 
+                rgba(122, 31, 43, var(--card-opacity)) 90%, 
+                rgba(16, 42, 67, var(--card-opacity)) 100%) !important;
+            background-size: 300% 300%;
+            animation: gradientMove 12s ease-in-out infinite;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-left: 5px solid var(--cc-gold, #C9A227) !important;
+            border-radius: var(--cc-radius-lg, 14px);
             margin-bottom: 1.25rem;
             padding: 1.25rem;
-            box-shadow: 0 4px 15px rgba(0, 51, 160, 0.1);
+            box-shadow: 0 8px 24px rgba(16, 42, 67, 0.2);
             gap: 0.75rem;
+            color: #ffffff;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
         
         .edit-table tbody td {
@@ -76,7 +167,7 @@
             font-weight: 700;
             font-size: 0.75rem;
             text-transform: uppercase;
-            color: var(--deped-blue, #0033A0);
+            color: rgba(255, 255, 255, 0.8);
             margin-bottom: 3px;
         }
 
@@ -84,7 +175,7 @@
             flex-direction: row;
             justify-content: space-between;
             align-items: center;
-            background: rgba(0, 51, 160, 0.04);
+            background: rgba(255, 255, 255, 0.1);
             padding: 8px 12px !important;
             border-radius: 8px;
         }
@@ -96,19 +187,27 @@
     }
 </style>
 
+<!-- Fullscreen Progress Overlay -->
+<div id="progressOverlay">
+    <h4 id="progressText" class="mb-4 fw-bold" style="color: var(--cc-primary, #102A43); font-family: var(--font-body);">Processing...</h4>
+    <div class="progress w-75 rounded-pill shadow-sm" style="max-width: 400px; height: 1.5rem;">
+        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+    </div>
+</div>
+
 <div class="container py-4 py-md-5">
     <div class="mb-4">
-        <a asp-controller="Events" asp-action="SubmitResults" asp-route-id="@eventDetails?.Id" class="text-decoration-none text-muted fw-bold" style="font-size: 0.85rem;">
+        <a asp-controller="Events" asp-action="SubmitResults" asp-route-id="@eventDetails?.Id" class="text-decoration-none text-muted fw-bold" style="font-size: 0.85rem; font-family: var(--font-body);">
             <i class="bi bi-arrow-left"></i> Back to Official Results
         </a>
     </div>
 
     <div class="glass-card p-4 p-md-5">
         <div class="mb-4">
-            <h2 style="font-family: var(--font-header); color: var(--deped-blue);">
+            <h2 style="font-family: var(--font-body); color: var(--cc-primary, #102A43); font-weight: 800;">
                 <i class="bi bi-people-fill text-warning me-2"></i> DELEGATION: @eventDetails?.Title
             </h2>
-            <p class="text-muted fw-bold">Manage athletes, coaches, and chaperons for this event.</p>
+            <p class="text-muted fw-bold" style="font-family: var(--font-body);">Manage athletes, coaches, and chaperons for this event.</p>
         </div>
 
         @if (TempData["SuccessMessage"] != null)
@@ -126,11 +225,11 @@
             </div>
         }
 
-        <!-- Add Participant Form (Retained) -->
-        <div class="card mb-4 border-0 bg-light p-3">
+        <!-- Add Participant Form -->
+        <div class="card mb-4 border-0 bg-light p-3 rounded-3 shadow-sm">
             <div class="card-body">
-                <h5 class="mb-3" style="font-family: var(--font-header); color: var(--deped-blue);">
-                    <i class="bi bi-person-plus-fill me-1"></i> Add New Participant
+                <h5 class="mb-3 fw-bold" style="font-family: var(--font-body); color: var(--cc-primary, #102A43);">
+                    <i class="bi bi-person-plus-fill me-1 text-warning"></i> Add New Participant
                 </h5>
                 <form asp-action="SaveQualifier" method="post" id="participantForm">
                     <input type="hidden" name="EventId" value="@eventDetails?.Id" />
@@ -164,7 +263,7 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary w-100 fw-bold" style="padding: 0.75rem; background-color: var(--deped-blue);">
+                            <button type="submit" class="btn btn-custom-primary w-100 fw-bold py-2">
                                 <i class="bi bi-plus-lg"></i> Add
                             </button>
                         </div>
@@ -179,15 +278,15 @@
             <input type="hidden" name="eventId" value="@eventDetails?.Id" />
 
             <!-- Action Toolbar -->
-            <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-3 rounded border">
-                <span class="fw-bold text-dark" style="font-size: 0.85rem;">
+            <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-3 rounded border flex-wrap gap-2">
+                <span class="fw-bold text-dark" style="font-size: 0.85rem; font-family: var(--font-body);">
                     <i class="bi bi-info-circle text-primary"></i> Edit participants directly in the table below, then click <strong>Save All Changes</strong>.
                 </span>
                 <div class="d-flex gap-2">
-                    <button type="submit" formaction="@Url.Action("BulkDelete", new { eventId = eventDetails?.Id })" class="btn btn-outline-danger fw-bold btn-sm px-3" onclick="return confirm('Are you sure you want to delete all selected participants?');">
+                    <button type="button" id="btnDeleteSelected" formnovalidate formaction="@Url.Action("BulkDelete", new { eventId = eventDetails?.Id })" class="btn btn-outline-danger fw-bold btn-sm px-3">
                         <i class="bi bi-trash"></i> Delete Selected
                     </button>
-                    <button type="submit" formaction="@Url.Action("BulkSave", new { eventId = eventDetails?.Id })" class="btn text-white fw-bold btn-sm px-4" style="background-color: var(--deped-blue);">
+                    <button type="button" id="btnSaveAll" formaction="@Url.Action("BulkSave", new { eventId = eventDetails?.Id })" class="btn btn-custom-primary fw-bold btn-sm px-4">
                         <i class="bi bi-save"></i> Save All Changes
                     </button>
                 </div>
@@ -208,7 +307,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model == null || !Model.Any())
+                        @if (!sortedModel.Any())
                         {
                             <tr>
                                 <td colspan="5" class="text-center py-5 text-muted fw-bold">No participants added yet.</td>
@@ -217,7 +316,7 @@
                         else
                         {
                             int index = 0;
-                            foreach (var item in Model)
+                            foreach (var item in sortedModel)
                             {
                                 <tr>
                                     <td class="text-center mobile-select-row" style="width: 35px;">
@@ -273,4 +372,64 @@
             checkboxes[i].checked = source.checked;
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const participantForm = document.getElementById('participantForm');
+        const bulkForm = document.getElementById('bulkActionForm');
+        const btnDelete = document.getElementById('btnDeleteSelected');
+        const btnSave = document.getElementById('btnSaveAll');
+        
+        const overlay = document.getElementById('progressOverlay');
+        const progressText = document.getElementById('progressText');
+        const progressBar = document.getElementById('progressBar');
+
+        function showProgress(text, colorClass) {
+            progressText.innerText = text;
+            progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated ' + colorClass;
+            overlay.style.display = 'flex';
+        }
+
+        // Handle Add Participant Form
+        if (participantForm) {
+            participantForm.addEventListener('submit', function() {
+                showProgress('Adding participant...', 'bg-success');
+            });
+        }
+
+        // Handle Delete Selected Button
+        if (btnDelete) {
+            btnDelete.addEventListener('click', function(e) {
+                e.preventDefault();
+                let checkboxes = document.querySelectorAll('.row-checkbox:checked');
+                
+                if (checkboxes.length === 0) {
+                    alert('Please select at least one participant to delete.');
+                    return;
+                }
+                
+                if (confirm('Are you sure you want to delete all selected participants?')) {
+                    showProgress('Deleting selected participants...', 'bg-danger');
+                    bulkForm.noValidate = true;
+                    bulkForm.action = btnDelete.getAttribute('formaction');
+                    bulkForm.submit();
+                }
+            });
+        }
+
+        // Handle Save All Changes Button
+        if (btnSave) {
+            btnSave.addEventListener('click', function(e) {
+                e.preventDefault();
+                bulkForm.noValidate = false;
+                
+                if (bulkForm.checkValidity()) {
+                    showProgress('Saving all changes...', 'bg-primary');
+                    bulkForm.action = btnSave.getAttribute('formaction');
+                    bulkForm.submit();
+                } else {
+                    bulkForm.reportValidity();
+                }
+            });
+        }
+    });
 </script>

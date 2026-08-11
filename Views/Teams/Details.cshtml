@@ -24,6 +24,20 @@
     
     var allWonEvents = goldEvents.Concat(silverEvents).Concat(bronzeEvents).ToList();
     int totalMedals = allWonEvents.Count;
+
+    // Helper to get local municipality logo path
+    string GetMunicipalityLogoPath(string? name) {
+        if (string.IsNullOrEmpty(name)) return "";
+        if (name.Contains("Loon", StringComparison.OrdinalIgnoreCase)) 
+            return Url.Content("~/images/loon-logo.png");
+        if (name.Contains("Calape", StringComparison.OrdinalIgnoreCase)) 
+            return Url.Content("~/images/calape-logo.png");
+        if (name.Contains("Tubigon", StringComparison.OrdinalIgnoreCase)) 
+            return Url.Content("~/images/tubigon-logo.png");
+        return "";
+    }
+
+    string logoPath = GetMunicipalityLogoPath(team?.Name);
 }
 
 <style>
@@ -46,47 +60,51 @@
     }
 
     .school-header {
-        background: linear-gradient(135deg, 
+        background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
-            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
             rgba(16, 42, 67, var(--card-opacity)) 100%);
-        background-size: 200% 100%;
-        background-position: 0% 0%;
+        background-size: 300% 300%;
         animation: gradientMove 12s ease-in-out infinite;
         border-bottom: 5px solid var(--cc-gold, #C9A227);
         border-radius: var(--cc-radius-lg, 14px);
         position: relative;
         overflow: hidden;
         box-shadow: 0 10px 30px rgba(16, 42, 67, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
     
     .medal-card {
-        background: linear-gradient(135deg, 
+        background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
-            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
             rgba(16, 42, 67, var(--card-opacity)) 100%);
-        background-size: 200% 100%;
-        background-position: 0% 0%;
+        background-size: 300% 300%;
         animation: gradientMove 12s ease-in-out infinite;
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: var(--cc-radius-lg, 14px);
         box-shadow: 0 8px 20px rgba(16, 42, 67, 0.12);
         color: white;
         cursor: pointer;
-        transition: background-position 0.5s ease-in-out, transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease, border-color 0.3s ease;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         padding: 1.25rem 1rem;
         height: 100%;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
 
     .medal-card:hover, .medal-card.active {
-        transform: translateY(-8px);
-        background-position: 100% 0%;
+        transform: translateY(-5px);
         border-color: var(--cc-gold, #C9A227);
-        box-shadow: 0 15px 30px rgba(122, 31, 43, 0.35), 0 0 15px rgba(201, 162, 39, 0.3);
+        box-shadow: 0 14px 28px rgba(122, 31, 43, 0.25), 0 0 15px rgba(201, 162, 39, 0.3);
     }
 
     .medal-count {
@@ -111,16 +129,35 @@
     }
 
     .table-gradient-header {
-        background: linear-gradient(135deg, var(--cc-primary, #102A43) 0%, var(--cc-secondary, #7A1F2B) 100%);
+        background: transparent !important;
     }
 
     .table-gradient-header th {
-        background: transparent !important;
-        color: white !important;
-        border-bottom: none;
         font-family: var(--font-body, 'Inter', sans-serif);
+        background: linear-gradient(-45deg, 
+            rgba(16, 42, 67, var(--card-opacity)) 0%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
+            rgba(16, 42, 67, var(--card-opacity)) 100%);
+        background-size: 300% 300%;
+        animation: gradientMove 12s ease-in-out infinite;
+        color: white !important;
         font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        padding: 14px 16px;
         letter-spacing: 0.5px;
+        border: none;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+    .table-gradient-header th:first-child {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+    .table-gradient-header th:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
     }
 
     /* Balanced and compact mobile-friendly medal badges */
@@ -140,6 +177,17 @@
         border: 1px solid rgba(16, 42, 67, 0.15) !important;
         box-shadow: 0 10px 30px rgba(16, 42, 67, 0.08) !important;
         border-radius: var(--cc-radius-lg, 14px);
+    }
+
+    .municipality-logo-header {
+        width: 150px;
+        height: 150px;
+        object-fit: contain;
+        filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
+        background: rgba(255, 255, 255, 0);
+        padding: 6px;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     /* Dynamic Alternating Zebra Contrast with Theme Tint */
@@ -163,26 +211,31 @@
         </a>
     </div>
 
-    <!-- Aesthetic Header with Enhanced Prominent Badges -->
-    <div class="school-header p-4 p-md-5 shadow-lg mb-5 text-center text-md-start text-white">
-        <div class="position-relative z-1 d-flex flex-column flex-md-row align-items-center justify-content-between">
-            <div class="mb-3 mb-md-0">
-                <h1 class="fw-black mb-3 text-white" style="font-family: var(--font-body); font-weight: 800; letter-spacing: 1px;">@team?.Name</h1>
-                <div class="d-flex gap-2 justify-content-center justify-content-md-start align-items-center flex-wrap">
-                    @if (isOverall)
-                    {
-                        <span class="badge bg-warning text-dark px-3 py-2 fs-6 fw-bold shadow">⭐ OVERALL VIEW</span>
-                        <span class="badge bg-dark text-warning px-3 py-2 fs-6 fw-bold border border-warning shadow">🏆 Overall Rank: @ViewBag.Rank</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-light text-dark px-3 py-2 fs-6 fw-bold shadow">@team?.Division Division</span>
-                        <span class="badge bg-secondary text-white px-3 py-2 fs-6 fw-bold shadow">Rank: @ViewBag.Rank</span>
-                    }
-                    <span class="badge px-3 py-2 fs-6 fw-bold shadow" style="background: var(--cc-gold, #C9A227); color: var(--cc-primary, #102A43);">@team?.Acronym</span>
+    <!-- Aesthetic Header with Municipality Logo & Badges -->
+    <div class="school-header p-4 p-md-5 shadow-lg mb-5 text-white">
+        <div class="position-relative z-1 d-flex flex-column flex-md-row align-items-center justify-content-between gap-4">
+            <div class="d-flex align-items-center gap-3 text-center text-md-start flex-column flex-md-row">
+                @if (!string.IsNullOrEmpty(logoPath)) {
+                    <img src="@logoPath" alt="@team?.Name Logo" class="municipality-logo-header mb-2 mb-md-0" />
+                }
+                <div>
+                    <h1 class="fw-black mb-2 text-white" style="font-family: var(--font-body); font-weight: 800; letter-spacing: 1px;">@team?.Name</h1>
+                    <div class="d-flex gap-2 justify-content-center justify-content-md-start align-items-center flex-wrap">
+                        @if (isOverall)
+                        {
+                            <span class="badge bg-warning text-dark px-3 py-2 fs-6 fw-bold shadow">⭐ OVERALL VIEW</span>
+                            <span class="badge bg-dark text-warning px-3 py-2 fs-6 fw-bold border border-warning shadow">🏆 Overall Rank: @ViewBag.Rank</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-light text-dark px-3 py-2 fs-6 fw-bold shadow">@team?.Division Division</span>
+                            <span class="badge bg-secondary text-white px-3 py-2 fs-6 fw-bold shadow">Rank: @ViewBag.Rank</span>
+                        }
+                        <span class="badge px-3 py-2 fs-6 fw-bold shadow" style="background: var(--cc-gold, #C9A227); color: var(--cc-primary, #102A43);">@team?.Acronym</span>
+                    </div>
                 </div>
             </div>
-            <div class="text-center bg-white bg-opacity-10 p-3 rounded-3 border border-light border-opacity-25">
+            <div class="text-center bg-white bg-opacity-10 p-3 rounded-3 border border-light border-opacity-25" style="min-width: 130px;">
                 <div class="display-4 fw-bold mb-0" style="color: var(--cc-gold-light, #E5D28A);">@totalMedals</div>
                 <div class="text-uppercase small fw-bold text-white-50" style="letter-spacing: 1px;">Total Medals</div>
             </div>
@@ -218,7 +271,7 @@
     </div>
 
     <!-- Achievement Records Table -->
-    <div class="bg-white p-4 rounded shadow-sm border-top border-4 border-primary table-container-card">
+    <div class="bg-white p-4 rounded shadow-sm table-container-card">
         <h4 class="mb-4 fw-bold" style="font-family: var(--font-body); color: var(--cc-primary, #102A43);">
             <i class="bi bi-trophy-fill text-warning me-2"></i>Achievement Records
         </h4>
@@ -227,10 +280,10 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-gradient-header">
                     <tr>
-                        <th class="text-uppercase small py-3">Event Title</th>
-                        <th class="text-uppercase small py-3">Division</th>
-                        <th class="text-uppercase small py-3">Medal Won</th>
-                        <th class="text-uppercase small py-3">Winners</th>
+                        <th class="py-3">Event Title</th>
+                        <th class="py-3">Division</th>
+                        <th class="py-3">Medal Won</th>
+                        <th class="py-3">Winners</th>
                     </tr>
                 </thead>
                 <tbody id="recordsBody">

@@ -100,10 +100,10 @@
         /* Navbar - Animated Navy-to-Burgundy Gradient with Glassmorphism */
         .navbar-custom { 
             background: linear-gradient(-45deg, 
-                rgba(16, 42, 67, 0.92) 0%, 
-                rgba(11, 31, 51, 0.92) 40%, 
-                rgba(122, 31, 43, 0.92) 80%, 
-                rgba(16, 42, 67, 0.92) 100%) !important; 
+                rgba(16, 42, 67, 0.96) 0%, 
+                rgba(11, 31, 51, 0.96) 65%, 
+                rgba(122, 31, 43, 0.96) 90%, 
+                rgba(16, 42, 67, 0.96) 100%) !important; 
             background-size: 300% 300% !important;
             animation: gradientMove 12s ease-in-out infinite !important;
             backdrop-filter: blur(12px);
@@ -182,13 +182,13 @@
             padding-left: 0.5rem;
         }
         
-        /* Navigation Links - Maroon Default, Dark Navy Hover */
+        /* Navigation Links - Navy Default, Burgundy Hover */
         .drawer-link { 
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
             padding: 10px 14px; 
-            color: var(--cc-secondary); /* Maroon Default */
+            color: var(--cc-primary); /* Navy Default */
             text-decoration: none; 
             border-radius: var(--cc-radius-md); 
             margin-bottom: 4px; 
@@ -200,7 +200,7 @@
 
         .drawer-link:hover, .drawer-link:focus-visible { 
             background-color: var(--cc-background); 
-            color: var(--cc-primary-dark); /* Dark Navy Hover */
+            color: var(--cc-secondary); /* Maroon Hover */
             border-color: var(--cc-border);
             transform: translateX(4px); 
         }
@@ -212,23 +212,23 @@
         }
 
         .drawer-link i { 
-            color: var(--cc-secondary); /* Maroon Default */
+            color: var(--cc-primary); /* Navy Default */
             font-size: 1.15rem; 
             transition: color var(--cc-transition);
         }
 
         .drawer-link:hover i {
-            color: var(--cc-primary-dark); /* Dark Navy Hover */
+            color: var(--cc-secondary); /* Maroon Hover */
         }
 
         .drawer-link .chevron { 
-            color: var(--cc-secondary); /* Maroon Default */
+            color: var(--cc-primary); /* Navy Default */
             font-size: 0.8rem;
             transition: transform var(--cc-transition), color var(--cc-transition);
         }
         
         .drawer-link:hover .chevron {
-            color: var(--cc-primary-dark); /* Dark Navy Hover */
+            color: var(--cc-secondary); /* Maroon Hover */
         }
 
         /* Click Expandable Dropdown styling inside Drawer */
@@ -255,19 +255,19 @@
 
         .drawer-dropdown-container.show-submenu > .drawer-link .chevron {
             transform: rotate(90deg);
-            color: var(--cc-primary-dark);
+            color: var(--cc-secondary); /* Maroon Active */
         }
         
         .drawer-dropdown-container.show-submenu > .drawer-link,
         .drawer-dropdown-container.show-submenu > .drawer-link i {
-            color: var(--cc-primary-dark);
+            color: var(--cc-secondary); /* Maroon Active */
         }
 
         .drawer-sub-link {
             display: flex;
             align-items: center;
             padding: 8px 12px;
-            color: var(--cc-secondary); /* Maroon Default */
+            color: var(--cc-primary); /* Navy Default */
             text-decoration: none;
             border-radius: var(--cc-radius-md);
             font-size: 0.85rem;
@@ -277,17 +277,17 @@
 
         .drawer-sub-link:hover {
             background-color: var(--cc-background);
-            color: var(--cc-primary-dark); /* Dark Navy Hover */
+            color: var(--cc-secondary); /* Maroon Hover */
             transform: translateX(4px);
         }
 
         .drawer-sub-link i {
-            color: var(--cc-secondary); /* Maroon Default */
+            color: var(--cc-primary); /* Navy Default */
             transition: color var(--cc-transition);
         }
         
         .drawer-sub-link:hover i {
-            color: var(--cc-primary-dark) !important; /* Dark Navy Hover */
+            color: var(--cc-secondary) !important; /* Maroon Hover */
         }
 
         /* Footer - Clean, Structured */
@@ -369,7 +369,7 @@
     <div class="offcanvas offcanvas-end offcanvas-custom" tabindex="-1" id="offcanvasMenu">
         <div class="offcanvas-header">
             <h5 class="offcanvas-title d-flex align-items-center" style="color: var(--cc-primary);">
-                <i class="bi bi-grid-fill me-3" style="font-size: 1.5rem; color: var(--cc-secondary);"></i> Menu
+                <i class="bi bi-grid-fill me-3" style="font-size: 1.5rem; color: var(--cc-primary);"></i> Menu
             </h5>
             <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>

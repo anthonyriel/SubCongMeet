@@ -4,6 +4,18 @@
 
     // Group teams by their base name to create the 3 Overall cards
     var overallGroups = Model.GroupBy(t => t.Name.Trim()).ToList();
+
+    // Helper to get the correct local municipality logo path based on team name
+    string GetMunicipalityLogoPath(string name) {
+        if (string.IsNullOrEmpty(name)) return "";
+        if (name.Contains("Loon", StringComparison.OrdinalIgnoreCase)) 
+            return Url.Content("~/images/loon-logo.png");
+        if (name.Contains("Calape", StringComparison.OrdinalIgnoreCase)) 
+            return Url.Content("~/images/calape-logo.png");
+        if (name.Contains("Tubigon", StringComparison.OrdinalIgnoreCase)) 
+            return Url.Content("~/images/tubigon-logo.png");
+        return "";
+    }
 }
 
 <style>
@@ -26,25 +38,29 @@
     }
 
     .school-card {
-        background: linear-gradient(135deg, 
+        background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
-            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
             rgba(16, 42, 67, var(--card-opacity)) 100%);
-        background-size: 200% 100%;
-        background-position: 0% 0%;
+        background-size: 300% 300%;
         animation: gradientMove 12s ease-in-out infinite;
         border-radius: var(--cc-radius-lg, 14px);
-        box-shadow: 0 10px 25px rgba(16, 42, 67, 0.15);
-        transition: background-position 0.5s ease-in-out, transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease;
+        box-shadow: 0 8px 24px rgba(16, 42, 67, 0.15);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
         text-decoration: none;
-        display: block;
-        padding: 2rem 1.75rem;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.75rem 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         position: relative;
         overflow: hidden;
         z-index: 1;
         min-height: 160px;
         color: #ffffff;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
 
     .school-card::before {
@@ -61,30 +77,56 @@
     }
 
     .school-card:hover {
-        transform: translateY(-8px);
-        background-position: 100% 0%;
-        box-shadow: 0 18px 35px rgba(122, 31, 43, 0.35);
-        border-color: rgba(255, 255, 255, 0.35);
+        transform: translateY(-5px);
+        box-shadow: 0 14px 28px rgba(122, 31, 43, 0.25);
+        border-color: rgba(255, 255, 255, 0.25);
     }
 
     .school-card:hover::before {
         left: 125%;
     }
 
+    .card-left-content {
+        flex: 1;
+        padding-right: 1rem;
+        z-index: 2;
+    }
+
+    .card-right-logo {
+        width: 45%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2;
+    }
+
+    .municipality-logo {
+        max-width: 150px;
+        max-height: 150px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        padding: 6px;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .school-card:hover .municipality-logo {
+        transform: scale(1.12);
+    }
+
     .acronym-badge {
         background: var(--cc-gold, #C9A227);
         color: var(--cc-primary, #102A43);
         font-weight: 800;
-        padding: 5px 12px;
+        padding: 4px 10px;
         border-radius: 6px;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         display: inline-block;
-        transition: transform 0.3s ease;
-    }
-
-    .school-card:hover .acronym-badge {
-        transform: scale(1.05);
+        margin-bottom: 0.5rem;
     }
 
     /* Division Filter Tabs matching application design system */
@@ -117,7 +159,7 @@
         border-color: rgba(16, 42, 67, 0.25);
     }
 
-    .filter-btn.active {
+    .filter-btn.active, .filter-btn.active-filter {
         background: linear-gradient(135deg, var(--cc-primary, #102A43) 0%, var(--cc-secondary, #7A1F2B) 100%);
         background-size: 200% 100%;
         border-color: rgba(255,255,255,0.2);
@@ -142,11 +184,19 @@
     <div class="row g-4 justify-content-center" id="schoolsContainer">
         <!-- 1. Individual Division Cards (Elementary & Secondary) -->
         @foreach (var team in Model) {
+            string logoPath = GetMunicipalityLogoPath(team.Name);
             <div class="col-md-6 col-lg-4 team-item" data-division="@team.Division">
                 <a asp-action="Details" asp-route-id="@team.Id" class="school-card h-100">
-                    <span class="acronym-badge">@team.Acronym</span>
-                    <h4 class="mt-3 mb-2 fw-bold text-white" style="font-family: var(--font-body);">@team.Name</h4>
-                    <small class="text-white-50 fw-bold text-uppercase" style="font-size: 0.8rem;">@team.Division</small>
+                    <div class="card-left-content">
+                        <span class="acronym-badge">@team.Acronym</span>
+                        <h4 class="mt-1 mb-1 fw-bold text-white" style="font-family: var(--font-body); font-size: 1.15rem;">@team.Name</h4>
+                        <small class="text-white-50 fw-bold text-uppercase" style="font-size: 0.75rem;">@team.Division</small>
+                    </div>
+                    <div class="card-right-logo">
+                        @if (!string.IsNullOrEmpty(logoPath)) {
+                            <img src="@logoPath" alt="@team.Name Logo" class="municipality-logo" />
+                        }
+                    </div>
                 </a>
             </div>
         }
@@ -154,12 +204,20 @@
         <!-- 2. Overall Cards (Shown only when All Divisions is clicked - Exactly 3 cards) -->
         @foreach (var group in overallGroups) {
             var sampleTeam = group.First();
+            string logoPath = GetMunicipalityLogoPath(sampleTeam.Name);
             <div class="col-md-6 col-lg-4 team-item overall-item" data-division="All" style="display: none;">
                 <!-- Pass the team name or grouped IDs to Details -->
                 <a asp-action="Details" asp-route-name="@sampleTeam.Name" class="school-card h-100">
-                    <span class="acronym-badge">@sampleTeam.Acronym</span>
-                    <h4 class="mt-3 mb-2 fw-bold text-white" style="font-family: var(--font-body);">@sampleTeam.Name</h4>
-                    <small class="text-warning fw-bold text-uppercase" style="font-size: 0.8rem; color: var(--cc-gold-light, #E5D28A) !important;">OVERALL</small>
+                    <div class="card-left-content">
+                        <span class="acronym-badge">@sampleTeam.Acronym</span>
+                        <h4 class="mt-1 mb-1 fw-bold text-white" style="font-family: var(--font-body); font-size: 1.15rem;">@sampleTeam.Name</h4>
+                        <small class="text-warning fw-bold text-uppercase" style="font-size: 0.75rem; color: var(--cc-gold-light, #E5D28A) !important;">OVERALL</small>
+                    </div>
+                    <div class="card-right-logo">
+                        @if (!string.IsNullOrEmpty(logoPath)) {
+                            <img src="@logoPath" alt="@sampleTeam.Name Logo" class="municipality-logo" />
+                        }
+                    </div>
                 </a>
             </div>
         }

@@ -4,17 +4,42 @@
 }
 
 <style>
+    /* ========================================== */
+    /* MASTER OPACITY & COLOR CONTROL             */
+    :root {
+        --card-opacity: 1.0; 
+    }
+    /* ========================================== */
+
+    body {
+        background-color: var(--cc-background) !important; 
+    }
+
+    /* Animated Gradient Core Setup */
+    @@keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
     .form-card {
         background: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        border-top: 5px solid var(--golden-yellow);
+        border-radius: var(--cc-radius-lg, 14px);
+        box-shadow: 0 10px 30px rgba(16, 42, 67, 0.08);
+        border: 1px solid rgba(16, 42, 67, 0.15);
+        border-top: 5px solid var(--cc-gold, #C9A227);
     }
     
     .form-control-custom {
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--cc-border, #D9DEE5);
         border-radius: 6px;
         padding: 0.75rem 1rem;
+        font-family: var(--font-body, 'Inter', sans-serif);
+    }
+
+    .form-control-custom:focus {
+        border-color: var(--cc-primary, #102A43);
+        box-shadow: 0 0 0 0.2rem rgba(16, 42, 67, 0.15);
     }
 
     /* Styles to seamlessly integrate the custom input with the button */
@@ -26,16 +51,54 @@
     .input-group > .btn-reset {
         border-top-right-radius: 6px;
         border-bottom-right-radius: 6px;
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--cc-border, #D9DEE5);
         border-left: none;
         background-color: #f8f9fa;
-        color: var(--deped-blue);
+        color: var(--cc-primary, #102A43);
         font-weight: 600;
         transition: all 0.2s ease-in-out;
+        font-family: var(--font-body, 'Inter', sans-serif);
     }
     
     .input-group > .btn-reset:hover {
         background-color: #e9ecef;
+        color: var(--cc-primary-dark, #0B1F33);
+    }
+
+    .btn-submit-custom {
+        background: linear-gradient(135deg, var(--cc-primary, #102A43) 0%, var(--cc-secondary, #7A1F2B) 100%);
+        border: none;
+        color: white;
+        font-weight: 700;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(16, 42, 67, 0.2);
+        font-family: var(--font-body, 'Inter', sans-serif);
+    }
+
+    .btn-submit-custom:hover {
+        opacity: 0.95;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(122, 31, 43, 0.3);
+        color: white;
+    }
+
+    .btn-cancel-custom {
+        border: 1px solid var(--cc-border, #D9DEE5);
+        color: var(--cc-primary, #102A43);
+        background: #ffffff;
+        font-weight: 700;
+        padding: 0.75rem 1.25rem;
+        border-radius: 6px;
+        transition: all 0.25s ease;
+        font-family: var(--font-body, 'Inter', sans-serif);
+    }
+
+    .btn-cancel-custom:hover {
+        background: rgba(16, 42, 67, 0.04);
+        color: var(--cc-primary, #102A43);
+        border-color: var(--cc-primary, #102A43);
     }
 </style>
 
@@ -43,7 +106,7 @@
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="form-card p-4 p-md-5">
-                <h3 class="fw-bold mb-4" style="font-family: var(--font-header); color: var(--deped-blue);">
+                <h3 class="fw-bold mb-4" style="font-family: var(--font-body); color: var(--cc-primary, #102A43);">
                     <i class="bi bi-pencil-square text-warning me-2"></i>MODIFY CREDENTIALS
                 </h3>
 
@@ -69,19 +132,19 @@
                                 <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
                             </button>
                         </div>
-                        <small class="text-muted mt-1 d-block">
+                        <small class="text-muted mt-1 d-block" style="font-family: var(--font-body);">
                             <i class="bi bi-info-circle me-1"></i> Click reset to change the password to the default ("coordinator").
                         </small>
                     </div>
 
                     <div class="mb-4 p-3 bg-light rounded border d-flex align-items-center gap-3">
                         <input asp-for="IsAdmin" class="form-check-input ms-0" type="checkbox" id="isAdminSwitch" style="transform: scale(1.2);">
-                        <label class="form-check-label fw-bold text-dark" for="isAdminSwitch" style="font-size: 0.9rem;">Global Administrator Access</label>
+                        <label class="form-check-label fw-bold text-dark" for="isAdminSwitch" style="font-size: 0.9rem; font-family: var(--font-body);">Global Administrator Access</label>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn-athletic flex-grow-1" style="background-color: var(--deped-blue);"><span>Update Changes</span></button>
-                        <a asp-action="Index" class="btn btn-outline-secondary px-4 fw-bold">Cancel</a>
+                        <button type="submit" class="btn btn-submit-custom flex-grow-1"><span>Update Changes</span></button>
+                        <a asp-action="Index" class="btn btn-cancel-custom px-4">Cancel</a>
                     </div>
                 </form>
             </div>

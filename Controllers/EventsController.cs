@@ -300,7 +300,8 @@ namespace SubcongMeet.Controllers
             await _context.SaveChangesAsync();
             await RecalculateMedalTally(); 
 
-            return RedirectToAction(nameof(Index));
+            TempData["SuccessMessage"] = "Official results published successfully.";
+            return RedirectToAction(nameof(SubmitResults), new { id = model.Id });
         }
 
         [HttpPost]
@@ -340,6 +341,7 @@ namespace SubcongMeet.Controllers
             await _context.SaveChangesAsync();
             await RecalculateMedalTally(); 
 
+            TempData["SuccessMessage"] = "Event data cleared successfully.";
             return RedirectToAction(nameof(SubmitResults), new { id = id });
         }
     }

@@ -76,34 +76,34 @@
         100% { background-position: 0% 50%; }
     }
 
-    /* Top Dashboard Summary Metric Cards - Vibrant Moving Gradient */
+    /* Top Dashboard Summary Metric Cards - Unified Animated Gradient */
     .stat-card-clean {
-        background: linear-gradient(135deg, 
+        background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
-            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
             rgba(16, 42, 67, var(--card-opacity)) 100%);
-        background-size: 200% 100%;
-        background-position: 0% 0%;
+        background-size: 300% 300%;
         animation: gradientMove 12s ease-in-out infinite;
         border-radius: var(--cc-radius-lg, 14px);
         box-shadow: 0 8px 24px rgba(16, 42, 67, 0.15);
-        transition: background-position 0.5s ease-in-out, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
         color: #ffffff;
         border-left: 5px solid var(--cc-gold-light, #E5D28A);
-        border-top: 1px solid rgba(255,255,255,0.2);
-        border-right: 1px solid rgba(255,255,255,0.2);
-        border-bottom: 1px solid rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.12);
         padding: 1.5rem;
         height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
 
     .stat-card-clean:hover {
         transform: translateY(-5px);
-        background-position: 100% 0%; 
         box-shadow: 0 15px 35px rgba(122, 31, 43, 0.3) !important; 
+        border-color: rgba(255,255,255,0.35);
     }
 
     .stat-title {
@@ -199,10 +199,16 @@
         color: initial !important;
     }
 
-    /* Vibrant Table Headers Blue Gradient */
+    /* Table Headers matching Card Animated Gradient Design */
     #eventsTable thead th {
         font-family: var(--font-body, 'Inter', sans-serif);
-        background: linear-gradient(135deg, var(--cc-primary, #102A43) 0%, var(--cc-secondary, #7A1F2B) 100%);
+        background: linear-gradient(-45deg, 
+            rgba(16, 42, 67, var(--card-opacity)) 0%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
+            rgba(16, 42, 67, var(--card-opacity)) 100%);
+        background-size: 300% 300%;
+        animation: gradientMove 12s ease-in-out infinite;
         color: #ffffff;
         font-weight: 700;
         text-transform: uppercase;
@@ -210,6 +216,8 @@
         padding: 14px 16px;
         letter-spacing: 0.5px;
         border: none;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
     #eventsTable thead th:first-child {
         border-top-left-radius: 8px;
@@ -272,14 +280,14 @@
         height: 100%;
     }
 
-    /* Dynamic Recent Update Feed Cards with Navy-Burgundy Gradient that Pop-up on White Background */
+    /* Dynamic Recent Update Feed Cards with Unified Gradient */
     .feed-item {
-        background: linear-gradient(135deg, 
+        background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
-            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(11, 31, 51, var(--card-opacity)) 65%, 
+            rgba(122, 31, 43, var(--card-opacity)) 90%, 
             rgba(16, 42, 67, var(--card-opacity)) 100%);
-        background-size: 200% 100%;
-        background-position: 0% 0%;
+        background-size: 300% 300%;
         animation: gradientMove 12s ease-in-out infinite;
         border-left: 5px solid var(--cc-gold, #C9A227) !important;
         padding: 1.25rem; 
@@ -287,13 +295,14 @@
         margin-bottom: 1.25rem;
         color: #ffffff !important;
         border-radius: var(--cc-radius-md, 10px);
-        border: 1px solid rgba(255,255,255,0.2);
-        transition: background-position 0.5s ease-in-out, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.12);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
     
     .feed-item:hover {
         transform: translateY(-3px);
-        background-position: 100% 0%;
         box-shadow: 0 12px 24px rgba(122, 31, 43, 0.3) !important;
         border-color: rgba(255,255,255,0.35);
     }
@@ -376,11 +385,14 @@
         .mobile-cards tbody tr { 
             display: flex; 
             flex-direction: column;
-            background: linear-gradient(135deg, 
+            background: linear-gradient(-45deg, 
                 rgba(16, 42, 67, var(--card-opacity)) 0%, 
-                rgba(122, 31, 43, var(--card-opacity)) 50%, 
+                rgba(11, 31, 51, var(--card-opacity)) 65%, 
+                rgba(122, 31, 43, var(--card-opacity)) 90%, 
                 rgba(16, 42, 67, var(--card-opacity)) 100%) !important; 
-            border: 1px solid rgba(255, 255, 255, 0.2); 
+            background-size: 300% 300%;
+            animation: gradientMove 12s ease-in-out infinite;
+            border: 1px solid rgba(255, 255, 255, 0.12); 
             border-left: 5px solid var(--cc-gold, #C9A227) !important;
             border-radius: var(--cc-radius-lg, 14px); 
             margin-bottom: 1.25rem; 
@@ -388,6 +400,8 @@
             box-shadow: 0 8px 24px rgba(16, 42, 67, 0.2);
             color: #ffffff !important;
             gap: 0.5rem;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
         
         .mobile-cards tbody td { 
@@ -675,7 +689,7 @@
             </div>
         </div>
 
-        <!-- Right Side Updates Panel (Solid White Background Container with Gradient Cards) -->
+        <!-- Right Side Updates Panel -->
         <div class="col-12 col-lg-4">
             <div class="updates-sidebar-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
