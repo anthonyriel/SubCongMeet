@@ -240,22 +240,22 @@
                             <input type="text" name="ParticipantName" class="form-control form-control-custom" placeholder="Full Name" required />
                         </div>
                         <div class="col-md-2">
-                            <select name="Role" class="form-select form-control-custom" required>
-                                <option value="Athlete">Athlete</option>
+                            <select name="Role" class="form-select form-control-custom">
+                                <option value="Athlete" selected>Athlete</option>
                                 <option value="Coach">Coach</option>
                                 <option value="Chaperon">Chaperon</option>
                             </select>
                         </div>
                         <div class="col-md-3">
                             <select name="SchoolName" class="form-select form-control-custom" required>
-                                <option value="">Select School</option>
+                                <option value="">Select Area</option>
                                 @foreach (var team in teams) {
                                     <option value="@team.Name">@team.Name</option>
                                 }
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <select name="TshirtSize" class="form-select form-control-custom" required>
+                            <select name="TshirtSize" class="form-select form-control-custom">
                                 <option value="">T-Shirt Size</option>
                                 @foreach (var size in tShirtSizes) {
                                     <option value="@size">@size</option>
@@ -301,7 +301,7 @@
                                 <input type="checkbox" id="selectAll" class="form-check-input" onclick="toggleSelectAll(this)" />
                             </th>
                             <th style="width: 32%;">Participant Name</th>
-                            <th style="width: 25%;">School</th>
+                            <th style="width: 25%;">Area</th>
                             <th style="width: 22%;">Role</th>
                             <th style="width: 18%;">T-Shirt Size</th>
                         </tr>
@@ -327,9 +327,9 @@
                                     <td data-label="Participant Name">
                                         <input type="text" name="qualifiers[@index].ParticipantName" value="@item.ParticipantName" class="form-control form-control-sm fw-bold" required placeholder="Full Name" />
                                     </td>
-                                    <td data-label="School">
+                                    <td data-label="Area">
                                         <select name="qualifiers[@index].SchoolName" class="form-select form-select-sm" required>
-                                            <option value="">Select School</option>
+                                            <option value="">Select Area</option>
                                             @foreach (var team in teams)
                                             {
                                                 if (item.SchoolName == team.Name) { <option value="@team.Name" selected>@team.Name</option> }
@@ -338,14 +338,14 @@
                                         </select>
                                     </td>
                                     <td data-label="Role">
-                                        <select name="qualifiers[@index].Role" class="form-select form-select-sm" required>
-                                            @if (item.Role?.ToLower() == "athlete") { <option value="Athlete" selected>Athlete</option> } else { <option value="Athlete">Athlete</option> }
+                                        <select name="qualifiers[@index].Role" class="form-select form-select-sm">
                                             @if (item.Role?.ToLower() == "coach") { <option value="Coach" selected>Coach</option> } else { <option value="Coach">Coach</option> }
                                             @if (item.Role?.ToLower() == "chaperon" || item.Role?.ToLower() == "chaperone") { <option value="Chaperon" selected>Chaperon</option> } else { <option value="Chaperon">Chaperon</option> }
+                                            @if (item.Role?.ToLower() != "coach" && item.Role?.ToLower() != "chaperon" && item.Role?.ToLower() != "chaperone") { <option value="Athlete" selected>Athlete</option> } else { <option value="Athlete">Athlete</option> }
                                         </select>
                                     </td>
                                     <td data-label="T-Shirt Size">
-                                        <select name="qualifiers[@index].TshirtSize" class="form-select form-select-sm" required>
+                                        <select name="qualifiers[@index].TshirtSize" class="form-select form-select-sm">
                                             <option value="">Size</option>
                                             @foreach (var size in tShirtSizes)
                                             {

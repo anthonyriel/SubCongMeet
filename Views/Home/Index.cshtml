@@ -585,16 +585,38 @@
 <script>
     function toggleTop3(division, btnElement) {
         // Update active button styling
-        $('.filter-btn').removeClass('active-filter');
-        $(btnElement).addClass('active-filter');
+        $('.division-filters .filter-btn').removeClass('active-filter');
+        if (btnElement) {
+            $(btnElement).addClass('active-filter');
+        } else {
+            $('.division-filters .filter-btn').each(function() {
+                if ($(this).text().trim().toLowerCase() === division.toLowerCase()) {
+                    $(this).addClass('active-filter');
+                }
+            });
+        }
 
         // Toggle the specific Top 3 views
         $('.top3-view').hide();
         $('#top3-' + division).fadeIn(200);
+
+        try {
+            sessionStorage.setItem('subcong_home_top3_division', division);
+        } catch (e) {}
+    }
+
+    function loadTop3Filter() {
+        try {
+            const saved = sessionStorage.getItem('subcong_home_top3_division');
+            if (saved && (saved.toLowerCase() === 'elementary' || saved.toLowerCase() === 'secondary')) {
+                toggleTop3(saved);
+            }
+        } catch (e) {}
     }
 
     // Vanilla Javascript for Real-Time Timer
     document.addEventListener("DOMContentLoaded", function () {
+        loadTop3Filter();
         const timerElement = document.getElementById('countdown-timer');
         const labelElement = document.getElementById('countdown-label');
         

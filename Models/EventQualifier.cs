@@ -13,10 +13,11 @@ namespace SubcongMeet.Models
         [Required]
         public string ParticipantName { get; set; } = string.Empty;
         
-        [Required]
-        public string Role { get; set; } = string.Empty;
+        public string? Role { get; set; } = "Athlete";
         
         public string? SchoolName { get; set; }
+        public string? School { get; set; }
+        public string? Gender { get; set; }
         public string? TshirtSize { get; set; }
         
         public Guid? UpdatedBy { get; set; } // The ID of the Admin/Coordinator

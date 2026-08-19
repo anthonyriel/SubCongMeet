@@ -551,12 +551,28 @@
 @section Scripts {
 <script>
     $(document).ready(function() {
-        applyDivisionFilter('Secondary');
+        let savedDivision = 'Secondary';
+        try {
+            const stored = sessionStorage.getItem('subcong_rankings_division');
+            if (stored) savedDivision = stored;
+        } catch (e) {}
+
+        $('.division-filters .filter-btn').removeClass('active-filter');
+        $('.division-filters .filter-btn').each(function() {
+            if ($(this).text().trim().toLowerCase() === savedDivision.toLowerCase()) {
+                $(this).addClass('active-filter');
+            }
+        });
+
+        applyDivisionFilter(savedDivision);
     });
 
     function setDivisionFilter(division, btnElement) {
-        $('.filter-btn').removeClass('active-filter');
+        $('.division-filters .filter-btn').removeClass('active-filter');
         $(btnElement).addClass('active-filter');
+        try {
+            sessionStorage.setItem('subcong_rankings_division', division);
+        } catch (e) {}
         applyDivisionFilter(division);
     }
 

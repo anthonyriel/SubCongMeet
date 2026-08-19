@@ -248,16 +248,35 @@
                 }
             }
 
+            function setActiveButton(filterValue) {
+                buttons.forEach(b => {
+                    if ((b.getAttribute('data-filter') || '').toLowerCase() === filterValue.toLowerCase()) {
+                        b.classList.add('active');
+                    } else {
+                        b.classList.remove('active');
+                    }
+                });
+            }
+
             buttons.forEach(btn => {
                 btn.addEventListener('click', function () {
-                    buttons.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    filterItems(this.getAttribute('data-filter'));
+                    const filter = this.getAttribute('data-filter');
+                    setActiveButton(filter);
+                    filterItems(filter);
+                    try {
+                        sessionStorage.setItem('subcong_teams_dashboard_filter', filter);
+                    } catch (e) {}
                 });
             });
 
-            // Default view set to Secondary on page load
-            filterItems('Secondary');
+            let savedFilter = 'Secondary';
+            try {
+                const stored = sessionStorage.getItem('subcong_teams_dashboard_filter');
+                if (stored) savedFilter = stored;
+            } catch (e) {}
+
+            setActiveButton(savedFilter);
+            filterItems(savedFilter);
         });
     </script>
 }

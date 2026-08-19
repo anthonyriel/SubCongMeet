@@ -337,22 +337,41 @@
             const cards = document.querySelectorAll('.medal-card');
             const rows = document.querySelectorAll('.record-row');
 
+            function applyMedalFilter(filter) {
+                cards.forEach(c => {
+                    if ((c.getAttribute('data-filter') || '').toLowerCase() === filter.toLowerCase()) {
+                        c.classList.add('active');
+                    } else {
+                        c.classList.remove('active');
+                    }
+                });
+
+                rows.forEach(row => {
+                    if (filter === 'all' || (row.getAttribute('data-medal') || '').toLowerCase() === filter.toLowerCase()) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+
             cards.forEach(card => {
                 card.addEventListener('click', function () {
-                    cards.forEach(c => c.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    const filter = this.getAttribute('data-filter');
-                    
-                    rows.forEach(row => {
-                        if (filter === 'all' || row.getAttribute('data-medal') === filter) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    });
+                    const filter = this.getAttribute('data-filter') || 'all';
+                    applyMedalFilter(filter);
+                    try {
+                        sessionStorage.setItem('subcong_team_details_medal_filter', filter);
+                    } catch (e) {}
                 });
             });
+
+            let savedFilter = 'all';
+            try {
+                const stored = sessionStorage.getItem('subcong_team_details_medal_filter');
+                if (stored) savedFilter = stored;
+            } catch (e) {}
+
+            applyMedalFilter(savedFilter);
         });
     </script>
 }

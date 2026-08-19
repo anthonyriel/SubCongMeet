@@ -188,7 +188,7 @@
                 </div>
 
                 <div class="col-md-12 text-end mt-3">
-                    <a asp-action="EditQualifiers" class="btn btn-outline-secondary btn-sm px-3 fw-bold me-2">Reset Filters</a>
+                    <a asp-action="EditQualifiers" asp-route-reset="true" class="btn btn-outline-secondary btn-sm px-3 fw-bold me-2" onclick="try { sessionStorage.removeItem('subcong_edit_qualifiers_query'); } catch(e){}">Reset Filters</a>
                     <button type="submit" class="btn text-white shadow-sm px-4 fw-bold" style="background-color: #0033A0;">Apply Filters</button>
                 </div>
             </div>
@@ -369,6 +369,22 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        (function checkQueryRetention() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('reset')) {
+                    sessionStorage.removeItem('subcong_edit_qualifiers_query');
+                } else if (window.location.search && window.location.search.length > 1) {
+                    sessionStorage.setItem('subcong_edit_qualifiers_query', window.location.search);
+                } else {
+                    const savedQuery = sessionStorage.getItem('subcong_edit_qualifiers_query');
+                    if (savedQuery && savedQuery.length > 1) {
+                        window.location.replace(window.location.pathname + savedQuery);
+                    }
+                }
+            } catch (e) {}
+        })();
+
         $(document).ready(function() {
             $('.select2-multi').select2({ placeholder: '-- All --', allowClear: true, width: '100%', multiple: true });
         });

@@ -56,34 +56,30 @@ namespace SubcongMeet.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AllEventsResultsReport(string sportsName, int? eventId, string division, int? schoolId)
+        public async Task<IActionResult> AllEventsResultsReport(List<string> sportsName, List<int> eventId, List<string> division, List<int> schoolId)
         {
             var query = _context.Events.AsQueryable();
 
-            if (!string.IsNullOrEmpty(sportsName))
+            if (sportsName != null && sportsName.Any())
             {
-                query = query.Where(e => e.SportName == sportsName);
-                ViewBag.SelectedSportsName = sportsName;
+                query = query.Where(e => e.SportName != null && sportsName.Contains(e.SportName));
             }
 
-            if (eventId.HasValue)
+            if (eventId != null && eventId.Any())
             {
-                query = query.Where(e => e.Id == eventId.Value);
-                ViewBag.SelectedEventId = eventId;
+                query = query.Where(e => eventId.Contains(e.Id));
             }
 
-            if (!string.IsNullOrEmpty(division))
+            if (division != null && division.Any())
             {
-                query = query.Where(e => e.Division == division);
-                ViewBag.SelectedDivision = division;
+                query = query.Where(e => e.Division != null && division.Contains(e.Division));
             }
 
-            if (schoolId.HasValue)
+            if (schoolId != null && schoolId.Any())
             {
-                query = query.Where(e => e.GoldTeamId == schoolId.Value || 
-                                       e.SilverTeamId == schoolId.Value || 
-                                       e.BronzeTeamId == schoolId.Value);
-                ViewBag.SelectedSchoolId = schoolId;
+                query = query.Where(e => (e.GoldTeamId.HasValue && schoolId.Contains(e.GoldTeamId.Value)) || 
+                                       (e.SilverTeamId.HasValue && schoolId.Contains(e.SilverTeamId.Value)) || 
+                                       (e.BronzeTeamId.HasValue && schoolId.Contains(e.BronzeTeamId.Value)));
             }
 
             var eventsList = await query

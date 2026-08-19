@@ -55,7 +55,21 @@ namespace SubcongMeet.Controllers
                 .ToListAsync();
 
             ViewBag.Event = eventDetails;
-            ViewBag.Teams = await _context.Teams.OrderBy(t => t.Name).ToListAsync();
+            var division = eventDetails.Division?.Trim() ?? "";
+            var teamsQuery = _context.Teams.AsQueryable();
+            if (!string.IsNullOrEmpty(division))
+            {
+                var filteredTeams = await teamsQuery
+                    .Where(t => t.Division.Trim().ToLower() == division.ToLower())
+                    .OrderBy(t => t.Name)
+                    .ToListAsync();
+                
+                ViewBag.Teams = filteredTeams.GroupBy(t => t.Name).Select(g => g.First()).OrderBy(t => t.Name).ToList();
+            }
+            else
+            {
+                ViewBag.Teams = await teamsQuery.GroupBy(t => t.Name).Select(g => g.First()).OrderBy(t => t.Name).ToListAsync();
+            }
             
             return View(qualifiers);
         }
@@ -76,6 +90,29 @@ namespace SubcongMeet.Controllers
                 return Forbid();
             }
 
+            if (!string.IsNullOrWhiteSpace(model.ParticipantName))
+            {
+                model.ParticipantName = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(model.ParticipantName.Trim().ToLowerInvariant());
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Role))
+            {
+                model.Role = "Athlete";
+            }
+
+            // Automatically determine gender based on event title if not set
+            if (string.IsNullOrWhiteSpace(model.Gender) && !string.IsNullOrEmpty(eventDetails.Title))
+            {
+                if (eventDetails.Title.Contains("boys", StringComparison.OrdinalIgnoreCase))
+                {
+                    model.Gender = "M";
+                }
+                else if (eventDetails.Title.Contains("girls", StringComparison.OrdinalIgnoreCase))
+                {
+                    model.Gender = "W";
+                }
+            }
+
             model.UpdatedAt = DateTime.UtcNow;
 
             if (model.Id == Guid.Empty)
@@ -83,6 +120,10 @@ namespace SubcongMeet.Controllers
                 model.Id = Guid.NewGuid();
                 _context.EventQualifiers.Add(model);
                 TempData["SuccessMessage"] = "New participant successfully added.";
+            }
+            else
+            {
+                _context.EventQualifiers.Update(model);
             }
 
             await _context.SaveChangesAsync();
@@ -111,10 +152,13 @@ namespace SubcongMeet.Controllers
                     var existing = await _context.EventQualifiers.FirstOrDefaultAsync(x => x.Id == q.Id && x.EventId == eventId);
                     if (existing != null)
                     {
-                        existing.ParticipantName = q.ParticipantName;
+                        var pName = string.IsNullOrWhiteSpace(q.ParticipantName) ? "" : System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(q.ParticipantName.Trim().ToLowerInvariant());
+                        existing.ParticipantName = pName;
                         existing.SchoolName = q.SchoolName;
-                        existing.Role = q.Role;
+                        existing.Role = string.IsNullOrWhiteSpace(q.Role) ? "Athlete" : q.Role;
                         existing.TshirtSize = q.TshirtSize;
+                        if (!string.IsNullOrWhiteSpace(q.School)) existing.School = q.School;
+                        if (!string.IsNullOrWhiteSpace(q.Gender)) existing.Gender = q.Gender;
                         existing.UpdatedAt = DateTime.UtcNow;
                         _context.EventQualifiers.Update(existing);
                     }

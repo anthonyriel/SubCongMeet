@@ -169,10 +169,10 @@
                     <div class="modern-medal-box" style="border-top: 5px solid #D4AF37;">
                         <label class="medal-label" style="color: #997A15;"><span>🥇</span> Gold Medalist</label>
                         <select asp-for="GoldTeamId" class="form-select form-control-custom mb-3" disabled="@(!isAuthorized)">
-                            <option value="">-- Select Winning School --</option>
+                            <option value="">-- Select Winning District --</option>
                             @foreach(var t in teams){<option value="@t.Id">@t.Name</option>}
                         </select>
-                        <textarea asp-for="GoldWinnerName" class="form-control form-control-custom flex-grow-1" placeholder="@(isAuthorized ? "Athlete Name(s) (Optional)\nPress Enter for next line" : "")" rows="3" readonly="@(!isAuthorized)"></textarea>
+                        <textarea asp-for="GoldWinnerName" class="form-control form-control-custom flex-grow-1" placeholder="@(isAuthorized ? "Athlete Name(s)\nPress Enter for next line" : "")" rows="3" readonly="@(!isAuthorized)"></textarea>
                     </div>
                 </div>
                 <!-- SILVER -->
@@ -183,7 +183,7 @@
                             <option value="">-- Select Runner-up --</option>
                             @foreach(var t in teams){<option value="@t.Id">@t.Name</option>}
                         </select>
-                        <textarea asp-for="SilverWinnerName" class="form-control form-control-custom flex-grow-1" placeholder="@(isAuthorized ? "Athlete Name(s) (Optional)\nPress Enter for next line" : "")" rows="3" readonly="@(!isAuthorized)"></textarea>
+                        <textarea asp-for="SilverWinnerName" class="form-control form-control-custom flex-grow-1" placeholder="@(isAuthorized ? "Athlete Name(s)\nPress Enter for next line" : "")" rows="3" readonly="@(!isAuthorized)"></textarea>
                     </div>
                 </div>
                 <!-- BRONZE -->
@@ -194,7 +194,7 @@
                             <option value="">-- Select 3rd Place --</option>
                             @foreach(var t in teams){<option value="@t.Id">@t.Name</option>}
                         </select>
-                        <textarea asp-for="BronzeWinnerName" class="form-control form-control-custom flex-grow-1" placeholder="@(isAuthorized ? "Athlete Name(s) (Optional)\nPress Enter for next line" : "")" rows="3" readonly="@(!isAuthorized)"></textarea>
+                        <textarea asp-for="BronzeWinnerName" class="form-control form-control-custom flex-grow-1" placeholder="@(isAuthorized ? "Athlete Name(s)\nPress Enter for next line" : "")" rows="3" readonly="@(!isAuthorized)"></textarea>
                     </div>
                 </div>
             </div>
@@ -252,7 +252,7 @@
 
             // Global confirmation and progress for clearing data
             window.confirmClear = function() { 
-                if (confirm('Are you sure you want to remove all results for this event? This will reset the medal tally for the involved schools.')) { 
+                if (confirm('Are you sure you want to remove all results for this event? This will reset the medal tally for the involved areas.')) { 
                     showProgress('Clearing event data...', 'bg-danger');
                     document.getElementById('clearForm').submit(); 
                 } 

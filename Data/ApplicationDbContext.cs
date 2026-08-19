@@ -86,6 +86,8 @@ namespace SubcongMeet.Data
                 entity.Property(e => e.ParticipantName).HasColumnName("participant_name");
                 entity.Property(e => e.Role).HasColumnName("role");
                 entity.Property(e => e.SchoolName).HasColumnName("school_name");
+                entity.Property(e => e.School).HasColumnName("school");
+                entity.Property(e => e.Gender).HasColumnName("gender");
                 entity.Property(e => e.TshirtSize).HasColumnName("tshirt_size");
                 entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
                 entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");

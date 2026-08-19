@@ -247,35 +247,66 @@ namespace SubcongMeet.Controllers
 
             var allTeams = await _context.Teams.ToListAsync();
 
+            string ToProperCase(string input)
+            {
+                if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+                return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input.Trim().ToLowerInvariant());
+            }
+
+            string FormatNamesToProperCase(string? names)
+            {
+                if (string.IsNullOrWhiteSpace(names)) return string.Empty;
+                var lines = names.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                return string.Join(Environment.NewLine, lines.Select(l => ToProperCase(l)).Where(l => !string.IsNullOrEmpty(l)));
+            }
+
             eventToUpdate.GoldTeamId = model.GoldTeamId;
             eventToUpdate.SilverTeamId = model.SilverTeamId;
             eventToUpdate.BronzeTeamId = model.BronzeTeamId;
-            eventToUpdate.GoldWinnerName = model.GoldWinnerName;
-            eventToUpdate.SilverWinnerName = model.SilverWinnerName;
-            eventToUpdate.BronzeWinnerName = model.BronzeWinnerName;
+            eventToUpdate.GoldWinnerName = string.IsNullOrWhiteSpace(model.GoldWinnerName) ? null : FormatNamesToProperCase(model.GoldWinnerName);
+            eventToUpdate.SilverWinnerName = string.IsNullOrWhiteSpace(model.SilverWinnerName) ? null : FormatNamesToProperCase(model.SilverWinnerName);
+            eventToUpdate.BronzeWinnerName = string.IsNullOrWhiteSpace(model.BronzeWinnerName) ? null : FormatNamesToProperCase(model.BronzeWinnerName);
             eventToUpdate.LastUpdatedBy = User.FindFirst("FullName")?.Value ?? User.Identity?.Name;
             eventToUpdate.UpdatedAt = DateTime.UtcNow;
             eventToUpdate.Status = "Completed";
+
+            // Automatically determine gender based on event title ("boys" -> "M", "girls" -> "W", otherwise blank)
+            string autoGender = "";
+            if (!string.IsNullOrEmpty(eventToUpdate.Title))
+            {
+                if (eventToUpdate.Title.Contains("boys", StringComparison.OrdinalIgnoreCase))
+                {
+                    autoGender = "M";
+                }
+                else if (eventToUpdate.Title.Contains("girls", StringComparison.OrdinalIgnoreCase))
+                {
+                    autoGender = "W";
+                }
+            }
 
             async Task ProcessQualifiers(long? teamId, string winnerNames, string role)
             {
                 if (teamId == null || string.IsNullOrWhiteSpace(winnerNames)) return;
 
-                var teamName = allTeams.FirstOrDefault(t => t.Id == teamId)?.Name ?? "Unknown School";
+                var teamName = allTeams.FirstOrDefault(t => t.Id == teamId)?.Name ?? "Unknown Area";
                 var names = winnerNames.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
                 foreach (var name in names)
                 {
-                    var cleanName = name.Trim();
+                    var cleanName = ToProperCase(name);
                     if (string.IsNullOrEmpty(cleanName)) continue;
 
+                    var cleanNameLower = cleanName.ToLower();
                     var existing = await _context.EventQualifiers
-                        .FirstOrDefaultAsync(q => q.EventId == model.Id && q.ParticipantName == cleanName);
+                        .FirstOrDefaultAsync(q => q.EventId == model.Id && 
+                            (q.ParticipantName == cleanName || q.ParticipantName.ToLower() == cleanNameLower));
 
                     if (existing != null)
                     {
+                        existing.ParticipantName = cleanName;
                         existing.SchoolName = teamName;
                         existing.Role = role;
+                        existing.Gender = autoGender;
                         existing.UpdatedAt = DateTime.UtcNow;
                     }
                     else
@@ -287,15 +318,15 @@ namespace SubcongMeet.Controllers
                             ParticipantName = cleanName,
                             SchoolName = teamName,
                             Role = role,
+                            Gender = autoGender,
                             UpdatedAt = DateTime.UtcNow
                         });
                     }
                 }
             }
 
+            // Only the gold winner is added to subcong_qualifiers
             await ProcessQualifiers(model.GoldTeamId, model.GoldWinnerName ?? string.Empty, "Athlete");
-            await ProcessQualifiers(model.SilverTeamId, model.SilverWinnerName ?? string.Empty, "Athlete");
-            await ProcessQualifiers(model.BronzeTeamId, model.BronzeWinnerName ?? string.Empty, "Athlete");
 
             await _context.SaveChangesAsync();
             await RecalculateMedalTally(); 

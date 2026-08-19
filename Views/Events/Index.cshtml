@@ -582,7 +582,7 @@
             <!-- Search, Sports and Game Status Multitask Filters -->
             <div class="filter-bar row g-2">
                 <div class="col-md-4">
-                    <input type="text" id="searchInput" class="form-control form-control-custom" placeholder="Search event title..." onkeyup="applyFilters()">
+                    <input type="text" id="searchInput" class="form-control form-control-custom" placeholder="Search event title..." oninput="applyFilters()" onkeyup="applyFilters()">
                 </div>
                 <div class="col-md-4">
                     <select id="sportFilter" class="form-select form-control-custom" onchange="applyFilters()">
@@ -740,18 +740,80 @@
     let currentDivisionFilter = 'All';
     let viewAssignedOnly = false;
 
+    function saveFilterState() {
+        const state = {
+            division: currentDivisionFilter,
+            search: document.getElementById('searchInput')?.value || '',
+            sport: document.getElementById('sportFilter')?.value || '',
+            status: document.getElementById('statusFilter')?.value || '',
+            assignedOnly: viewAssignedOnly
+        };
+        try {
+            sessionStorage.setItem('subcong_events_last_filters', JSON.stringify(state));
+        } catch (e) {}
+    }
+
+    function loadFilterState() {
+        try {
+            const saved = sessionStorage.getItem('subcong_events_last_filters');
+            if (!saved) return;
+            const state = JSON.parse(saved);
+
+            if (state.division) {
+                currentDivisionFilter = state.division;
+                $('.filter-btn').removeClass('active-filter');
+                $('.filter-btn').each(function() {
+                    const btnText = $(this).text().trim().toLowerCase();
+                    const targetDiv = state.division.toLowerCase();
+                    if (btnText === targetDiv || (targetDiv === 'all' && btnText === 'overall')) {
+                        $(this).addClass('active-filter');
+                    }
+                });
+            }
+
+            if (state.search !== undefined) {
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) searchInput.value = state.search;
+            }
+
+            if (state.sport !== undefined) {
+                const sportFilter = document.getElementById('sportFilter');
+                if (sportFilter) sportFilter.value = state.sport;
+            }
+
+            if (state.status !== undefined) {
+                const statusFilter = document.getElementById('statusFilter');
+                if (statusFilter) statusFilter.value = state.status;
+            }
+
+            if (state.assignedOnly === true) {
+                viewAssignedOnly = true;
+                let btn = document.getElementById('btnViewAssigned');
+                if (btn) {
+                    btn.style.backgroundColor = 'var(--cc-primary, #102A43)';
+                    btn.style.color = 'white';
+                    btn.innerHTML = '<i class="bi bi-collection-fill"></i> View All Events';
+                }
+            }
+        } catch (e) {
+            console.error("Error restoring filter state:", e);
+        }
+    }
+
     function toggleAssignedEvents() {
         viewAssignedOnly = !viewAssignedOnly;
         
         let btn = document.getElementById('btnViewAssigned');
-        if (viewAssignedOnly) {
-            btn.style.backgroundColor = 'var(--cc-primary, #102A43)';
-            btn.style.color = 'white';
-            btn.innerHTML = '<i class="bi bi-collection-fill"></i> View All Events';
-        } else {
-            btn.style.backgroundColor = 'transparent';
-            btn.style.color = 'var(--cc-primary, #102A43)';
-            btn.innerHTML = '<i class="bi bi-person-lines-fill"></i> View Assigned Events';
+        if (btn) {
+            if (viewAssignedOnly) {
+                btn.style.backgroundColor = 'var(--cc-primary, #102A43)';
+                btn.style.color = 'white';
+                btn.innerHTML = '<i class="bi bi-collection-fill"></i> View All Events';
+            } else {
+                btn.style.backgroundColor = 'transparent';
+                btn.style.color = 'var(--cc-primary, #102A43)';
+                btn.innerHTML = '<i class="bi bi-person-lines-fill"></i> View Assigned Events';
+            }
         }
         
         applyFilters();
@@ -765,9 +827,13 @@
     }
 
     function applyFilters() {
-        var searchText = document.getElementById('searchInput').value.toLowerCase().trim();
-        var sport = document.getElementById('sportFilter').value.toLowerCase().trim();
-        var status = document.getElementById('statusFilter').value.toLowerCase().trim();
+        var searchInputElem = document.getElementById('searchInput');
+        var sportFilterElem = document.getElementById('sportFilter');
+        var statusFilterElem = document.getElementById('statusFilter');
+
+        var searchText = searchInputElem ? searchInputElem.value.toLowerCase().trim() : '';
+        var sport = sportFilterElem ? sportFilterElem.value.toLowerCase().trim() : '';
+        var status = statusFilterElem ? statusFilterElem.value.toLowerCase().trim() : '';
         var visibleCount = 0;
 
         $('.event-row').each(function() {
@@ -825,6 +891,13 @@
             $('#noEventsRow').hide();
             $('#eventsTable').show();
         }
+
+        saveFilterState();
     }
+
+    $(document).ready(function() {
+        loadFilterState();
+        applyFilters();
+    });
 </script>
 }

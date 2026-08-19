@@ -243,7 +243,7 @@
         @if (Model.Any()) {
             <div class="filter-bar row g-3 m-0">
                 <div class="col-md-4">
-                    <input type="text" id="searchEventInput" class="form-control form-control-custom" placeholder="Search event title..." onkeyup="filterManageEvents()">
+                    <input type="text" id="searchEventInput" class="form-control form-control-custom" placeholder="Search event title..." oninput="filterManageEvents()" onkeyup="filterManageEvents()">
                 </div>
                 <div class="col-md-4">
                     <select id="divisionFilter" class="form-select form-control-custom" onchange="filterManageEvents()">
@@ -338,17 +338,52 @@
             } 
         } 
 
+        function saveManageEventsFilterState() {
+            try {
+                const state = {
+                    search: document.getElementById('searchEventInput')?.value || '',
+                    division: document.getElementById('divisionFilter')?.value || '',
+                    sport: document.getElementById('sportFilter')?.value || ''
+                };
+                sessionStorage.setItem('subcong_manage_events_filters', JSON.stringify(state));
+            } catch (e) {}
+        }
+
+        function loadManageEventsFilterState() {
+            try {
+                const saved = sessionStorage.getItem('subcong_manage_events_filters');
+                if (!saved) return;
+                const state = JSON.parse(saved);
+                if (state.search !== undefined) {
+                    const input = document.getElementById('searchEventInput');
+                    if (input) input.value = state.search;
+                }
+                if (state.division !== undefined) {
+                    const divSelect = document.getElementById('divisionFilter');
+                    if (divSelect) divSelect.value = state.division;
+                }
+                if (state.sport !== undefined) {
+                    const sportSelect = document.getElementById('sportFilter');
+                    if (sportSelect) sportSelect.value = state.sport;
+                }
+            } catch (e) {}
+        }
+
         function filterManageEvents() {
             // Use pure Vanilla JS for better performance and to remove jQuery dependency
-            const searchText = document.getElementById('searchEventInput').value.toLowerCase();
-            const sport = document.getElementById('sportFilter').value;
-            const division = document.getElementById('divisionFilter').value;
+            const searchInput = document.getElementById('searchEventInput');
+            const sportSelect = document.getElementById('sportFilter');
+            const divisionSelect = document.getElementById('divisionFilter');
+
+            const searchText = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const sport = sportSelect ? sportSelect.value : '';
+            const division = divisionSelect ? divisionSelect.value : '';
             const rows = document.querySelectorAll('.event-management-row');
 
             rows.forEach(row => {
-                const title = row.querySelector('.event-title').textContent.toLowerCase();
-                const rowSport = row.getAttribute('data-sport');
-                const rowDiv = row.getAttribute('data-division');
+                const title = row.querySelector('.event-title')?.textContent.toLowerCase() || '';
+                const rowSport = row.getAttribute('data-sport') || '';
+                const rowDiv = row.getAttribute('data-division') || '';
 
                 const matchSearch = title.includes(searchText);
                 const matchSport = sport === "" || rowSport === sport;
@@ -364,7 +399,14 @@
                     row.style.display = 'none';
                 }
             });
+
+            saveManageEventsFilterState();
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadManageEventsFilterState();
+            filterManageEvents();
+        });
 
         window.addEventListener('resize', filterManageEvents);
     </script> 
