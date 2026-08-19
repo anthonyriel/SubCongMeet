@@ -22,8 +22,23 @@
                             .ThenBy(e => e.Division)
                             .ToList();
     
-    var allWonEvents = goldEvents.Concat(silverEvents).Concat(bronzeEvents).ToList();
-    int totalMedals = allWonEvents.Count;
+    // Create a flat list of explicit medal records to fix the duplicate event/medal overlap issue
+    var medalRecords = new List<(string MedalType, string MedalBadge, string EventTitle, string Division, string WinnerName)>();
+
+    foreach(var ev in goldEvents) 
+    {
+        medalRecords.Add(("gold", "<span class='table-medal-badge text-dark fw-bold' style='background-color: var(--cc-gold, #C9A227);'>🥇 Gold</span>", ev.Title ?? "Unknown Event", ev.Division ?? "Unknown", ev.GoldWinnerName ?? "Not specified"));
+    }
+    foreach(var ev in silverEvents) 
+    {
+        medalRecords.Add(("silver", "<span class='table-medal-badge bg-secondary text-white'>🥈 Silver</span>", ev.Title ?? "Unknown Event", ev.Division ?? "Unknown", ev.SilverWinnerName ?? "Not specified"));
+    }
+    foreach(var ev in bronzeEvents) 
+    {
+        medalRecords.Add(("bronze", "<span class='table-medal-badge text-white' style='background-color: #EA580C;'>🥉 Bronze</span>", ev.Title ?? "Unknown Event", ev.Division ?? "Unknown", ev.BronzeWinnerName ?? "Not specified"));
+    }
+
+    int totalMedals = medalRecords.Count;
 
     // Helper to get local municipality logo path
     string GetMunicipalityLogoPath(string? name) {
@@ -287,7 +302,7 @@
                     </tr>
                 </thead>
                 <tbody id="recordsBody">
-                    @if (!allWonEvents.Any())
+                    @if (!medalRecords.Any())
                     {
                         <tr>
                             <td colspan="4" class="text-center py-4 text-muted">No medals recorded yet.</td>
@@ -295,33 +310,13 @@
                     }
                     else
                     {
-                        @foreach (var ev in allWonEvents) 
+                        @foreach (var record in medalRecords) 
                         {
-                            string medalType = "";
-                            string medalBadge = "";
-                            string winnerName = "";
-                            
-                            if(teamIds.Contains(ev.GoldTeamId ?? 0)) { 
-                                medalType = "gold"; 
-                                medalBadge = "<span class='table-medal-badge text-dark fw-bold' style='background-color: var(--cc-gold, #C9A227);'>🥇 Gold</span>"; 
-                                winnerName = ev.GoldWinnerName ?? "Not specified";
-                            }
-                            else if(teamIds.Contains(ev.SilverTeamId ?? 0)) { 
-                                medalType = "silver"; 
-                                medalBadge = "<span class='table-medal-badge bg-secondary text-white'>🥈 Silver</span>";
-                                winnerName = ev.SilverWinnerName ?? "Not specified";
-                            }
-                            else if(teamIds.Contains(ev.BronzeTeamId ?? 0)) { 
-                                medalType = "bronze"; 
-                                medalBadge = "<span class='table-medal-badge text-white' style='background-color: #EA580C;'>🥉 Bronze</span>"; 
-                                winnerName = ev.BronzeWinnerName ?? "Not specified";
-                            }
-
-                            <tr class="record-row" data-medal="@medalType">
-                                <td class="fw-semibold" style="font-family: var(--font-body); color: var(--cc-primary, #102A43);">@ev.Title</td>
-                                <td><span class="badge bg-light text-dark border">@ev.Division</span></td>
-                                <td>@Html.Raw(medalBadge)</td>
-                                <td class="fw-bold text-dark">@winnerName</td>
+                            <tr class="record-row" data-medal="@record.MedalType">
+                                <td class="fw-semibold" style="font-family: var(--font-body); color: var(--cc-primary, #102A43);">@record.EventTitle</td>
+                                <td><span class="badge bg-light text-dark border">@record.Division</span></td>
+                                <td>@Html.Raw(record.MedalBadge)</td>
+                                <td class="fw-bold text-dark">@record.WinnerName</td>
                             </tr>
                         }
                     }
