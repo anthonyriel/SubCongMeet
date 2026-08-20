@@ -97,7 +97,7 @@
         background-color: var(--cc-background) !important; 
     }
 
-    /* Themed Page Header */
+    /* Clean Page Header matching Events page */
     .page-header {
         color: var(--cc-primary, #102A43);
         border-bottom: 3px solid var(--cc-gold, #C9A227);
@@ -108,14 +108,14 @@
         color: var(--cc-primary, #102A43);
     }
 
-    /* Animated Gradient Core Setup */
+    /* Animated Gradient Keyframes (Navy Blue <-> Burgundy) */
     @@keyframes gradientMove {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
 
-    /* Uniform Cards Styling matching Home Page Design System */
+    /* Dashboard Summary Cards - 3D Animated Navy Blue to Burgundy Gradient */
     .stat-card-clean {
         background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
@@ -125,14 +125,18 @@
         background-size: 300% 300%;
         animation: gradientMove 12s ease-in-out infinite;
         border-radius: var(--cc-radius-lg, 14px);
-        box-shadow: 0 8px 24px rgba(16, 42, 67, 0.15);
+        
+        /* 3D Pop-Up Shadows */
+        box-shadow: 0 12px 24px rgba(16, 42, 67, 0.4), 
+                    0 8px 8px rgba(16, 42, 67, 0.25), 
+                    inset 0 2px 4px rgba(255, 255, 255, 0.2), 
+                    inset 0 -3px 6px rgba(0, 0, 0, 0.3);
+        transform: translateY(-3px);
         transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+        
         color: #ffffff;
-        border: 1px solid rgba(255,255,255,0.12);
-        position: relative;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
         border-left: 5px solid var(--cc-gold-light, #E5D28A);
+        border: 1px solid rgba(255,255,255,0.12);
         padding: 1rem 1.25rem;
         display: flex;
         flex-direction: column;
@@ -141,20 +145,25 @@
         flex: 1;
         min-width: 140px;
         max-width: 260px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
 
     .stat-card-clean:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 14px 28px rgba(122, 31, 43, 0.3) !important; 
+        transform: translateY(-8px);
+        box-shadow: 0 18px 35px rgba(122, 31, 43, 0.5), 
+                    0 10px 12px rgba(122, 31, 43, 0.3), 
+                    inset 0 2px 5px rgba(255, 255, 255, 0.3), 
+                    inset 0 -3px 6px rgba(0, 0, 0, 0.4) !important; 
         border-color: rgba(255,255,255,0.35);
     }
 
     .stat-title {
         font-family: var(--font-body, 'Inter', sans-serif);
         color: rgba(255, 255, 255, 0.8);
-        font-size: 0.72rem;
+        font-size: 0.75rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
         text-align: center;
         font-weight: 700;
     }
@@ -162,17 +171,17 @@
     .stat-value {
         font-family: var(--font-body, 'Inter', sans-serif);
         color: #ffffff;
-        font-size: 0.98rem; 
+        font-size: 1.1rem; 
         font-weight: 800;
         margin-top: 4px;
         line-height: 1.2;
         text-align: center;
     }
 
-    /* Division Filter Tabs matching Home Page */
+    /* Division Filter Tabs - 3D Pop Style */
     .division-filters {
         display: flex;
-        gap: 8px;
+        gap: 12px;
         margin-bottom: 1.5rem;
         flex-wrap: wrap;
     }
@@ -184,38 +193,51 @@
         font-family: var(--font-body, 'Inter', sans-serif);
         font-weight: 700;
         text-transform: uppercase;
-        padding: 7px 18px;
-        font-size: 0.8rem;
+        padding: 8px 22px;
         border-radius: 50px;
-        transition: var(--cc-transition, all 0.25s ease);
-        box-shadow: 0 2px 6px rgba(16, 42, 67, 0.04);
+        font-size: 0.85rem;
         backdrop-filter: blur(4px);
+        
+        box-shadow: 0 6px 12px rgba(16, 42, 67, 0.15), 
+                    0 3px 4px rgba(16, 42, 67, 0.1), 
+                    inset 0 2px 3px rgba(255, 255, 255, 0.8), 
+                    inset 0 -2px 4px rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
+        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     .filter-btn:hover { 
         background: linear-gradient(135deg, rgba(226, 232, 240, 1) 0%, rgba(203, 213, 225, 1) 100%);
         color: var(--cc-primary-dark, #0B1F33); 
+        box-shadow: 0 8px 16px rgba(16, 42, 67, 0.2), 
+                    0 4px 6px rgba(16, 42, 67, 0.15), 
+                    inset 0 2px 3px rgba(255, 255, 255, 0.9), 
+                    inset 0 -2px 4px rgba(0, 0, 0, 0.08);
+        transform: translateY(-4px);
     }
 
     .filter-btn.active-filter { 
         background: linear-gradient(135deg, var(--cc-primary, #102A43) 0%, var(--cc-secondary, #7A1F2B) 100%);
         background-size: 200% 100%;
         border-color: rgba(255,255,255,0.2); 
-        color: var(--cc-white, #FFFFFF); 
-        box-shadow: 0 4px 12px rgba(122, 31, 43, 0.25); 
+        color: #ffffff; 
+        box-shadow: 0 10px 20px rgba(122, 31, 43, 0.35), 
+                    0 5px 8px rgba(122, 31, 43, 0.25), 
+                    inset 0 2px 4px rgba(255, 255, 255, 0.3), 
+                    inset 0 -3px 4px rgba(0, 0, 0, 0.3);
     }
 
     /* Minimalist Rankings Table Layout */
     .minimalist-table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0 8px;
         margin-bottom: 1rem;
-        background: white;
+        background: transparent;
         table-layout: fixed;
     }
     
-    /* Table Headers now share the animated gradient card styles */
-    .minimalist-table th {
+    .minimalist-table thead th {
         font-family: var(--font-body, 'Inter', sans-serif);
         background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
@@ -227,64 +249,87 @@
         color: #ffffff;
         font-weight: 700;
         text-transform: uppercase;
-        font-size: 0.75rem;
-        padding: 12px 8px;
-        border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-        letter-spacing: 0.3px;
+        font-size: 0.8rem;
+        padding: 14px 12px;
+        letter-spacing: 0.5px;
+        border: none;
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
     }
 
-    .minimalist-table td {
-        padding: 0.85rem 8px;
+    .minimalist-table thead th:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+    }
+    .minimalist-table thead th:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+
+    .minimalist-table tbody td {
+        padding: 1rem 12px;
         vertical-align: middle;
-        border-bottom: 1px solid #dee2e6;
         font-family: var(--font-body, 'Inter', sans-serif);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        border-top: 1px solid rgba(255, 255, 255, 0.4);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     }
 
-    /* Dynamic Alternating Zebra Contrast with Theme Tint */
+    .minimalist-table tbody td:first-child {
+        border-left: 1px solid rgba(255, 255, 255, 0.4);
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+    }
+    .minimalist-table tbody td:last-child {
+        border-right: 1px solid rgba(0, 0, 0, 0.05);
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+
+    /* Alternating Floating Rows for Rankings */
     .minimalist-table tbody tr {
-        background-color: #ffffff;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 6px 16px rgba(16, 42, 67, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    }
+
+    .minimalist-table tbody tr:nth-child(odd) {
+        background: rgba(255, 255, 255, 0.65);
     }
 
     .minimalist-table tbody tr:nth-child(even) {
-        background-color: rgba(122, 31, 43, 0.03); /* Slight burgundy/navy theme tint for rows */
+        background: rgba(122, 31, 43, 0.08);
     }
 
     .minimalist-table tbody tr:hover {
-        background-color: rgba(16, 42, 67, 0.06) !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(16, 42, 67, 0.15) !important;
     }
 
-    /* Blue Glow Shadow Effect for Table Container */
-    .table-shadow-blue {
-        border: 1px solid rgba(16, 42, 67, 0.15) !important;
-        box-shadow: 0 10px 30px rgba(16, 42, 67, 0.08) !important;
-        border-radius: var(--cc-radius-lg, 14px);
-        overflow: hidden;
-    }
+    /* Medal Text Formatting */
+    .medal-text-gold { color: var(--cc-gold, #C9A227); font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .medal-text-silver { color: #64748B; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .medal-text-bronze { color: #EA580C; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
-    /* Medal Text Colors */
-    .medal-text-gold { color: var(--cc-gold, #C9A227); font-weight: 800; }
-    .medal-text-silver { color: #64748B; font-weight: 800; }
-    .medal-text-bronze { color: #C2410C; font-weight: 800; }
-
-    /* Solid White Sidebar Container Card */
+    /* Transparent Sidebar Container Card */
     .updates-sidebar-card {
-        background: #ffffff !important;
-        border: 1px solid rgba(16, 42, 67, 0.12) !important;
-        box-shadow: 0 8px 24px rgba(16, 42, 67, 0.08) !important;
-        border-top: 4px solid var(--cc-gold, #C9A227) !important;
-        border-radius: var(--cc-radius-lg, 14px);
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-top: none !important;
         color: var(--cc-text, #17202A) !important;
-        padding: 1.5rem;
+        padding: 0;
         height: 100%;
     }
 
-    /* Gradient Feed Item Cards that Pop-up on White Background */
+    /* Clickable Gradient Feed Item Cards with Animated Background */
     .feed-item {
+        display: block;
+        text-decoration: none !important;
         background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
             rgba(11, 31, 51, var(--card-opacity)) 65%, 
@@ -295,32 +340,38 @@
         border-radius: var(--cc-radius-md, 10px);
         border-left: 5px solid var(--cc-gold, #C9A227) !important;
         padding: 1.15rem; 
-        box-shadow: 0 6px 18px rgba(16, 42, 67, 0.18);
+        
+        box-shadow: 0 10px 20px rgba(16, 42, 67, 0.25), 
+                    inset 0 2px 4px rgba(255, 255, 255, 0.2), 
+                    inset 0 -3px 5px rgba(0, 0, 0, 0.25);
         margin-bottom: 1.15rem;
-        color: #ffffff;
-        border: 1px solid rgba(255,255,255,0.12);
+        color: #ffffff !important;
+        border: 1px solid rgba(255,255,255,0.15);
+        transform: translateY(-2px);
         transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
+        cursor: pointer;
     }
 
     .feed-item:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 24px rgba(122, 31, 43, 0.3) !important; 
-        border-color: rgba(255,255,255,0.35);
+        transform: translateY(-6px);
+        box-shadow: 0 16px 30px rgba(122, 31, 43, 0.45), 
+                    inset 0 2px 5px rgba(255, 255, 255, 0.3) !important; 
+        border-color: rgba(255,255,255,0.4);
     }
     
     .feed-title { 
         font-family: var(--font-body, 'Inter', sans-serif); 
         color: #ffffff !important; 
-        font-size: 0.9rem; 
+        font-size: 0.95rem; 
         font-weight: 700;
         margin-bottom: 3px; 
     }
 
     .feed-time { 
-        color: rgba(255,255,255,0.8) !important; 
-        font-size: 0.7rem; 
+        color: rgba(255,255,255,0.85) !important; 
+        font-size: 0.73rem; 
         font-weight: 600; 
     }
 
@@ -330,11 +381,11 @@
         font-weight: 700; 
         text-transform: uppercase;
         margin-bottom: 8px; 
-        letter-spacing: 0.3px;
+        letter-spacing: 0.5px;
     }
     
     .medal-text { 
-        font-size: 0.82rem; 
+        font-size: 0.85rem; 
         color: #ffffff !important; 
         display: flex; 
         align-items: center; 
@@ -356,23 +407,41 @@
             font-size: 0.80rem !important; 
         }
 
-        .stat-value { font-size: 0.85rem; }
+        .division-filters {
+            flex-wrap: nowrap !important;
+            gap: 8px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+        }
+        .filter-btn {
+            flex: 1;
+            font-size: 0.75rem;
+            padding: 8px 10px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .stat-value { font-size: 0.9rem; }
         .stat-title { font-size: 0.65rem; letter-spacing: 0px; }
-        .stat-card-clean { padding: 0.75rem; border-left-width: 4px; max-width: 100%; }
+        .stat-card-clean { padding: 0.85rem; border-left-width: 4px; max-width: 100%; }
         
-        .minimalist-table th, .minimalist-table td {
-            padding: 10px 4px !important;
+        .minimalist-table thead th, 
+        .minimalist-table tbody td {
+            padding: 10px 6px !important;
             font-size: 0.78rem !important;
         }
         .school-name-text {
             font-size: 0.82rem !important;
         }
+
+        .feed-item {
+            margin-left: 0;
+            margin-right: 0;
+        }
     }
 
     @@media (max-width: 576px) {
-        .division-filters {
-            justify-content: flex-start;
-        }
         .filter-btn {
             text-align: center;
             font-size: 0.78rem;
@@ -397,7 +466,7 @@
         <!-- Main Standings Board Section -->
         <div class="col-12 col-lg-8 d-flex flex-column">
             
-            <!-- Dashboard Status Cards -->
+            <!-- Dashboard Status Metric Cards (3D Navy-Burgundy FX) -->
             <div class="d-flex justify-content-center gap-2 gap-md-3 mb-4 w-100">
                 <div class="stat-card-clean">
                     <div class="stat-title">Last Update</div>
@@ -413,24 +482,24 @@
                 <h4 class="mb-0 fw-bold" style="font-family: var(--font-body); color: var(--cc-primary);">Leaderboard</h4>
             </div>
 
-            <!-- Division & Overall Selection Tabs -->
+            <!-- Division & Overall Selection Tabs (Rearranged Succession: Overall -> Elementary -> Secondary) -->
             <div class="division-filters">
-                <button class="filter-btn active-filter" onclick="setDivisionFilter('Secondary', this)">Secondary</button>
+                <button class="filter-btn active-filter" onclick="setDivisionFilter('Overall', this)">Overall</button>
                 <button class="filter-btn" onclick="setDivisionFilter('Elementary', this)">Elementary</button>
-                <button class="filter-btn" onclick="setDivisionFilter('Overall', this)">Overall</button>
+                <button class="filter-btn" onclick="setDivisionFilter('Secondary', this)">Secondary</button>
             </div>
 
             <div class="flex-grow-1 p-0 bg-transparent border-0 shadow-none">
                 @if(!Model.Any())
                 {
-                    <div class="text-center py-5 bg-white rounded shadow-sm">
+                    <div class="text-center py-5 rounded shadow-sm" style="background: rgba(255,255,255,0.4); backdrop-filter: blur(10px);">
                         <i class="bi bi-trophy" style="font-size: 3rem; color: var(--cc-text-muted);"></i>
                         <p class="mt-3 text-muted fw-bold">No recorded entries yet. The games have not started.</p>
                     </div>
                 }
                 else
                 {
-                    <div class="table-responsive bg-white rounded table-shadow-blue p-0 p-md-0">
+                    <div class="table-responsive p-0">
                         <table class="minimalist-table w-100 mb-0" id="rankingsTable">
                             <thead>
                                 <tr>
@@ -472,7 +541,7 @@
                                     int totalMedals = overall.Total;
                                     string teamColor = GetHouseText(overall.Municipality);
 
-                                    <tr class="ranking-row" data-division="Overall" data-gold="@overall.Gold" data-silver="@overall.Silver" data-bronze="@overall.Bronze" style="display: none;">
+                                    <tr class="ranking-row" data-division="Overall" data-gold="@overall.Gold" data-silver="@overall.Silver" data-bronze="@overall.Bronze">
                                         <td class="text-center fw-bold rank-cell" style="color: var(--cc-primary); font-size: 1rem;"></td>
                                         <td>
                                             <span class="fw-bold school-name-text" data-default-color="@teamColor" style="color: @teamColor; font-size: 0.95rem;">
@@ -488,7 +557,7 @@
                             </tbody>
                         </table>
                         
-                        <div id="noRankingsRow" class="text-center py-5 bg-white mt-0" style="display: none;">
+                        <div id="noRankingsRow" class="text-center py-5 rounded mt-0" style="display: none; background: rgba(255,255,255,0.4); backdrop-filter: blur(10px);">
                             <p class="mb-0 text-muted fw-bold">No ranking statistics recorded for this category yet.</p>
                         </div>
                     </div>
@@ -496,7 +565,7 @@
             </div>
         </div>
 
-        <!-- Sidebar Updates Feed Section (Solid White Background Container) -->
+        <!-- Sidebar Updates Feed Section (Transparent Container & Pop-out Cards) -->
         <div class="col-12 col-lg-4">
             <div class="updates-sidebar-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -515,10 +584,11 @@
                     {
                         @foreach (var game in recentResults)
                         {
-                            <div class="feed-item">
-                                <div class="d-flex justify-content-between align-items-start mb-1">
+                            <!-- Clickable Event Card -> Routes to SubmitResults with returnUrl query parameter -->
+                            <a asp-controller="Events" asp-action="SubmitResults" asp-route-id="@game.Id" asp-route-returnUrl="@Url.Action("Index", "Rankings")" class="feed-item">
+                                <div class="d-flex justify-content-between align-items-start mb-1 gap-2">
                                     <h6 class="feed-title mb-0">@game.Title</h6>
-                                    <small class="feed-time">@FormatToPst(game.UpdatedAt, "h:mm tt")</small>
+                                    <small class="feed-time text-nowrap">@FormatToPst(game.UpdatedAt, "MMM dd, yyyy • h:mm tt")</small>
                                 </div>
                                 <div class="feed-div">@(game.Division ?? "Secondary")</div>
                                 
@@ -539,7 +609,7 @@
                                         <div class="medal-text"><span class="medal-icon">🥉</span> <span class="fw-bold">@bronzeIdentifier</span><span class="ms-1 opacity-75" style="font-size: 0.75rem;">(Bronze)</span></div>
                                     }
                                 </div>
-                            </div>
+                            </a>
                         }
                     }
                 </div>
@@ -550,14 +620,15 @@
 
 @section Scripts {
 <script>
-    const divisionsList = ['Secondary', 'Elementary', 'Overall'];
+    // Updated Division Rotation Order: Overall -> Elementary -> Secondary
+    const divisionsList = ['Overall', 'Elementary', 'Secondary'];
     let currentDivIndex = 0;
     let autoTimer = null;
     let idleTimer = null;
     let isAutoRotating = true;
 
     $(document).ready(function() {
-        let savedDivision = 'Secondary';
+        let savedDivision = 'Overall';
         try {
             const stored = sessionStorage.getItem('subcong_rankings_division');
             if (stored && divisionsList.includes(stored)) savedDivision = stored;
@@ -571,7 +642,7 @@
         // Start automatic rotation immediately on page load
         startAutoRotation();
 
-        // Listen for user interactions anywhere on the page to reset the 20-second idle timer
+        // Reset the idle timer on user interactions
         $(document).on('mousemove keypress touchstart', function() {
             if (!isAutoRotating) {
                 resetIdleTimer();
@@ -588,10 +659,9 @@
         });
     }
 
-    // Called when a user clicks one of the leaderboard buttons
     function setDivisionFilter(division, btnElement) {
         isAutoRotating = false;
-        clearInterval(autoTimer); // Stop auto-rotation immediately
+        clearInterval(autoTimer);
         
         currentDivIndex = divisionsList.findIndex(d => d.toLowerCase() === division.toLowerCase());
         
@@ -603,11 +673,9 @@
         
         applyDivisionFilter(division);
         
-        // Start the 10-second idle timer waiting for no movement
         resetIdleTimer();
     }
 
-    // Core function to rotate the tables every 10 seconds
     function startAutoRotation() {
         isAutoRotating = true;
         clearInterval(autoTimer);
@@ -620,7 +688,6 @@
         }, 10000);
     }
 
-    // Controls the 15-second timeout. If it finishes without being reset by movement, it auto-rotates again.
     function resetIdleTimer() {
         clearTimeout(idleTimer);
         idleTimer = setTimeout(function() {
@@ -628,7 +695,6 @@
         }, 15000); 
     }
 
-    // Core table display logic (unchanged from original processing)
     function applyDivisionFilter(division) {
         let visibleCount = 0;
         let runningCount = 1;
@@ -650,7 +716,7 @@
                 let bronze = parseInt($(this).data('bronze')) || 0;
 
                 if (gold === prevGold && silver === prevSilver && bronze === prevBronze) {
-                    // Tie scenario encountered - displayRank remains the same
+                    // Tie scenario encountered - retain same displayRank
                 } else {
                     displayRank = runningCount;
                 }
@@ -681,10 +747,11 @@
             }
         });
 
-        // Dynamic Striping Fix for Visibility Shifts matching theme tint
-        $('.ranking-row:visible').each(function(index) {
-            $(this).css('background-color', (index % 2 === 1) ? 'rgba(122, 31, 43, 0.03)' : '#ffffff');
-        });
+        if ($(window).width() > 768) {
+            $('.ranking-row:visible').each(function(index) {
+                $(this).css('background', (index % 2 === 1) ? 'rgba(122, 31, 43, 0.08)' : 'rgba(255, 255, 255, 0.65)');
+            });
+        }
 
         if (visibleCount === 0) {
             $('#noRankingsRow').show();

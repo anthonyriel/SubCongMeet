@@ -221,18 +221,19 @@ namespace SubcongMeet.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> SubmitResults(int id)
+        public async Task<IActionResult> SubmitResults(int id, string? returnUrl = null)
         {
             var ev = await _context.Events.FindAsync(id);
             if (ev == null) return NotFound();
 
             ViewBag.Teams = await _context.Teams.Where(t => t.Division == ev.Division).OrderBy(t => t.Name).ToListAsync();
+            ViewBag.ReturnUrl = returnUrl;
             return View(ev);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SubmitResults(Event model)
+        public async Task<IActionResult> SubmitResults(Event model, string? returnUrl = null)
         {
             var eventToUpdate = await _context.Events.FindAsync(model.Id);
             if (eventToUpdate == null) return NotFound();
@@ -332,12 +333,12 @@ namespace SubcongMeet.Controllers
             await RecalculateMedalTally(); 
 
             TempData["SuccessMessage"] = "Official results published successfully.";
-            return RedirectToAction(nameof(SubmitResults), new { id = model.Id });
+            return RedirectToAction(nameof(SubmitResults), new { id = model.Id, returnUrl = returnUrl });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ClearResults(int id) 
+        public async Task<IActionResult> ClearResults(int id, string? returnUrl = null) 
         {
             var eventToClear = await _context.Events.FindAsync(id);
             if (eventToClear == null) return NotFound();
@@ -373,7 +374,7 @@ namespace SubcongMeet.Controllers
             await RecalculateMedalTally(); 
 
             TempData["SuccessMessage"] = "Event data cleared successfully.";
-            return RedirectToAction(nameof(SubmitResults), new { id = id });
+            return RedirectToAction(nameof(SubmitResults), new { id = id, returnUrl = returnUrl });
         }
     }
 }

@@ -2,13 +2,14 @@
 @{
     ViewData["Title"] = "Submit Results";
     var teams = ViewBag.Teams as List<SubcongMeet.Models.Team> ?? new List<SubcongMeet.Models.Team>();
+    var returnUrl = ViewBag.ReturnUrl as string;
     
-    // FIX: Retrieve the numerical CoordinatorId from the user's claims
+    // Retrieve the numerical CoordinatorId from the user's claims
     var currentCoordinatorIdStr = User.FindFirst("CoordinatorId")?.Value 
         ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
         ?? User.FindFirst("Id")?.Value;
 
-    // FIX: Compare the Model's CoordinatorId against the Claim's CoordinatorId instead of the Username
+    // Compare the Model's CoordinatorId against the Claim's CoordinatorId instead of the Username
     bool isAuthorized = User.Identity?.IsAuthenticated == true && 
         (User.IsInRole("Admin") || (Model.CoordinatorId != null && Model.CoordinatorId.ToString() == currentCoordinatorIdStr));
 }
@@ -117,8 +118,16 @@
 
 <div class="container py-4 py-md-5">
     
+    <!-- Dynamic Back Button: Reloads Rankings if navigated from Recent Updates, otherwise returns to Events -->
     <div class="mb-4">
-        <a asp-action="Index" class="text-decoration-none text-muted fw-bold" style="font-size: 0.85rem; font-family: var(--font-body);"><i class="bi bi-arrow-left"></i> Back to Events</a>
+        @if (!string.IsNullOrEmpty(returnUrl))
+        {
+            <a href="@returnUrl" class="text-decoration-none text-muted fw-bold" style="font-size: 0.85rem; font-family: var(--font-body);"><i class="bi bi-arrow-left"></i> Back to Rankings</a>
+        }
+        else
+        {
+            <a asp-action="Index" class="text-decoration-none text-muted fw-bold" style="font-size: 0.85rem; font-family: var(--font-body);"><i class="bi bi-arrow-left"></i> Back to Events</a>
+        }
     </div>
 
     @if (TempData["SuccessMessage"] != null)
@@ -163,6 +172,8 @@
         
         <form id="submitResultsForm" asp-action="SubmitResults" method="post">
             <input type="hidden" asp-for="Id" />
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
             <div class="row g-4 mb-5">
                 <!-- GOLD -->
                 <div class="col-md-4">
@@ -205,7 +216,6 @@
                     <div class="d-flex gap-2 flex-wrap mb-3 mb-sm-0">
                         <button type="button" class="btn btn-outline-danger fw-bold rounded-pill px-4" onclick="confirmClear()">Clear All Data</button>
                         
-                        @* Only show Manage Qualifier if there are existing results *@
                         @if (Model.GoldTeamId.HasValue || Model.SilverTeamId.HasValue || Model.BronzeTeamId.HasValue)
                         {
                             <a asp-controller="Delegation" asp-action="Manage" asp-route-eventId="@Model.Id" class="btn btn-outline-success fw-bold rounded-pill px-4">
@@ -220,7 +230,10 @@
             }
         </form>
         @if (isAuthorized) { 
-            <form id="clearForm" asp-action="ClearResults" method="post" style="display:none;"><input type="hidden" name="id" value="@Model.Id" /></form> 
+            <form id="clearForm" asp-action="ClearResults" method="post" style="display:none;">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+            </form> 
         }
     </div>
 </div>
