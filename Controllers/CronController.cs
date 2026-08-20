@@ -38,7 +38,7 @@ namespace SubcongMeet.Controllers
             var stopwatch = Stopwatch.StartNew();
 
             // Validate Secret Header or Query Param
-            string expectedSecret = _configuration["CronJobOrg:CronSecret"] ?? "calape-district-meet-cron-secret-2026";
+            string expectedSecret = _configuration["CronJobOrg:CronSecret"] ?? "locatu-cron-secret-2026";
             string? providedHeaderSecret = Request.Headers["X-Cron-Secret"].FirstOrDefault();
             string? providedAuthHeader = Request.Headers["Authorization"].FirstOrDefault();
             
@@ -67,7 +67,7 @@ namespace SubcongMeet.Controllers
                 var unauthorizedLog = new CronExecutionLog
                 {
                     ExecutedAt = DateTime.UtcNow,
-                    TaskName = "Unauthorized Trigger Attempt",
+                    TaskName = "Subcong: Unauthorized Trigger Attempt",
                     Status = "Failed",
                     StatusCode = 401,
                     ExecutionTimeMs = stopwatch.Elapsed.TotalMilliseconds,
@@ -137,17 +137,17 @@ namespace SubcongMeet.Controllers
                 taskSummary.Add($"SystemHealthCheck Error: {ex.Message}");
             }
 
-            // Task 3: Maintenance Cleanup (Delete logs older than 30 days)
+            // Task 3: Maintenance Cleanup (Delete logs older than 5 days)
             try
             {
-                var cutoff = DateTime.UtcNow.AddDays(-30);
+                var cutoff = DateTime.UtcNow.AddDays(-5);
                 var oldLogs = await _context.CronExecutionLogs.Where(l => l.ExecutedAt < cutoff).ToListAsync();
                 if (oldLogs.Any())
                 {
                     _context.CronExecutionLogs.RemoveRange(oldLogs);
                     await _context.SaveChangesAsync();
                 }
-                taskSummary.Add($"LogCleanup: Purged {oldLogs.Count} execution log entries older than 30 days.");
+                taskSummary.Add($"LogCleanup: Purged {oldLogs.Count} execution log entries older than 5 days.");
             }
             catch (Exception ex)
             {
@@ -161,7 +161,7 @@ namespace SubcongMeet.Controllers
             var execLog = new CronExecutionLog
             {
                 ExecutedAt = DateTime.UtcNow,
-                TaskName = "Automated Cron Trigger (cron-job.org)",
+                TaskName = "Subcong: Automated Cron Trigger",
                 Status = isOverallSuccess ? "Success" : "Warning",
                 StatusCode = 200,
                 ExecutionTimeMs = durationMs,
@@ -200,7 +200,7 @@ namespace SubcongMeet.Controllers
             return Ok(new
             {
                 status = "Online",
-                service = "Calape District Meet Cron Webhook",
+                service = "Subcong Meet Cron Webhook",
                 timestamp = DateTime.UtcNow,
                 cronJobOrgCompatible = true
             });

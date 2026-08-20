@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SubcongMeet.Models
 {
-    [Table("dist_cron_execution_logs")]
+    [Table("subcong_cron_execution_logs")]
     public class CronExecutionLog
     {
         [Key]
