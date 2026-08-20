@@ -14,7 +14,7 @@ namespace SubcongMeet.Data
         public DbSet<Event> Events { get; set; }
         public DbSet<MedalTally> MedalTallies { get; set; }
         public DbSet<Coordinator> Coordinators { get; set; }
-        public DbSet<EventQualifier> EventQualifiers { get; set; } // Added
+        public DbSet<EventQualifier> EventQualifiers { get; set; } 
         public DbSet<CronExecutionLog> CronExecutionLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -95,7 +95,8 @@ namespace SubcongMeet.Data
 
             modelBuilder.Entity<CronExecutionLog>(entity =>
             {
-                entity.ToTable("dist_cron_execution_logs");
+                // CHANGED THIS LINE TO POINT TO THE NEW TABLE
+                entity.ToTable("subcong_cron_execution_logs");
                 entity.Property(e => e.Id).HasColumnName("id");
                 entity.Property(e => e.ExecutedAt).HasColumnName("executed_at");
                 entity.Property(e => e.TaskName).HasColumnName("task_name");
