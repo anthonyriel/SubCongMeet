@@ -247,7 +247,8 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select name="SchoolName" class="form-select form-control-custom" required>
+                            <!-- Updated from SchoolName to Team -->
+                            <select name="Team" class="form-select form-control-custom" required>
                                 <option value="">Select Area</option>
                                 @foreach (var team in teams) {
                                     <option value="@team.Name">@team.Name</option>
@@ -328,11 +329,12 @@
                                         <input type="text" name="qualifiers[@index].ParticipantName" value="@item.ParticipantName" class="form-control form-control-sm fw-bold" required placeholder="Full Name" />
                                     </td>
                                     <td data-label="Area">
-                                        <select name="qualifiers[@index].SchoolName" class="form-select form-select-sm" required>
+                                        <!-- Updated from qualifiers[@index].SchoolName to Team -->
+                                        <select name="qualifiers[@index].Team" class="form-select form-select-sm" required>
                                             <option value="">Select Area</option>
                                             @foreach (var team in teams)
                                             {
-                                                if (item.SchoolName == team.Name) { <option value="@team.Name" selected>@team.Name</option> }
+                                                if (item.Team == team.Name) { <option value="@team.Name" selected>@team.Name</option> }
                                                 else { <option value="@team.Name">@team.Name</option> }
                                             }
                                         </select>

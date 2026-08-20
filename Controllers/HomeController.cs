@@ -56,7 +56,7 @@ namespace SubcongMeet.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AllEventsResultsReport(List<string> sportsName, List<int> eventId, List<string> division, List<int> schoolId)
+        public async Task<IActionResult> AllEventsResultsReport(List<string> sportsName, List<int> eventId, List<string> division, List<int> teamId)
         {
             var query = _context.Events.AsQueryable();
 
@@ -75,11 +75,11 @@ namespace SubcongMeet.Controllers
                 query = query.Where(e => e.Division != null && division.Contains(e.Division));
             }
 
-            if (schoolId != null && schoolId.Any())
+            if (teamId != null && teamId.Any())
             {
-                query = query.Where(e => (e.GoldTeamId.HasValue && schoolId.Contains(e.GoldTeamId.Value)) || 
-                                       (e.SilverTeamId.HasValue && schoolId.Contains(e.SilverTeamId.Value)) || 
-                                       (e.BronzeTeamId.HasValue && schoolId.Contains(e.BronzeTeamId.Value)));
+                query = query.Where(e => (e.GoldTeamId.HasValue && teamId.Contains(e.GoldTeamId.Value)) || 
+                                       (e.SilverTeamId.HasValue && teamId.Contains(e.SilverTeamId.Value)) || 
+                                       (e.BronzeTeamId.HasValue && teamId.Contains(e.BronzeTeamId.Value)));
             }
 
             var eventsList = await query
@@ -108,7 +108,7 @@ namespace SubcongMeet.Controllers
                 .Select(d => new SelectListItem { Value = d, Text = d })
                 .ToListAsync();
 
-            ViewBag.SchoolsList = await _context.Teams
+            ViewBag.TeamsList = await _context.Teams
                 .OrderBy(t => t.Name)
                 .ToListAsync();
 
@@ -116,7 +116,7 @@ namespace SubcongMeet.Controllers
         }
 
         [Authorize(Roles = "Admin,Coordinator")]
-        public async Task<IActionResult> DistrictQualifierReport(List<string> sportsName, List<long> eventId, List<string> division, List<string> schoolName)
+        public async Task<IActionResult> DistrictQualifierReport(List<string> sportsName, List<long> eventId, List<string> division, List<string> teamName)
         {
             var joinedQuery = from q in _context.EventQualifiers
                               join e in _context.Events on q.EventId equals e.Id
@@ -137,9 +137,9 @@ namespace SubcongMeet.Controllers
                 joinedQuery = joinedQuery.Where(x => division.Contains(x.Event.Division));
             }
 
-            if (schoolName != null && schoolName.Any())
+            if (teamName != null && teamName.Any())
             {
-                joinedQuery = joinedQuery.Where(x => x.Qualifier.SchoolName != null && schoolName.Contains(x.Qualifier.SchoolName));
+                joinedQuery = joinedQuery.Where(x => x.Qualifier.Team != null && teamName.Contains(x.Qualifier.Team));
             }
 
             var rawList = await joinedQuery.ToListAsync();
@@ -181,9 +181,9 @@ namespace SubcongMeet.Controllers
                 .Select(d => new SelectListItem { Value = d, Text = d })
                 .ToListAsync();
 
-            ViewBag.SchoolNamesList = await _context.EventQualifiers
-                .Where(q => !string.IsNullOrEmpty(q.SchoolName))
-                .Select(q => q.SchoolName)
+            ViewBag.TeamNamesList = await _context.EventQualifiers
+                .Where(q => !string.IsNullOrEmpty(q.Team))
+                .Select(q => q.Team)
                 .Distinct()
                 .OrderBy(s => s)
                 .Select(s => new SelectListItem { Value = s, Text = s })
@@ -194,7 +194,7 @@ namespace SubcongMeet.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,Coordinator")]
-        public async Task<IActionResult> EditQualifiers(List<string> sportsName, List<long> eventId, List<string> division, List<string> schoolName)
+        public async Task<IActionResult> EditQualifiers(List<string> sportsName, List<long> eventId, List<string> division, List<string> teamName)
         {
             var joinedQuery = from q in _context.EventQualifiers
                               join e in _context.Events on q.EventId equals e.Id
@@ -215,9 +215,9 @@ namespace SubcongMeet.Controllers
                 joinedQuery = joinedQuery.Where(x => division.Contains(x.Event.Division));
             }
 
-            if (schoolName != null && schoolName.Any())
+            if (teamName != null && teamName.Any())
             {
-                joinedQuery = joinedQuery.Where(x => x.Qualifier.SchoolName != null && schoolName.Contains(x.Qualifier.SchoolName));
+                joinedQuery = joinedQuery.Where(x => x.Qualifier.Team != null && teamName.Contains(x.Qualifier.Team));
             }
 
             var rawList = await joinedQuery.ToListAsync();
@@ -260,9 +260,9 @@ namespace SubcongMeet.Controllers
                 .Select(d => new SelectListItem { Value = d, Text = d })
                 .ToListAsync();
 
-            ViewBag.SchoolNamesList = await _context.EventQualifiers
-                .Where(q => !string.IsNullOrEmpty(q.SchoolName))
-                .Select(q => q.SchoolName)
+            ViewBag.TeamNamesList = await _context.EventQualifiers
+                .Where(q => !string.IsNullOrEmpty(q.Team))
+                .Select(q => q.Team)
                 .Distinct()
                 .OrderBy(s => s)
                 .Select(s => new SelectListItem { Value = s, Text = s })
@@ -288,7 +288,7 @@ namespace SubcongMeet.Controllers
                     {
                         existing.EventId = q.EventId;
                         existing.ParticipantName = q.ParticipantName;
-                        existing.SchoolName = q.SchoolName;
+                        existing.Team = q.Team; 
                         existing.Role = q.Role;
                         existing.TshirtSize = q.TshirtSize;
                         existing.UpdatedAt = DateTime.UtcNow;

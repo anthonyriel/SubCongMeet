@@ -77,7 +77,7 @@ namespace SubcongMeet.Data
                 entity.Property(e => e.IsAdmin).HasColumnName("is_admin");
             });
 
-            // New Mapping for EventQualifier
+            // Mapping for EventQualifier
             modelBuilder.Entity<EventQualifier>(entity =>
             {
                 entity.ToTable("subcong_qualifiers");
@@ -85,8 +85,10 @@ namespace SubcongMeet.Data
                 entity.Property(e => e.EventId).HasColumnName("event_id");
                 entity.Property(e => e.ParticipantName).HasColumnName("participant_name");
                 entity.Property(e => e.Role).HasColumnName("role");
-                entity.Property(e => e.SchoolName).HasColumnName("school_name");
-                entity.Property(e => e.School).HasColumnName("school");
+                
+                // Maps Team property directly to the "district" column in PostgreSQL
+                entity.Property(e => e.Team).HasColumnName("district");
+                
                 entity.Property(e => e.Gender).HasColumnName("gender");
                 entity.Property(e => e.TshirtSize).HasColumnName("tshirt_size");
                 entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
@@ -95,7 +97,6 @@ namespace SubcongMeet.Data
 
             modelBuilder.Entity<CronExecutionLog>(entity =>
             {
-                // CHANGED THIS LINE TO POINT TO THE NEW TABLE
                 entity.ToTable("subcong_cron_execution_logs");
                 entity.Property(e => e.Id).HasColumnName("id");
                 entity.Property(e => e.ExecutedAt).HasColumnName("executed_at");

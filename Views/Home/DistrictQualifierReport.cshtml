@@ -15,7 +15,7 @@
     var selectedDivisions = (Context.Request.Query["division"].ToString() ?? "")
         .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .ToList();
-    var selectedSchools = (Context.Request.Query["schoolName"].ToString() ?? "")
+    var selectedDistricts = (Context.Request.Query["district"].ToString() ?? "")
         .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .ToList();
 
@@ -41,10 +41,9 @@
         return textInfo.ToTitleCase(text.ToLower());
     }
 
-    // Sort qualifiers by Division -> Sports -> Event Title -> Event Category -> Role -> Name
+    // Identical sorting sequence to the District Qualifier Report view
     var reportQualifiers = Model?
         .OrderBy(q => {
-            // 1. Sort by Division (Elementary then Secondary)
             var evt = allDbEvents.FirstOrDefault(e => e.Id == q.EventId);
             string div = evt != null ? GetEventDivision(evt) : "";
             if (div.Contains("ELEM")) return 1;
@@ -52,34 +51,59 @@
             return 3;
         })
         .ThenBy(q => {
-            // 2. Sort by Sports
             var evt = allDbEvents.FirstOrDefault(e => e.Id == q.EventId);
             return evt?.SportName ?? "";
         })
         .ThenBy(q => {
-            // 3. Sort by Event Title
+            var evt = allDbEvents.FirstOrDefault(e => e.Id == q.EventId);
+            string sport = evt?.SportName?.Trim() ?? "";
+            string title = evt?.Title?.ToLower() ?? "";
+
+            if (sport.Equals("Arnis", StringComparison.OrdinalIgnoreCase))
+            {
+                int anyoOrder = title.Contains("anyo") ? 1 : 2;
+                int genderOrder = 3;
+                if (Regex.IsMatch(title, @"\b(girls?|women'?s?)\b")) genderOrder = 1;
+                else if (Regex.IsMatch(title, @"\b(boys?|men'?s?)\b")) genderOrder = 2;
+                
+                return anyoOrder * 10 + genderOrder;
+            }
+
+            if (sport.Equals("Gymnastics", StringComparison.OrdinalIgnoreCase))
+            {
+                int disciplineOrder = title.Contains("aerobic") ? 1 : 2;
+                int genderOrder = 3;
+                if (Regex.IsMatch(title, @"\b(girls?|women'?s?)\b")) genderOrder = 1;
+                else if (Regex.IsMatch(title, @"\b(boys?|men'?s?)\b")) genderOrder = 2;
+                
+                return disciplineOrder * 10 + genderOrder;
+            }
+
+            if (Regex.IsMatch(title, @"\b(girls?|women'?s?)\b")) return 1;
+            if (Regex.IsMatch(title, @"\b(boys?|men'?s?)\b")) return 2;
+            return 3; 
+        })
+        .ThenBy(q => {
             var evt = allDbEvents.FirstOrDefault(e => e.Id == q.EventId);
             return evt?.Title ?? "";
         })
         .ThenBy(q => {
-            // 4. Sort by Event Category (Girls, Boys, Mixed)
-            var evt = allDbEvents.FirstOrDefault(e => e.Id == q.EventId);
-            string title = evt?.Title?.ToLower() ?? "";
-            if (title.Contains("girls")) return 1;
-            if (title.Contains("boys")) return 2;
-            if (title.Contains("mixed")) return 3;
-            return 4;
-        })
-        .ThenBy(q => {
-            // 5. Sort by Roles (Athletes -> Chaperone -> Assistant Coach -> Coach)
             string r = q.Role?.ToLower() ?? "";
             if (r.Contains("athlete")) return 1;
-            if (r.Contains("chaperon")) return 2; // Catches chaperone as well
+            if (r.Contains("coach")) return 2;
             if (r.Contains("assistant coach")) return 3;
-            if (r.Contains("coach")) return 4;
+            if (r.Contains("chaperon") || r.Contains("chaperone")) return 4;
             return 5;
         })
-        .ThenBy(q => q.ParticipantName) // 6. Sort by Name
+        .ThenBy(q => {
+            var evt = allDbEvents.FirstOrDefault(e => e.Id == q.EventId);
+            if (evt != null && !string.IsNullOrEmpty(q.ParticipantName)) {
+                if (!string.IsNullOrEmpty(evt.GoldWinnerName) && evt.GoldWinnerName.Contains(q.ParticipantName)) return 1;
+                if (!string.IsNullOrEmpty(evt.SilverWinnerName) && evt.SilverWinnerName.Contains(q.ParticipantName)) return 2;
+                if (!string.IsNullOrEmpty(evt.BronzeWinnerName) && evt.BronzeWinnerName.Contains(q.ParticipantName)) return 3;
+            }
+            return 4;
+        })
         .ToList() ?? new List<SubcongMeet.Models.EventQualifier>();
 
     SubcongMeet.Models.Event? GetEvent(long eventId)
@@ -91,12 +115,12 @@
     foreach (var q in reportQualifiers)
     {
         string pName = q.ParticipantName?.Trim() ?? "";
-        string sName = q.SchoolName?.Trim() ?? "";
+        string dName = q.Team?.Trim() ?? "";
         string tSize = q.TshirtSize?.Trim() ?? "";
         
         if (!string.IsNullOrEmpty(pName) && !string.IsNullOrEmpty(tSize) && !tSize.Equals("N/A", StringComparison.OrdinalIgnoreCase))
         {
-            string key = $"{pName}_{sName}";
+            string key = $"{pName}_{dName}";
             if (!globalTshirtSizes.ContainsKey(key))
             {
                 globalTshirtSizes[key] = tSize;
@@ -106,7 +130,7 @@
 
     int uniqueQualifiersCount = reportQualifiers
         .Where(q => !string.IsNullOrWhiteSpace(q.ParticipantName))
-        .Select(q => $"{q.ParticipantName?.Trim().ToLower()}_{q.SchoolName?.Trim().ToLower()}")
+        .Select(q => $"{q.ParticipantName?.Trim().ToLower()}_{q.Team?.Trim().ToLower()}")
         .Distinct()
         .Count();
 
@@ -143,11 +167,11 @@
         lastRenderedEvent = eventTitle;
 
         string pNameKey = qualifier.ParticipantName?.Trim() ?? "";
-        string sNameKey = qualifier.SchoolName?.Trim() ?? "";
-        string globalKey = $"{pNameKey}_{sNameKey}";
+        string dNameKey = qualifier.Team?.Trim() ?? "";
+        string globalKey = $"{pNameKey}_{dNameKey}";
         string bestTshirtSize = globalTshirtSizes.ContainsKey(globalKey) ? globalTshirtSizes[globalKey] : "N/A";
 
-        string globalParticipantKey = $"{qualifier.ParticipantName?.Trim().ToLower()}_{qualifier.SchoolName?.Trim().ToLower()}";
+        string globalParticipantKey = $"{qualifier.ParticipantName?.Trim().ToLower()}_{qualifier.Team?.Trim().ToLower()}";
         bool isDuplicateTshirt = !seenParticipantsForTshirt.Add(globalParticipantKey);
 
         string tShirtDisplay = isDuplicateTshirt ? "-" : bestTshirtSize;
@@ -158,7 +182,7 @@
             </td>
             <td class="text-start"><div class="event-title-clamp">@displayEvent</div></td>
             <td class="text-start" style="white-space: nowrap;"><strong>@(string.IsNullOrEmpty(qualifier.ParticipantName) ? "N/A" : ToProperCase(qualifier.ParticipantName))</strong></td>
-            <td class="text-start" style="white-space: nowrap;">@(string.IsNullOrEmpty(qualifier.SchoolName) ? "N/A" : qualifier.SchoolName)</td>
+            <td class="text-start" style="white-space: nowrap;">@(string.IsNullOrEmpty(qualifier.Team) ? "N/A" : qualifier.Team)</td>
             <td class="text-start">@roleDisplay</td>
             <td class="text-center">@tShirtDisplay</td>
         </tr>
@@ -183,7 +207,7 @@
         string sportName = evt?.SportName ?? "N/A";
         string div = evt != null ? GetEventDivision(evt) : "";
         
-        string eventParticipantKey = $"{div}_{sportName}_{qualifier.ParticipantName?.Trim().ToLower()}_{qualifier.SchoolName?.Trim().ToLower()}_{qualifier.Role?.Trim().ToLower()}";
+        string eventParticipantKey = $"{div}_{sportName}_{qualifier.ParticipantName?.Trim().ToLower()}_{qualifier.Team?.Trim().ToLower()}_{qualifier.Role?.Trim().ToLower()}";
         if (!seenParticipantsForList.Add(eventParticipantKey)) return; 
 
         string roleDisplay = !string.IsNullOrEmpty(qualifier.Role) 
@@ -194,11 +218,11 @@
         lastRenderedSport_PL = sportName;
 
         string pNameKey = qualifier.ParticipantName?.Trim() ?? "";
-        string sNameKey = qualifier.SchoolName?.Trim() ?? "";
-        string globalKey = $"{pNameKey}_{sNameKey}";
+        string dNameKey = qualifier.Team?.Trim() ?? "";
+        string globalKey = $"{pNameKey}_{dNameKey}";
         string bestTshirtSize = globalTshirtSizes.ContainsKey(globalKey) ? globalTshirtSizes[globalKey] : "N/A";
 
-        string globalParticipantKey = $"{qualifier.ParticipantName?.Trim().ToLower()}_{qualifier.SchoolName?.Trim().ToLower()}";
+        string globalParticipantKey = $"{qualifier.ParticipantName?.Trim().ToLower()}_{qualifier.Team?.Trim().ToLower()}";
         bool isDuplicateTshirt = !seenParticipantsForTshirt_PL.Add(globalParticipantKey);
         string tShirtDisplay = isDuplicateTshirt ? "-" : bestTshirtSize;
 
@@ -207,7 +231,7 @@
                 @if (!string.IsNullOrEmpty(displaySport)) { <strong>@displaySport</strong> }
             </td>
             <td class="text-start" style="white-space: nowrap;"><strong>@(string.IsNullOrEmpty(qualifier.ParticipantName) ? "N/A" : ToProperCase(qualifier.ParticipantName))</strong></td>
-            <td class="text-start" style="white-space: nowrap;">@(string.IsNullOrEmpty(qualifier.SchoolName) ? "N/A" : qualifier.SchoolName)</td>
+            <td class="text-start" style="white-space: nowrap;">@(string.IsNullOrEmpty(qualifier.Team) ? "N/A" : qualifier.Team)</td>
             <td class="text-start">@roleDisplay</td>
             <td class="text-center">@tShirtDisplay</td>
         </tr>
@@ -368,14 +392,14 @@
                     </div>
 
                     <div class="col-md-3">
-                        <label class="form-label small fw-bold mb-1">Filter by School Name</label>
-                        <select name="schoolName" class="form-select select2-multi" multiple="multiple" data-placeholder="-- All Schools --">
-                            @if (ViewBag.SchoolNamesList != null)
+                        <label class="form-label small fw-bold mb-1">Filter by District</label>
+                        <select name="district" class="form-select select2-multi" multiple="multiple" data-placeholder="-- All Districts --">
+                            @if (ViewBag.DistrictsList != null)
                             {
-                                foreach (var sch in ViewBag.SchoolNamesList)
+                                foreach (var dist in ViewBag.DistrictsList)
                                 {
-                                    if (selectedSchools.Contains(sch.Value)) { <option value="@sch.Value" selected>@sch.Text</option> }
-                                    else { <option value="@sch.Value">@sch.Text</option> }
+                                    if (selectedDistricts.Contains(dist.Value)) { <option value="@dist.Value" selected>@dist.Text</option> }
+                                    else { <option value="@dist.Value">@dist.Text</option> }
                                 }
                             }
                         </select>
@@ -422,8 +446,8 @@
                     <div class="report-header-text">Republic of the Philippines</div>
                     <div class="report-header-text">Department of Education</div>
                     <div class="report-header-text">Division of Bohol</div>
-                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">CALAPE DISTRICT</div>
-                    <div class="report-header-text" style="font-weight: normal;">Calape, Bohol</div>
+                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">SUB-CONGRESSIONAL DISTRICT MEET</div>
+                    <div class="report-header-text" style="font-weight: normal;">LoCaTu, Bohol</div>
                 </div>
 
                 <div class="report-divider"></div>
@@ -453,8 +477,8 @@
                         <tr>
                             <th style="width: 14%;">Sports</th>
                             <th style="width: 25%;">Event Title</th>
-                            <th style="width: 22%; white-space: nowrap;">Name</th>
-                            <th style="width: 22%; white-space: nowrap;">Area/District</th>
+                            <th style="width: 22%; white-space: nowrap;">Participant Name</th>
+                            <th style="width: 22%; white-space: nowrap;">District</th>
                             <th style="width: 8%;">Role</th>
                             <th style="width: 9%;">T-Shirt Sizes</th>
                         </tr>
@@ -506,7 +530,7 @@
                 <h5 class="fw-bold mb-2 mt-4" style="font-size: 1.05rem; letter-spacing: 0.5px;">CERTIFICATION</h5>
                 <p class="cert-text">
                     This official report lists all confirmed athletes, coaches, and chaperones qualified for the higher meet, 
-                    verified and recorded through the Calape District Meet Management System.
+                    verified and recorded through the Sub-Congressional Meet Management System.
                 </p>
 
                 <div class="report-divider" style="margin-bottom: 25px;"></div>
@@ -531,8 +555,8 @@
                     <div class="report-header-text">Republic of the Philippines</div>
                     <div class="report-header-text">Department of Education</div>
                     <div class="report-header-text">Division of Bohol</div>
-                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">CALAPE DISTRICT</div>
-                    <div class="report-header-text" style="font-weight: normal;">Calape, Bohol</div>
+                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">SUB-CONGRESSIONAL DISTRICT MEET</div>
+                    <div class="report-header-text" style="font-weight: normal;">LoCaTu, Bohol</div>
                 </div>
 
                 <div class="report-divider"></div>
@@ -561,7 +585,7 @@
                         <tr>
                             <th style="width: 16%;">Sports</th>
                             <th style="width: 32%; white-space: nowrap;">Participant Name</th>
-                            <th style="width: 32%; white-space: nowrap;">School Name</th>
+                            <th style="width: 32%; white-space: nowrap;">District</th>
                             <th style="width: 10%;">Role</th>
                             <th style="width: 10%;">T-Shirt Sizes</th>
                         </tr>
@@ -612,7 +636,7 @@
 
                 <h5 class="fw-bold mb-2 mt-4" style="font-size: 1.05rem; letter-spacing: 0.5px;">CERTIFICATION</h5>
                 <p class="cert-text">
-                    This official report lists all confirmed athletes, coaches, and chaperones verified and recorded through the Calape District Meet Management System.
+                    This official report lists all confirmed athletes, coaches, and chaperones verified and recorded through the Sub-Congressional Meet Management System.
                 </p>
 
                 <div class="report-divider" style="margin-bottom: 25px;"></div>
@@ -640,11 +664,11 @@
             document.querySelectorAll('.signatory-row').forEach(row => {
                 dataToSave.push({ name: row.querySelector('.sig-name').value, designation: row.querySelector('.sig-designation').value });
             });
-            sessionStorage.setItem('calape_qualifier_signatories', JSON.stringify(dataToSave));
+            sessionStorage.setItem('subcong_qualifier_signatories', JSON.stringify(dataToSave));
         }
 
         function loadSignatories() {
-            const stored = sessionStorage.getItem('calape_qualifier_signatories');
+            const stored = sessionStorage.getItem('subcong_qualifier_signatories');
             const container = document.getElementById('signatories-container');
             container.innerHTML = ''; 
             if (stored) {
@@ -748,13 +772,12 @@
             addCenterText('Republic of the Philippines', 9, false);
             addCenterText('Department of Education', 9, false);
             addCenterText('Division of Bohol', 9, false);
-            addCenterText('CALAPE DISTRICT MEET', 12, true);
-            addCenterText('Calape, Bohol', 9, false);
+            addCenterText('SUB-CONGRESSIONAL DISTRICT MEET', 12, true);
+            addCenterText('LoCaTu, Bohol', 9, false);
             worksheet.addRow();
 
-            const reportTitle = isQualifier ? 'DISTRICT QUALIFIER REPORT' : 'LIST OF PARTICIPANTS';
+            const reportTitle = isQualifier ? 'HIGHER MEET QUALIFIER 2026' : 'LIST OF PARTICIPANTS 2026';
             addCenterText(reportTitle, 14, true);
-            addCenterText('School Year 2026–2027', 11, true);
             worksheet.addRow();
 
             const labelRow = worksheet.addRow(['REPORT DATE', '', '', isQualifier ? 'TOTAL QUALIFIERS' : 'TOTAL PARTICIPANTS', '', '']);
@@ -774,8 +797,8 @@
             worksheet.addRow();
 
             const tableHeaders = isQualifier 
-                ? ['Sports', 'Event Title', 'Participant Name', 'School Name', 'Role', 'T-Shirt Sizes']
-                : ['Sports', 'Participant Name', 'School Name', 'Role', 'T-Shirt Sizes'];
+                ? ['Sports', 'Event Title', 'Participant Name', 'District', 'Role', 'T-Shirt Sizes']
+                : ['Sports', 'Participant Name', 'District', 'Role', 'T-Shirt Sizes'];
                 
             const headerRow = worksheet.addRow(tableHeaders);
             headerRow.eachCell(cell => {
@@ -814,9 +837,7 @@
             const certTitle = worksheet.addRow(['CERTIFICATION']);
             certTitle.font = { bold: true, size: 11 };
             
-            const certBody = isQualifier 
-                ? 'This official report lists all confirmed athletes, coaches, and chaperones qualified for the higher meet, verified and recorded through the Calape District Meet Management System.'
-                : 'This official report lists all confirmed athletes, coaches, and chaperones verified and recorded through the Calape District Meet Management System.';
+            const certBody = 'This official report lists all confirmed athletes, coaches, and chaperones verified and recorded through the Sub-Congressional Meet Management System.';
                 
             const certText = worksheet.addRow([certBody]);
             worksheet.mergeCells(`A${certText.number}:${lastCol}${certText.number}`);
@@ -879,7 +900,7 @@
             }
 
             const buffer = await workbook.xlsx.writeBuffer();
-            const fileName = isQualifier ? 'CalapeDistrict_Qualifier_Report.xlsx' : 'CalapeDistrict_Participant_List.xlsx';
+            const fileName = isQualifier ? 'Subcong_Qualifier_Report.xlsx' : 'Subcong_Participant_List.xlsx';
             saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName);
         }
     </script>

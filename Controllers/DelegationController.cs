@@ -50,7 +50,9 @@ namespace SubcongMeet.Controllers
 
             var qualifiers = await _context.EventQualifiers
                 .Where(q => q.EventId == eventId)
-                .OrderBy(q => q.Role)
+                .OrderBy(q => q.Role != "Athlete" ? 1 : 0) // Athletes first, staff at the end
+                .ThenByDescending(q => q.Gender == "W" || q.Gender == "Girls") // Girls first, then Boys
+                .ThenBy(q => q.Team)
                 .ThenBy(q => q.ParticipantName)
                 .ToListAsync();
 
@@ -154,10 +156,9 @@ namespace SubcongMeet.Controllers
                     {
                         var pName = string.IsNullOrWhiteSpace(q.ParticipantName) ? "" : System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(q.ParticipantName.Trim().ToLowerInvariant());
                         existing.ParticipantName = pName;
-                        existing.SchoolName = q.SchoolName;
+                        existing.Team = q.Team;         // Maps to the "district" column in the DB
                         existing.Role = string.IsNullOrWhiteSpace(q.Role) ? "Athlete" : q.Role;
                         existing.TshirtSize = q.TshirtSize;
-                        if (!string.IsNullOrWhiteSpace(q.School)) existing.School = q.School;
                         if (!string.IsNullOrWhiteSpace(q.Gender)) existing.Gender = q.Gender;
                         existing.UpdatedAt = DateTime.UtcNow;
                         _context.EventQualifiers.Update(existing);
@@ -204,6 +205,55 @@ namespace SubcongMeet.Controllers
             }
 
             return RedirectToAction(nameof(Manage), new { eventId = eventId });
+        }
+
+        // Action for Generate Report View
+        [HttpGet]
+        public async Task<IActionResult> GenerateReport()
+        {
+            var qualifiersQuery = await (from q in _context.EventQualifiers
+                                         join e in _context.Events on q.EventId equals e.Id
+                                         select new
+                                         {
+                                             Qualifier = q,
+                                             EventTitle = e.Title ?? "General",
+                                             SportName = e.SportName ?? "General Sport",
+                                             Division = e.Division ?? "Uncategorized"
+                                         }).ToListAsync();
+
+            // Order helper for Roles: Athletes first, then Coach, Assistant Coach, Chaperon at the end of the sport
+            int GetRoleOrder(string? role)
+            {
+                if (string.IsNullOrWhiteSpace(role)) return 0;
+                var r = role.Trim().ToLower();
+                if (r == "athlete") return 0;
+                if (r == "coach") return 1;
+                if (r == "assistant coach") return 2;
+                if (r == "chaperon" || r == "chaperone") return 3;
+                return 4;
+            }
+
+            // Order helper for Gender: Girls first, then Boys
+            int GetGenderOrder(string? gender)
+            {
+                if (string.IsNullOrWhiteSpace(gender)) return 2;
+                var g = gender.Trim().ToLower();
+                if (g == "w" || g == "female" || g == "girls" || g == "girl") return 0;
+                if (g == "m" || g == "male" || g == "boys" || g == "boy") return 1;
+                return 2;
+            }
+
+            var reportData = qualifiersQuery
+                .OrderBy(x => x.Division.ToLower() == "elementary" ? 0 : (x.Division.ToLower() == "secondary" ? 1 : 2))
+                .ThenBy(x => x.SportName)
+                .ThenBy(x => x.EventTitle)
+                .ThenBy(x => GetRoleOrder(x.Qualifier.Role))
+                .ThenBy(x => GetGenderOrder(x.Qualifier.Gender))
+                .ThenBy(x => x.Qualifier.Team)
+                .ThenBy(x => x.Qualifier.ParticipantName)
+                .ToList();
+
+            return View(reportData);
         }
     }
 }

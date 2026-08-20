@@ -305,7 +305,7 @@ namespace SubcongMeet.Controllers
                     if (existing != null)
                     {
                         existing.ParticipantName = cleanName;
-                        existing.SchoolName = teamName;
+                        existing.Team = teamName; // UPDATED FROM SchoolName TO Team
                         existing.Role = role;
                         existing.Gender = autoGender;
                         existing.UpdatedAt = DateTime.UtcNow;
@@ -317,7 +317,7 @@ namespace SubcongMeet.Controllers
                             Id = Guid.NewGuid(),
                             EventId = model.Id,
                             ParticipantName = cleanName,
-                            SchoolName = teamName,
+                            Team = teamName, // UPDATED FROM SchoolName TO Team
                             Role = role,
                             Gender = autoGender,
                             UpdatedAt = DateTime.UtcNow

@@ -8,7 +8,7 @@
     var selectedSports = Context.Request.Query["sportsName"].ToList();
     var selectedEvents = Context.Request.Query["eventId"].ToList();
     var selectedDivisions = Context.Request.Query["division"].ToList();
-    var selectedSchools = Context.Request.Query["schoolName"].ToList();
+    var selectedTeams = Context.Request.Query["team"].ToList();
 
     var tShirtSizes = new List<string> { "12", "14", "16", "18", "20", "XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL" };
 }
@@ -174,13 +174,13 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold mb-1">Filter by School Name</label>
-                    <select name="schoolName" class="form-select select2-multi" multiple="multiple" data-placeholder="-- All Schools --">
+                    <label class="form-label small fw-bold mb-1">Filter by Area / Team</label>
+                    <select name="team" class="form-select select2-multi" multiple="multiple" data-placeholder="-- All Areas --">
                         @if (ViewBag.SchoolNamesList != null)
                         {
                             foreach (var sch in (List<SelectListItem>)ViewBag.SchoolNamesList)
                             {
-                                if (selectedSchools.Contains(sch.Value)) { <option value="@sch.Value" selected>@sch.Text</option> }
+                                if (selectedTeams.Contains(sch.Value)) { <option value="@sch.Value" selected>@sch.Text</option> }
                                 else { <option value="@sch.Value">@sch.Text</option> }
                             }
                         }
@@ -225,7 +225,7 @@
                             <th class="text-center" style="width: 35px; min-width: 35px;">
                                 <input type="checkbox" id="selectAll" class="form-check-input" onclick="toggleSelectAll(this)" />
                             </th>
-                            <th style="width: 26%;">Participant Name & School</th>
+                            <th style="width: 26%;">Participant Name & Area</th>
                             <th style="width: 33%;">Event & Sport</th>
                             <th style="width: 18%;">Role</th>
                             <th style="width: 14%;">T-Shirt Size</th>
@@ -249,13 +249,13 @@
                                         <input type="checkbox" name="selectedIds" value="@q.Id" class="form-check-input row-checkbox" />
                                         <input type="hidden" name="qualifiers[@index].Id" value="@q.Id" />
                                     </td>
-                                    <td data-label="Participant Name & School">
+                                    <td data-label="Participant Name & Area">
                                         <input type="text" name="qualifiers[@index].ParticipantName" value="@q.ParticipantName" class="form-control form-control-sm fw-bold mb-2" required placeholder="Participant Name" />
-                                        <select name="qualifiers[@index].SchoolName" class="form-select form-select-sm">
-                                            <option value="">-- Select School --</option>
+                                        <select name="qualifiers[@index].Team" class="form-select form-select-sm">
+                                            <option value="">-- Select Area --</option>
                                             @foreach(var t in teamsList)
                                             {
-                                                if (q.SchoolName == t.Name) { <option value="@t.Name" selected>@t.Name</option> }
+                                                if (q.Team == t.Name) { <option value="@t.Name" selected>@t.Name</option> }
                                                 else { <option value="@t.Name">@t.Name</option> }
                                             }
                                         </select>
@@ -327,9 +327,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">School Name</label>
-                        <select name="SchoolName" class="form-select">
-                            <option value="">-- Select School --</option>
+                        <label class="form-label fw-bold">Area / Team</label>
+                        <select name="Team" class="form-select">
+                            <option value="">-- Select Area --</option>
                             @foreach(var t in teamsList)
                             {
                                 <option value="@t.Name">@t.Name</option>
