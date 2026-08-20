@@ -27,10 +27,6 @@ namespace SubcongMeet.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Public endpoint to receive cron-job.org HTTP pings
-        /// Route: GET /api/cron/execute or POST /api/cron/execute
-        /// </summary>
         [HttpGet("execute")]
         [HttpPost("execute")]
         public async Task<IActionResult> Execute([FromQuery] string? secret)
@@ -94,50 +90,19 @@ namespace SubcongMeet.Controllers
             var taskSummary = new List<string>();
             bool isOverallSuccess = true;
 
-            // Task 1: Recalculate Medal Tallies
-            try
-            {
-                var currentTallies = await _context.MedalTallies.ToListAsync();
-                _context.MedalTallies.RemoveRange(currentTallies);
-
-                var teams = await _context.Teams.ToListAsync();
-                var completedEvents = await _context.Events.Where(e => e.Status == "Completed").ToListAsync();
-
-                foreach (var team in teams)
-                {
-                    var tally = new MedalTally
-                    {
-                        TeamId = team.Id,
-                        Gold = completedEvents.Count(e => e.GoldTeamId == team.Id),
-                        Silver = completedEvents.Count(e => e.SilverTeamId == team.Id),
-                        Bronze = completedEvents.Count(e => e.BronzeTeamId == team.Id)
-                    };
-                    _context.MedalTallies.Add(tally);
-                }
-                await _context.SaveChangesAsync();
-                taskSummary.Add($"MedalTalliesSync: Updated rankings for {teams.Count} schools based on {completedEvents.Count} finished events.");
-            }
-            catch (Exception ex)
-            {
-                isOverallSuccess = false;
-                taskSummary.Add($"MedalTalliesSync Error: {ex.Message}");
-                _logger.LogError(ex, "Cron Task MedalTalliesSync failed");
-            }
-
-            // Task 2: System Health Check & Database Status
+            // Task 1: Lightweight Database Ping
             try
             {
                 var totalEvents = await _context.Events.CountAsync();
-                var totalQualifiers = await _context.EventQualifiers.CountAsync();
-                taskSummary.Add($"SystemHealthCheck: Database connection active. Recorded {totalEvents} total events and {totalQualifiers} qualifiers.");
+                taskSummary.Add($"HealthCheck: Connection active across {totalEvents} total events.");
             }
             catch (Exception ex)
             {
                 isOverallSuccess = false;
-                taskSummary.Add($"SystemHealthCheck Error: {ex.Message}");
+                taskSummary.Add($"HealthCheck Error: {ex.Message}");
             }
 
-            // Task 3: Maintenance Cleanup (Delete logs older than 5 days)
+            // Task 2: Maintenance Cleanup (Delete logs older than 5 days)
             try
             {
                 var cutoff = DateTime.UtcNow.AddDays(-5);
@@ -190,10 +155,6 @@ namespace SubcongMeet.Controllers
             });
         }
 
-        /// <summary>
-        /// Simple ping endpoint to keep app warm or verify endpoint availability
-        /// Route: GET /api/cron/ping
-        /// </summary>
         [HttpGet("ping")]
         public IActionResult Ping()
         {

@@ -51,8 +51,8 @@
     int totalEventsCount = ViewBag.TotalEvents ?? 0;
     double progressPercent = totalEventsCount > 0 ? ((double)completedEventsCount / totalEventsCount) * 100 : 0;
     
-    // Server-side Fallback Countdown (Set to August 15, 2026 at 7:30 AM)
-    DateTime openingDate = new DateTime(2026, 9, 5, 7, 30, 0); 
+    // Server-side Fallback Countdown (Set to September 12, 2026 at 7:30 AM)
+    DateTime openingDate = new DateTime(2026, 9, 12, 7, 30, 0); 
     TimeSpan timeToGo = openingDate - phTime;
     
     string countdownLabel = "";
@@ -71,7 +71,7 @@
     }
     
     // Pass robust epoch milliseconds for JS to digest flawlessly
-    long targetDateMs = new DateTimeOffset(2026, 9, 5, 7, 30, 0, new TimeSpan(8, 0, 0)).ToUnixTimeMilliseconds();
+    long targetDateMs = new DateTimeOffset(2026, 9, 12, 7, 30, 0, new TimeSpan(8, 0, 0)).ToUnixTimeMilliseconds();
 
     var top3Elementary = teamTallies.Where(m => m.Division.Equals("Elementary", StringComparison.OrdinalIgnoreCase) && m.TotalMedals > 0)
                                   .OrderByDescending(m => m.Gold).ThenByDescending(m => m.Silver).ThenByDescending(m => m.Bronze)
@@ -111,15 +111,17 @@
         100% { left: 200%; opacity: 0; }
     }
 
-    /* Hero Banner with Opacity Control & Navy-Dominant Gradient */
+    /* Hero Banner with Opacity Control & Navy/Burgundy Gradient */
     .hero-banner {
+        /* Fixed percentage order for a perfectly smooth blend */
         background: linear-gradient(-45deg, 
             rgba(16, 42, 67, var(--card-opacity)) 0%, 
-            rgba(11, 31, 51, var(--card-opacity)) 65%, 
-            rgba(122, 31, 43, var(--card-opacity)) 90%, 
+            rgba(11, 31, 51, var(--card-opacity)) 25%, 
+            rgba(122, 31, 43, var(--card-opacity)) 50%, 
+            rgba(11, 31, 51, var(--card-opacity)) 75%, 
             rgba(16, 42, 67, var(--card-opacity)) 100%);
         background-size: 300% 300%;
-        animation: gradientMove 12s ease-in-out infinite;
+        animation: gradientMove 8s ease-in-out infinite;
         padding: 3rem 2rem; 
         border-radius: var(--cc-radius-lg);
         color: var(--cc-white);
@@ -410,7 +412,7 @@
             <div class="hero-banner">
                 <h2 class="hero-subtitle">SUB-CONGRESSIONAL<br>DISTRICT MEET 2026</h2>
                 <h1 class="hero-title-main">LOCATU</h1>
-                <h4 class="fw-semibold" style="font-family: var(--font-body); letter-spacing: 0.5px; color: rgba(255,255,255,0.9); font-size: 1.1rem;">September 5, 2026</h4>
+                <h4 class="fw-semibold" style="font-family: var(--font-body); letter-spacing: 0.5px; color: rgba(255,255,255,0.9); font-size: 1.1rem;">September 12, 2026</h4>
                 
                 <p class="hero-description">
                     "Sports: Building Bridges, Breaking Barriers"
