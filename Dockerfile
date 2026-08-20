@@ -3,12 +3,12 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy the project file and restore dependencies
-COPY ["SubcongMeet.csproj", "./"]
-RUN dotnet restore "SubcongMeet.csproj"
+COPY ["SubCongMeet.csproj", "./"]
+RUN dotnet restore "SubCongMeet.csproj"
 
 # Copy the rest of the code and build the release
 COPY . .
-RUN dotnet publish "SubcongMeet.csproj" -c Release -o /app/publish
+RUN dotnet publish "SubCongMeet.csproj" -c Release -o /app/publish
 
 # Use the lighter ASP.NET runtime image for the final container
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
@@ -18,4 +18,4 @@ WORKDIR /app
 EXPOSE 8080
 
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "SubcongMeet.dll"]
+ENTRYPOINT ["dotnet", "SubCongMeet.dll"]
