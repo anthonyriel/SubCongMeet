@@ -550,32 +550,85 @@
 
 @section Scripts {
 <script>
+    const divisionsList = ['Secondary', 'Elementary', 'Overall'];
+    let currentDivIndex = 0;
+    let autoTimer = null;
+    let idleTimer = null;
+    let isAutoRotating = true;
+
     $(document).ready(function() {
         let savedDivision = 'Secondary';
         try {
             const stored = sessionStorage.getItem('subcong_rankings_division');
-            if (stored) savedDivision = stored;
+            if (stored && divisionsList.includes(stored)) savedDivision = stored;
         } catch (e) {}
 
+        // Initialize state
+        currentDivIndex = divisionsList.indexOf(savedDivision);
+        updateActiveButton(savedDivision);
+        applyDivisionFilter(savedDivision);
+        
+        // Start automatic rotation immediately on page load
+        startAutoRotation();
+
+        // Listen for user interactions anywhere on the page to reset the 20-second idle timer
+        $(document).on('mousemove keypress touchstart', function() {
+            if (!isAutoRotating) {
+                resetIdleTimer();
+            }
+        });
+    });
+
+    function updateActiveButton(division) {
         $('.division-filters .filter-btn').removeClass('active-filter');
         $('.division-filters .filter-btn').each(function() {
-            if ($(this).text().trim().toLowerCase() === savedDivision.toLowerCase()) {
+            if ($(this).text().trim().toLowerCase() === division.toLowerCase()) {
                 $(this).addClass('active-filter');
             }
         });
+    }
 
-        applyDivisionFilter(savedDivision);
-    });
-
+    // Called when a user clicks one of the leaderboard buttons
     function setDivisionFilter(division, btnElement) {
-        $('.division-filters .filter-btn').removeClass('active-filter');
-        $(btnElement).addClass('active-filter');
+        isAutoRotating = false;
+        clearInterval(autoTimer); // Stop auto-rotation immediately
+        
+        currentDivIndex = divisionsList.findIndex(d => d.toLowerCase() === division.toLowerCase());
+        
+        updateActiveButton(division);
+        
         try {
             sessionStorage.setItem('subcong_rankings_division', division);
         } catch (e) {}
+        
         applyDivisionFilter(division);
+        
+        // Start the 10-second idle timer waiting for no movement
+        resetIdleTimer();
     }
 
+    // Core function to rotate the tables every 10 seconds
+    function startAutoRotation() {
+        isAutoRotating = true;
+        clearInterval(autoTimer);
+        autoTimer = setInterval(function() {
+            currentDivIndex = (currentDivIndex + 1) % divisionsList.length;
+            let nextDiv = divisionsList[currentDivIndex];
+            
+            updateActiveButton(nextDiv);
+            applyDivisionFilter(nextDiv);
+        }, 10000);
+    }
+
+    // Controls the 15-second timeout. If it finishes without being reset by movement, it auto-rotates again.
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function() {
+            startAutoRotation();
+        }, 15000); 
+    }
+
+    // Core table display logic (unchanged from original processing)
     function applyDivisionFilter(division) {
         let visibleCount = 0;
         let runningCount = 1;
