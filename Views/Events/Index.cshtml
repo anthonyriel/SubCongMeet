@@ -694,6 +694,7 @@
                                         (User?.IsInRole("Admin") == true || isCoordinator);
                                     
                                     <tr class="event-row" 
+                                        data-title="@(ev.Title?.Trim().ToLower() ?? "")"
                                         data-sport="@(ev.SportName?.Trim() ?? "")" 
                                         data-division="@(ev.Division?.Trim() ?? "")" 
                                         data-status="@(ev.Status?.Trim() ?? "")" 
@@ -850,20 +851,23 @@
         var statusFilterElem = document.getElementById('statusFilter');
 
         var searchText = searchInputElem ? searchInputElem.value.toLowerCase().trim() : '';
+        var searchWords = searchText.length > 0 ? searchText.split(/\s+/).filter(Boolean) : [];
         var sport = sportFilterElem ? sportFilterElem.value.toLowerCase().trim() : '';
         var status = statusFilterElem ? statusFilterElem.value.toLowerCase().trim() : '';
         var visibleCount = 0;
 
         $('.event-row').each(function() {
-            var title = $(this).find('.event-title-display').text().toLowerCase();
+            var title = ($(this).attr('data-title') || $(this).find('.event-title-display').text()).toLowerCase();
             var rowSport = ($(this).attr('data-sport') || '').toLowerCase().trim();
             var rowDivision = ($(this).attr('data-division') || '').toLowerCase().trim();
             var rowStatus = ($(this).attr('data-status') || '').toLowerCase().trim();
             
             var isAssigned = $(this).attr('data-is-assigned') === 'true';
 
-            // 1. Search Check
-            var matchSearch = title.indexOf(searchText) > -1;
+            // 1. Search Check (matches results that contain the search words in the event title)
+            var matchSearch = searchWords.length === 0 || searchWords.every(function(word) {
+                return title.indexOf(word) > -1;
+            });
 
             // 2. Sport Check
             var matchSport = sport === "" || rowSport === sport;
