@@ -22,8 +22,7 @@ namespace SubcongMeet.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var tallies = await _context.MedalTallies
-                .Include(t => t.Team)
+            var tallies = await _context.GetTeamStandings()
                 .OrderByDescending(t => t.Gold)
                 .ThenByDescending(t => t.Silver)
                 .ThenByDescending(t => t.Bronze)
@@ -45,8 +44,7 @@ namespace SubcongMeet.Controllers
         [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> GeneralOfficialReport()
         {
-            var medalTallies = await _context.MedalTallies
-                .Include(m => m.Team)
+            var medalTallies = await _context.GetTeamStandings()
                 .OrderByDescending(m => m.Gold)
                 .ThenByDescending(m => m.Silver)
                 .ThenByDescending(m => m.Bronze)

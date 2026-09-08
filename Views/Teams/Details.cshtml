@@ -40,19 +40,23 @@
 
     int totalMedals = medalRecords.Count;
 
-    // Helper to get local municipality logo path
-    string GetMunicipalityLogoPath(string? name) {
-        if (string.IsNullOrEmpty(name)) return "";
-        if (name.Contains("Loon", StringComparison.OrdinalIgnoreCase)) 
-            return Url.Content("~/images/loon-logo.png");
-        if (name.Contains("Calape", StringComparison.OrdinalIgnoreCase)) 
-            return Url.Content("~/images/calape-logo.png");
-        if (name.Contains("Tubigon", StringComparison.OrdinalIgnoreCase)) 
-            return Url.Content("~/images/tubigon-logo.png");
-        return "";
+    // Helper to get local team logo path dynamically
+    string GetTeamLogoPath(string? acronym, string? name) {
+        // Prefer the Acronym, fallback to Name if Acronym is empty
+        string identifier = !string.IsNullOrEmpty(acronym) ? acronym : name ?? "";
+
+        // If no name or acronym is found, return a default placeholder
+        if (string.IsNullOrEmpty(identifier)) 
+            return Url.Content("~/images/teams/default-logo.png");
+
+        // Convert "Loon North" to "loon-north.png"
+        string safeFileName = identifier.ToLower().Replace(" ", "-").Replace(".", "") + ".png";
+
+        return Url.Content($"~/images/teams/{safeFileName}");
     }
 
-    string logoPath = GetMunicipalityLogoPath(team?.Name);
+    // Usage (assuming your team object is named 'team'):
+    string logoPath = GetTeamLogoPath(team?.Acronym, team?.Name);
 }
 
 <style>
@@ -222,7 +226,7 @@
 <div class="container py-5">
     <div class="mb-4">
         <a asp-action="Dashboard" class="text-muted fw-bold text-decoration-none">
-            <i class="bi bi-arrow-left"></i> Back to Areas
+            <i class="bi bi-arrow-left"></i> Back to Districts
         </a>
     </div>
 

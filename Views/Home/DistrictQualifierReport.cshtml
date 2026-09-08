@@ -181,9 +181,9 @@
                 @if (!string.IsNullOrEmpty(displaySport)) { <strong>@displaySport</strong> }
             </td>
             <td class="text-start"><div class="event-title-clamp">@displayEvent</div></td>
-            <td class="text-start" style="white-space: nowrap;"><strong>@(string.IsNullOrEmpty(qualifier.ParticipantName) ? "N/A" : ToProperCase(qualifier.ParticipantName))</strong></td>
-            <td class="text-start" style="white-space: nowrap;">@(string.IsNullOrEmpty(qualifier.Team) ? "N/A" : qualifier.Team)</td>
-            <td class="text-start">@roleDisplay</td>
+            <td class="text-start"><strong>@(string.IsNullOrEmpty(qualifier.ParticipantName) ? "N/A" : ToProperCase(qualifier.ParticipantName))</strong></td>
+            <td class="text-start">@(string.IsNullOrEmpty(qualifier.Team) ? "N/A" : qualifier.Team)</td>
+            <td class="text-center">@roleDisplay</td>
             <td class="text-center">@tShirtDisplay</td>
         </tr>
     }
@@ -230,9 +230,9 @@
             <td class="text-start">
                 @if (!string.IsNullOrEmpty(displaySport)) { <strong>@displaySport</strong> }
             </td>
-            <td class="text-start" style="white-space: nowrap;"><strong>@(string.IsNullOrEmpty(qualifier.ParticipantName) ? "N/A" : ToProperCase(qualifier.ParticipantName))</strong></td>
-            <td class="text-start" style="white-space: nowrap;">@(string.IsNullOrEmpty(qualifier.Team) ? "N/A" : qualifier.Team)</td>
-            <td class="text-start">@roleDisplay</td>
+            <td class="text-start"><strong>@(string.IsNullOrEmpty(qualifier.ParticipantName) ? "N/A" : ToProperCase(qualifier.ParticipantName))</strong></td>
+            <td class="text-start">@(string.IsNullOrEmpty(qualifier.Team) ? "N/A" : qualifier.Team)</td>
+            <td class="text-center">@roleDisplay</td>
             <td class="text-center">@tShirtDisplay</td>
         </tr>
     }
@@ -266,8 +266,8 @@
     
     .table-report { width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #ffffff; border: 1px solid #000000; }
     
-    .table-report th { padding: 8px 10px; text-align: center; font-size: 0.75rem; font-weight: bold; border-bottom: 2px solid #000000; color: #000000; background-color: #f2f2f2; }
-    .table-report td { padding: 8px 10px; font-size: 0.75rem; border-bottom: 1px solid #cccccc; vertical-align: top; color: #000000; text-align: left; }
+    .table-report th { padding: 8px 10px; font-size: 0.75rem; font-weight: bold; border-bottom: 2px solid #000000; color: #000000; background-color: #f2f2f2; }
+    .table-report td { padding: 8px 10px; font-size: 0.75rem; border-bottom: 1px solid #cccccc; vertical-align: top; color: #000000; }
     .group-header { background-color: #e9ecef !important; color: #000000 !important; font-weight: bold !important; text-align: left !important; font-size: 0.85rem !important; border-top: 2px solid #000000 !important; border-bottom: 2px solid #000000 !important; }
 
     .event-title-clamp {
@@ -446,7 +446,7 @@
                     <div class="report-header-text">Republic of the Philippines</div>
                     <div class="report-header-text">Department of Education</div>
                     <div class="report-header-text">Division of Bohol</div>
-                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">LOCATU SUB-CONGRESSIONAL DISTRICT MEET</div>
+                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">LOCATU ATHLETIC MEET</div>
                 </div>
 
                 <div class="report-divider"></div>
@@ -474,12 +474,12 @@
                 <table class="table-report" id="resultsTable">
                     <thead>
                         <tr>
-                            <th style="width: 14%;">Sports</th>
-                            <th style="width: 25%;">Event Title</th>
-                            <th style="width: 22%; white-space: nowrap;">Participant Name</th>
-                            <th style="width: 22%; white-space: nowrap;">District</th>
-                            <th style="width: 8%;">Role</th>
-                            <th style="width: 9%;">T-Shirt Sizes</th>
+                            <th class="text-start" style="width: 15%;">Sports</th>
+                            <th class="text-start" style="width: 26%;">Event Title</th>
+                            <th class="text-start" style="width: 20%;">Participant Name</th>
+                            <th class="text-start" style="width: 20%;">District</th>
+                            <th class="text-center" style="width: 9%;">Role</th>
+                            <th class="text-center" style="width: 10%;">T-Shirt Sizes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -514,7 +514,7 @@
                                     foreach (var q in otherQualifiers) { RenderQualifierRow(q); }
                                 }
                             }
-                            else
+                            else 
                             {
                                 ResetTracker();
                                 foreach (var qualifier in reportQualifiers)
@@ -561,7 +561,7 @@
                 <div class="report-divider"></div>
 
                 <div class="text-center mb-3">
-                    <div class="report-title mb-1">LIST OF PARTICIPANTS 2026</div>
+                    <div class="report-title mb-1">LIST OF QUALIFIERS 2026</div>
                 </div>
 
                 <div class="report-divider"></div>
@@ -572,8 +572,8 @@
                         <div class="meta-value">@DateTime.UtcNow.AddHours(8).ToString("MMMM dd, yyyy h:mm tt") PST</div>
                     </div>
                     <div class="col-6 meta-col">
-                        <div class="meta-label">TOTAL PARTICIPANTS</div>
-                        <div class="meta-value">@(uniqueQualifiersCount) Participants</div>
+                        <div class="meta-label">TOTAL QUALIFIERS</div>
+                        <div class="meta-value">@(uniqueQualifiersCount) Qualifiers</div>
                     </div>
                 </div>
 
@@ -582,11 +582,11 @@
                 <table class="table-report" id="participantTable">
                     <thead>
                         <tr>
-                            <th style="width: 16%;">Sports</th>
-                            <th style="width: 32%; white-space: nowrap;">Participant Name</th>
-                            <th style="width: 32%; white-space: nowrap;">District</th>
-                            <th style="width: 10%;">Role</th>
-                            <th style="width: 10%;">T-Shirt Sizes</th>
+                            <th class="text-start" style="width: 18%;">Sports</th>
+                            <th class="text-start" style="width: 32%;">Participant Name</th>
+                            <th class="text-start" style="width: 28%;">District</th>
+                            <th class="text-center" style="width: 11%;">Role</th>
+                            <th class="text-center" style="width: 11%;">T-Shirt Sizes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -621,7 +621,7 @@
                                     foreach (var q in otherQualifiers) { RenderParticipantRow(q); }
                                 }
                             }
-                            else
+                            else 
                             {
                                 ResetTracker_PL();
                                 foreach (var qualifier in reportQualifiers)
@@ -635,7 +635,7 @@
 
                 <h5 class="fw-bold mb-2 mt-4" style="font-size: 1.05rem; letter-spacing: 0.5px;">CERTIFICATION</h5>
                 <p class="cert-text">
-                    This official report lists all confirmed athletes, coaches, and chaperones verified and recorded through the Sub-Congressional Meet Management System.
+                    This official report lists all confirmed qualifiers, coaches, and chaperones verified and recorded through the Sub-Congressional Meet Management System.
                 </p>
 
                 <div class="report-divider" style="margin-bottom: 25px;"></div>
@@ -800,11 +800,14 @@
                 : ['Sports', 'Participant Name', 'District', 'Role', 'T-Shirt Sizes'];
                 
             const headerRow = worksheet.addRow(tableHeaders);
-            headerRow.eachCell(cell => {
+            headerRow.eachCell((cell, colNumber) => {
                 cell.font = { bold: true };
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
                 cell.border = { bottom: { style: 'medium' }, top: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
-                cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                
+                // Center align Role and T-Shirt Sizes columns in Excel, left align others
+                const isCenter = isQualifier ? (colNumber >= 5) : (colNumber >= 4);
+                cell.alignment = { horizontal: isCenter ? 'center' : 'left', vertical: 'middle', wrapText: true };
             });
 
             const targetTable = isQualifier ? '#resultsTable tbody tr' : '#participantTable tbody tr';
@@ -822,8 +825,9 @@
                     const rowData = [];
                     tds.forEach(td => rowData.push(td.innerText.trim()));
                     const r = worksheet.addRow(rowData);
-                    r.eachCell(cell => {
-                        cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+                    r.eachCell((cell, colNumber) => {
+                        const isCenter = isQualifier ? (colNumber >= 5) : (colNumber >= 4);
+                        cell.alignment = { vertical: 'top', horizontal: isCenter ? 'center' : 'left', wrapText: true };
                         cell.font = { bold: false };
                         cell.border = { bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
                     });

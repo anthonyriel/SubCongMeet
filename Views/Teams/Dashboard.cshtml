@@ -2,19 +2,22 @@
 @{
     ViewData["Title"] = "Participating Schools";
 
-    // Group teams by their base name to create the 3 Overall cards
+    // One overall card per district, combining its divisions.
     var overallGroups = Model.GroupBy(t => t.Name.Trim()).ToList();
 
-    // Helper to get the correct local municipality logo path based on team name
-    string GetMunicipalityLogoPath(string name) {
-        if (string.IsNullOrEmpty(name)) return "";
-        if (name.Contains("Loon", StringComparison.OrdinalIgnoreCase)) 
-            return Url.Content("~/images/loon-logo.png");
-        if (name.Contains("Calape", StringComparison.OrdinalIgnoreCase)) 
-            return Url.Content("~/images/calape-logo.png");
-        if (name.Contains("Tubigon", StringComparison.OrdinalIgnoreCase)) 
-            return Url.Content("~/images/tubigon-logo.png");
-        return "";
+    // Helper to get local team logo path dynamically
+    string GetTeamLogoPath(string? acronym, string? name) {
+        // Prefer the Acronym, fallback to Name if Acronym is empty
+        string identifier = !string.IsNullOrEmpty(acronym) ? acronym : name ?? "";
+
+        // If no name or acronym is found, return a default placeholder
+        if (string.IsNullOrEmpty(identifier)) 
+            return Url.Content("~/images/teams/default-logo.png");
+
+        // Convert "Loon North" to "loon-north.png"
+        string safeFileName = identifier.ToLower().Replace(" ", "-").Replace(".", "") + ".png";
+
+        return Url.Content($"~/images/teams/{safeFileName}");
     }
 }
 
@@ -170,7 +173,7 @@
 
 <div class="container py-5">
     <h2 class="mb-4 text-center fw-bold" style="font-family: var(--font-body); color: var(--cc-primary, #102A43);">
-        <i class="bi bi-mortarboard-fill text-warning me-2"></i>PARTICIPATING AREAS
+        <i class="bi bi-mortarboard-fill text-warning me-2"></i>PARTICIPATING DISTRICTS
     </h2>
 
     <!-- Division Filter Selection -->
@@ -184,7 +187,7 @@
     <div class="row g-4 justify-content-center" id="schoolsContainer">
         <!-- 1. Individual Division Cards (Elementary & Secondary) -->
         @foreach (var team in Model) {
-            string logoPath = GetMunicipalityLogoPath(team.Name);
+            string logoPath = GetTeamLogoPath(team.Acronym, team.Name);
             <div class="col-md-6 col-lg-4 team-item" data-division="@team.Division">
                 <a asp-action="Details" asp-route-id="@team.Id" class="school-card h-100">
                     <div class="card-left-content">
@@ -201,10 +204,10 @@
             </div>
         }
 
-        <!-- 2. Overall Cards (Shown only when All Divisions is clicked - Exactly 3 cards) -->
+        <!-- 2. One overall card per district -->
         @foreach (var group in overallGroups) {
             var sampleTeam = group.First();
-            string logoPath = GetMunicipalityLogoPath(sampleTeam.Name);
+            string logoPath = GetTeamLogoPath(sampleTeam.Acronym, sampleTeam.Name);
             <div class="col-md-6 col-lg-4 team-item overall-item" data-division="All" style="display: none;">
                 <!-- Pass the team name or grouped IDs to Details -->
                 <a asp-action="Details" asp-route-name="@sampleTeam.Name" class="school-card h-100">

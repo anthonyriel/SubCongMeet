@@ -61,25 +61,14 @@
 
     string GetSchoolName(int? schoolId) 
     {
-        if (schoolId == null || schoolId == 0) return "No School Assigned";
+        if (schoolId == null || schoolId == 0) return "No District Assigned";
         var school = schoolsList?.FirstOrDefault(t => t.Id == schoolId);
-        return school != null ? school.Name : $"School ID: {schoolId}";
-    }
-
-    string GetCoordinatorName(string? coordinatorRef)
-    {
-        if (string.IsNullOrEmpty(coordinatorRef)) return "Unassigned";
+        if (school != null && !string.IsNullOrEmpty(school.Name)) return school.Name;
         
-        if (int.TryParse(coordinatorRef, out int coordId))
-        {
-            var coordById = DbContext.Coordinators.FirstOrDefault(c => c.Id == coordId);
-            if (coordById != null) return coordById.FullName;
-        }
+        var dbTeam = DbContext.Teams.FirstOrDefault(t => t.Id == schoolId);
+        if (dbTeam != null && !string.IsNullOrEmpty(dbTeam.Name)) return dbTeam.Name;
         
-        var coordByUsername = DbContext.Coordinators.FirstOrDefault(c => c.Username == coordinatorRef);
-        if (coordByUsername != null) return coordByUsername.FullName;
-        
-        return coordinatorRef;
+        return $"District ID: {schoolId}";
     }
 
     Microsoft.AspNetCore.Html.IHtmlContent RenderWinnerNames(string? namesString)
@@ -123,7 +112,6 @@
                 <span class="fw-bold">@GetSchoolName(evt.BronzeTeamId)</span>
                 @RenderWinnerNames(evt.BronzeWinnerName)
             </td>
-            <td class="text-start">@GetCoordinatorName(evt.CoordinatorId?.ToString())</td>
         </tr>
     }
 }
@@ -433,7 +421,7 @@
                     <div class="report-header-text">Republic of the Philippines</div>
                     <div class="report-header-text">Department of Education</div>
                     <div class="report-header-text">Division of Bohol</div>
-                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">LOCATU SUB-CONGRESSIONAL MEET 2026</div>
+                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">LOCATU ATHLETIC MEET 2026</div>
                     <div class="report-header-text fs-6 fw-bold text-uppercase" id="report-division-text"></div>
                 </div>
 
@@ -462,17 +450,16 @@
                 <table class="table-report" id="resultsTable">
                     <thead>
                         <tr>
-                            <th style="width: 20%;">Event Title</th>
-                            <th style="width: 20%;">Gold <span class="emoji-hide">🥇</span></th>
-                            <th style="width: 20%;">Silver <span class="emoji-hide">🥈</span></th>
-                            <th style="width: 20%;">Bronze <span class="emoji-hide">🥉</span></th>
-                            <th style="width: 20%;">Coordinator</th>
+                            <th style="width: 25%;">Event Title</th>
+                            <th style="width: 25%;">Gold <span class="emoji-hide">🥇</span></th>
+                            <th style="width: 25%;">Silver <span class="emoji-hide">🥈</span></th>
+                            <th style="width: 25%;">Bronze <span class="emoji-hide">🥉</span></th>
                         </tr>
                     </thead>
                     <tbody>
                         @if(!reportEvents.Any())
                         {
-                            <tr><td colspan="5" class="text-center py-4">No finalized event results available for the current filters.</td></tr>
+                            <tr><td colspan="4" class="text-center py-4">No finalized event results available for the current filters.</td></tr>
                         }
                         else
                         {
@@ -480,17 +467,17 @@
                             {
                                 if (elementaryEvents.Any())
                                 {
-                                    <tr><td colspan="5" class="group-header py-2">ELEMENTARY</td></tr>
+                                    <tr><td colspan="4" class="group-header py-2">ELEMENTARY</td></tr>
                                     foreach(var evt in elementaryEvents) { RenderEventRow(evt); }
                                 }
                                 if (secondaryEvents.Any())
                                 {
-                                    <tr><td colspan="5" class="group-header py-2">SECONDARY</td></tr>
+                                    <tr><td colspan="4" class="group-header py-2">SECONDARY</td></tr>
                                     foreach(var evt in secondaryEvents) { RenderEventRow(evt); }
                                 }
                                 if (otherEvents.Any())
                                 {
-                                    <tr><td colspan="5" class="group-header py-2">OTHER EVENTS</td></tr>
+                                    <tr><td colspan="4" class="group-header py-2">OTHER EVENTS</td></tr>
                                     foreach(var evt in otherEvents) { RenderEventRow(evt); }
                                 }
                             }
@@ -732,9 +719,9 @@
                 }
             });
 
-            const lastCol = 'E';
+            const lastCol = 'D';
             worksheet.columns = [
-                { width: 26 }, { width: 23 }, { width: 23 }, { width: 23 }, { width: 20 }
+                { width: 30 }, { width: 28 }, { width: 28 }, { width: 28 }
             ];
 
             function addCenterText(text, size, bold) {
@@ -758,10 +745,9 @@
             addCenterText('School Year 2026–2027', 11, true);
             worksheet.addRow([]); 
 
-            const metaLabels = ['REPORT DATE', '', '', 'TOTAL RECORDS', ''];
+            const metaLabels = ['REPORT DATE', '', 'TOTAL RECORDS', ''];
             const metaValues = [
                 '@DateTime.Now.ToString("MMMM dd, yyyy h:mm tt")',
-                '',
                 '',
                 '@(reportEvents.Count()) Events',
                 ''
@@ -772,13 +758,13 @@
             const valueRow = worksheet.addRow(metaValues);
             valueRow.font = { size: 10, bold: true };
             
-            worksheet.mergeCells(`A${labelRow.number}:C${labelRow.number}`);
-            worksheet.mergeCells(`A${valueRow.number}:C${valueRow.number}`);
-            worksheet.mergeCells(`D${labelRow.number}:E${labelRow.number}`);
-            worksheet.mergeCells(`D${valueRow.number}:E${valueRow.number}`);
+            worksheet.mergeCells(`A${labelRow.number}:B${labelRow.number}`);
+            worksheet.mergeCells(`A${valueRow.number}:B${valueRow.number}`);
+            worksheet.mergeCells(`C${labelRow.number}:D${labelRow.number}`);
+            worksheet.mergeCells(`C${valueRow.number}:D${valueRow.number}`);
             worksheet.addRow([]);
 
-            const headerRow = worksheet.addRow(['Event Title', 'Gold', 'Silver', 'Bronze', 'Coordinator']);
+            const headerRow = worksheet.addRow(['Event Title', 'Gold', 'Silver', 'Bronze']);
             headerRow.eachCell(cell => {
                 cell.font = { bold: true };
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
@@ -860,15 +846,15 @@
                     worksheet.mergeCells(`A${titleRow.number}:B${titleRow.number}`);
 
                     if (i + 1 < activeSignatories.length) {
-                        sigRow.getCell(4).value = activeSignatories[i+1].name;
-                        sigRow.getCell(4).font = { bold: true };
-                        sigRow.getCell(4).alignment = { horizontal: 'center' };
-                        titleRow.getCell(4).value = activeSignatories[i+1].designation;
-                        titleRow.getCell(4).alignment = { horizontal: 'center' };
-                        titleRow.getCell(4).font = { bold: false };
+                        sigRow.getCell(3).value = activeSignatories[i+1].name;
+                        sigRow.getCell(3).font = { bold: true };
+                        sigRow.getCell(3).alignment = { horizontal: 'center' };
+                        titleRow.getCell(3).value = activeSignatories[i+1].designation;
+                        titleRow.getCell(3).alignment = { horizontal: 'center' };
+                        titleRow.getCell(3).font = { bold: false };
                         
-                        worksheet.mergeCells(`D${sigRow.number}:E${sigRow.number}`);
-                        worksheet.mergeCells(`D${titleRow.number}:E${titleRow.number}`);
+                        worksheet.mergeCells(`C${sigRow.number}:D${sigRow.number}`);
+                        worksheet.mergeCells(`C${titleRow.number}:D${titleRow.number}`);
                     }
                     
                     worksheet.addRow([]);

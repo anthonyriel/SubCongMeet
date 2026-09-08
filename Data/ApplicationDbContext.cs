@@ -17,6 +17,22 @@ namespace SubcongMeet.Data
         public DbSet<EventQualifier> EventQualifiers { get; set; } 
         public DbSet<CronExecutionLog> CronExecutionLogs { get; set; }
 
+        // Start with registered teams so newly added districts appear with zero medals.
+        public IQueryable<MedalTally> GetTeamStandings()
+        {
+            return from team in Teams.AsNoTracking()
+                   join tally in MedalTallies.AsNoTracking() on team.Id equals tally.TeamId into teamTallies
+                   from tally in teamTallies.DefaultIfEmpty()
+                   select new MedalTally
+                   {
+                       TeamId = team.Id,
+                       Team = team,
+                       Gold = tally == null ? 0 : tally.Gold,
+                       Silver = tally == null ? 0 : tally.Silver,
+                       Bronze = tally == null ? 0 : tally.Bronze
+                   };
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

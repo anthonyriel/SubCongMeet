@@ -34,14 +34,6 @@
         return "var(--cc-primary, #102A43)";
     }
 
-    // Helper to map schools to LoCaTu municipalities for Overall standings
-    string GetLocatuMunicipality(string name) {
-        if (string.IsNullOrEmpty(name)) return "Calape";
-        if (name.Contains("Loon", StringComparison.OrdinalIgnoreCase)) return "Loon";
-        if (name.Contains("Tubigon", StringComparison.OrdinalIgnoreCase)) return "Tubigon";
-        return "Calape";
-    }
-
     // Build a lookup dictionary for acronyms based on the Model
     var acronymMap = new Dictionary<string, string>();
     foreach (var tally in Model)
@@ -68,9 +60,9 @@
         .ThenBy(t => t.Team?.Name ?? "")
         .ToList();
 
-    // Compute Combined Overall Standings grouped by Municipality (LoCaTu)
+    // Combine Elementary and Secondary medals for each district.
     var overallStandings = Model
-        .GroupBy(t => GetLocatuMunicipality(t.Team?.Name ?? string.Empty))
+        .GroupBy(t => t.Team?.Name.Trim() ?? string.Empty)
         .Select(g => new {
             Municipality = g.Key,
             Gold = g.Sum(x => x.Gold),
@@ -532,12 +524,13 @@
                                 {
                                     int totalMedals = overall.Total;
                                     string teamColor = GetHouseText(overall.Municipality);
+                                    string displayAreaName = acronymMap.ContainsKey(overall.Municipality) ? acronymMap[overall.Municipality] : overall.Municipality;
 
                                     <tr class="ranking-row" data-division="Overall" data-gold="@overall.Gold" data-silver="@overall.Silver" data-bronze="@overall.Bronze">
                                         <td class="text-center fw-bold rank-cell" style="color: var(--cc-primary); font-size: 1rem;"></td>
                                         <td>
                                             <span class="fw-bold school-name-text" data-default-color="@teamColor" style="color: @teamColor; font-size: 0.95rem;">
-                                                @overall.Municipality
+                                                @displayAreaName
                                             </span>
                                         </td>
                                         <td class="text-center fw-bold medal-text-gold">@overall.Gold</td>

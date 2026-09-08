@@ -26,15 +26,6 @@ namespace SubcongMeet.Controllers
             return View(teams);
         }
 
-        // Helper to categorize teams into municipalities/areas
-        private string GetMunicipality(string teamName)
-        {
-            if (string.IsNullOrEmpty(teamName)) return "Calape";
-            if (teamName.Contains("Loon", StringComparison.OrdinalIgnoreCase)) return "Loon";
-            if (teamName.Contains("Tubigon", StringComparison.OrdinalIgnoreCase)) return "Tubigon";
-            return "Calape"; // Default area
-        }
-
         public async Task<IActionResult> Details(int? id, string name)
         {
             // Case 1: Normal Single-Division View (Elementary or Secondary clicked)
@@ -50,8 +41,7 @@ namespace SubcongMeet.Controllers
                     .ToListAsync();
 
                 // Calculate rank specifically within this team's division
-                var tallies = await _context.MedalTallies
-                    .Include(t => t.Team)
+                var tallies = await _context.GetTeamStandings()
                     .Where(t => t.Team != null && t.Team.Division == team.Division)
                     .OrderByDescending(t => t.Gold)
                     .ThenByDescending(t => t.Silver)
@@ -98,7 +88,7 @@ namespace SubcongMeet.Controllers
             else if (!string.IsNullOrEmpty(name))
             {
                 var matchedTeams = await _context.Teams
-                    .Where(t => t.Name.Contains(name) || t.Acronym.Contains(name))
+                    .Where(t => t.Name == name || t.Acronym == name)
                     .ToListAsync();
 
                 if (!matchedTeams.Any()) return NotFound();
@@ -113,11 +103,11 @@ namespace SubcongMeet.Controllers
                     .OrderByDescending(e => e.UpdatedAt)
                     .ToListAsync();
 
-                // Calculate Combined Overall Rank across all municipalities
+                // Combine divisions only within the same district.
                 var allTeams = await _context.Teams.ToListAsync();
-                var allTallies = await _context.MedalTallies.ToListAsync();
+                var allTallies = await _context.GetTeamStandings().ToListAsync();
 
-                var municipalityGroups = allTeams.GroupBy(t => GetMunicipality(t.Name)).ToList();
+                var municipalityGroups = allTeams.GroupBy(t => t.Name.Trim()).ToList();
                 var municipalityRankings = new List<MunicipalityRankDto>();
 
                 foreach (var group in municipalityGroups)

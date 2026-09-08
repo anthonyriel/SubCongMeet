@@ -18,8 +18,7 @@ namespace SubcongMeet.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var tallies = await _context.MedalTallies
-                .Include(t => t.Team)
+            var tallies = await _context.GetTeamStandings()
                 .OrderByDescending(t => t.Gold)
                 .ThenByDescending(t => t.Silver)
                 .ThenByDescending(t => t.Bronze)
