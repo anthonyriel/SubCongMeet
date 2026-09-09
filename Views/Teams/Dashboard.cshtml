@@ -3,21 +3,19 @@
     ViewData["Title"] = "Participating Schools";
 
     // One overall card per district, combining its divisions.
-    var overallGroups = Model.GroupBy(t => t.Name.Trim()).ToList();
+    var overallGroups = Model.GroupBy(t => t.Name?.Trim() ?? "").ToList();
 
-    // Helper to get local team logo path dynamically
+    // Helper to get local team logo path dynamically with cache-busting to prevent browser caching old/missing states
     string GetTeamLogoPath(string? acronym, string? name) {
-        // Prefer the Acronym, fallback to Name if Acronym is empty
-        string identifier = !string.IsNullOrEmpty(acronym) ? acronym : name ?? "";
+        string identifier = !string.IsNullOrWhiteSpace(acronym) ? acronym.Trim() : (name?.Trim() ?? "");
 
-        // If no name or acronym is found, return a default placeholder
         if (string.IsNullOrEmpty(identifier)) 
             return Url.Content("~/images/teams/default-logo.png");
 
-        // Convert "Loon North" to "loon-north.png"
         string safeFileName = identifier.ToLower().Replace(" ", "-").Replace(".", "") + ".png";
 
-        return Url.Content($"~/images/teams/{safeFileName}");
+        // Adding a version query string (?v=2) ensures browsers load the newly updated image file immediately
+        return Url.Content($"~/images/teams/{safeFileName}") + "?v=2";
     }
 }
 

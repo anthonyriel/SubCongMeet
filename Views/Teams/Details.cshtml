@@ -8,9 +8,9 @@
 
     // Filter and group events based on teamIds, sorted by Gold -> Silver -> Bronze (Secondary then Elementary)
     var goldEvents = Model.Where(e => teamIds.Contains(e.GoldTeamId ?? 0))
-                          .OrderByDescending(e => e.Division == "Secondary")
-                          .ThenBy(e => e.Division)
-                          .ToList();
+                        .OrderByDescending(e => e.Division == "Secondary")
+                        .ThenBy(e => e.Division)
+                        .ToList();
 
     var silverEvents = Model.Where(e => teamIds.Contains(e.SilverTeamId ?? 0))
                             .OrderByDescending(e => e.Division == "Secondary")
@@ -40,19 +40,16 @@
 
     int totalMedals = medalRecords.Count;
 
-    // Helper to get local team logo path dynamically
+    // Helper to get local team logo path dynamically with cache-busting to prevent browser caching old/missing states
     string GetTeamLogoPath(string? acronym, string? name) {
-        // Prefer the Acronym, fallback to Name if Acronym is empty
-        string identifier = !string.IsNullOrEmpty(acronym) ? acronym : name ?? "";
+        string identifier = !string.IsNullOrWhiteSpace(acronym) ? acronym.Trim() : (name?.Trim() ?? "");
 
-        // If no name or acronym is found, return a default placeholder
         if (string.IsNullOrEmpty(identifier)) 
             return Url.Content("~/images/teams/default-logo.png");
 
-        // Convert "Loon North" to "loon-north.png"
         string safeFileName = identifier.ToLower().Replace(" ", "-").Replace(".", "") + ".png";
 
-        return Url.Content($"~/images/teams/{safeFileName}");
+        return Url.Content($"~/images/teams/{safeFileName}") + "?v=2";
     }
 
     // Usage (assuming your team object is named 'team'):
