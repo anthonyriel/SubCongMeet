@@ -5,17 +5,21 @@
     // One overall card per district, combining its divisions.
     var overallGroups = Model.GroupBy(t => t.Name?.Trim() ?? "").ToList();
 
-    // Helper to get local team logo path dynamically with cache-busting to prevent browser caching old/missing states
-    string GetTeamLogoPath(string? acronym, string? name) {
-        string identifier = !string.IsNullOrWhiteSpace(acronym) ? acronym.Trim() : (name?.Trim() ?? "");
-
-        if (string.IsNullOrEmpty(identifier)) 
+    // Helper to get local team logo path dynamically based on the District Name
+    string GetTeamLogoPath(string? name) {
+        if (string.IsNullOrWhiteSpace(name)) 
             return Url.Content("~/images/teams/default-logo.png");
 
-        string safeFileName = identifier.ToLower().Replace(" ", "-").Replace(".", "") + ".png";
+        // Strip out the word "District" to get just the municipality name (e.g., "Loon North District" -> "Loon North")
+        string normalizedName = name.Replace(" District", "", StringComparison.OrdinalIgnoreCase)
+                                    .Replace("District", "", StringComparison.OrdinalIgnoreCase)
+                                    .Trim();
 
-        // Adding a version query string (?v=2) ensures browsers load the newly updated image file immediately
-        return Url.Content($"~/images/teams/{safeFileName}") + "?v=2";
+        // Convert to safe filename (e.g., "Loon North" -> "loon-north.png")
+        string safeFileName = normalizedName.ToLower().Replace(" ", "-").Replace(".", "") + ".png";
+
+        // Using Ticks ensures the browser NEVER caches a broken or old image while you are testing
+        return Url.Content($"~/images/teams/{safeFileName}") + "?v=" + DateTime.Now.Ticks;
     }
 }
 
@@ -185,7 +189,7 @@
     <div class="row g-4 justify-content-center" id="schoolsContainer">
         <!-- 1. Individual Division Cards (Elementary & Secondary) -->
         @foreach (var team in Model) {
-            string logoPath = GetTeamLogoPath(team.Acronym, team.Name);
+            string logoPath = GetTeamLogoPath(team.Name);
             <div class="col-md-6 col-lg-4 team-item" data-division="@team.Division">
                 <a asp-action="Details" asp-route-id="@team.Id" class="school-card h-100">
                     <div class="card-left-content">
@@ -205,7 +209,7 @@
         <!-- 2. One overall card per district -->
         @foreach (var group in overallGroups) {
             var sampleTeam = group.First();
-            string logoPath = GetTeamLogoPath(sampleTeam.Acronym, sampleTeam.Name);
+            string logoPath = GetTeamLogoPath(sampleTeam.Name);
             <div class="col-md-6 col-lg-4 team-item overall-item" data-division="All" style="display: none;">
                 <!-- Pass the team name or grouped IDs to Details -->
                 <a asp-action="Details" asp-route-name="@sampleTeam.Name" class="school-card h-100">
