@@ -141,7 +141,14 @@
         gap: 8px;
         justify-content: center;
         margin-bottom: 2.5rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap; /* Keep buttons on one line */
+        overflow-x: auto; /* Enable horizontal scrolling if needed */
+        scrollbar-width: none; /* Hide scrollbar Firefox */
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    }
+
+    .division-filters::-webkit-scrollbar {
+        display: none; /* Hide scrollbar Chrome/Safari */
     }
 
     .filter-btn {
@@ -155,6 +162,7 @@
         border-radius: 50px;
         transition: var(--cc-transition, all 0.25s ease);
         font-size: 0.85rem;
+        white-space: nowrap; /* Prevent text from wrapping to a second line */
         box-shadow: 0 2px 6px rgba(16, 42, 67, 0.04);
         backdrop-filter: blur(4px);
     }
@@ -171,6 +179,21 @@
         border-color: rgba(255,255,255,0.2);
         color: white;
         box-shadow: 0 4px 12px rgba(122, 31, 43, 0.25);
+    }
+
+    /* Mobile specific adjustments for a perfect single-line layout */
+    @@media (max-width: 576px) {
+        .division-filters {
+            width: 100%;
+            gap: 5px;
+            justify-content: flex-start; /* Ensure the first button is flush left when scrolling */
+        }
+        .filter-btn {
+            flex: 0 0 auto; /* Prevent buttons from squishing to the point of breaking */
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            text-align: center;
+        }
     }
 </style>
 
