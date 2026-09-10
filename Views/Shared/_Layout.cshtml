@@ -53,7 +53,7 @@
             --cc-shadow-md: 0 8px 24px rgba(16, 42, 67, 0.06);
             --cc-shadow-hover: 0 8px 20px rgba(16, 42, 67, 0.10), 0 16px 32px rgba(16, 42, 67, 0.06);
             
-            --cc-transition: all 0.25s ease;
+            --cc-transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 
             /* Base Font overrides */
             --font-body: 'Inter', Segoe UI, Arial, sans-serif;
@@ -123,7 +123,7 @@
             border-radius: 0 !important;
             box-shadow: none !important;
             object-fit: contain;
-            transition: transform var(--cc-transition);
+            transition: transform 0.2s ease;
         }
 
         .navbar-brand:hover .navbar-logo {
@@ -131,7 +131,17 @@
         }
 
         .brand-title { 
-            color: var(--cc-white); 
+            background: linear-gradient(125deg, #5795ed 8%, #122e83 22%, #39a555 38%, #efc33e 52%, #e96b28 62%, #b3233f 75%, #338948 95%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            width: fit-content;
+            filter: drop-shadow(0.4px 0 0 #fff)
+                    drop-shadow(-0.4px 0 0 #fff)
+                    drop-shadow(0 0.4px 0 #fff)
+                    drop-shadow(0 -0.4px 0 #fff)
+                    drop-shadow(0 1px 0 rgba(255,255,255,0.6))
+                    drop-shadow(0 2px 3px rgba(0,0,0,0.35));
             font-size: clamp(1.1rem, 2.5vw, 1.35rem); 
             letter-spacing: 1px; 
             font-weight: 800;
@@ -159,7 +169,7 @@
         }
 
         .offcanvas {
-            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
         }
 
         .offcanvas-header {
@@ -213,7 +223,7 @@
         .drawer-link i { 
             color: var(--cc-primary); 
             font-size: 1.15rem; 
-            transition: color var(--cc-transition);
+            transition: color 0.2s ease;
         }
 
         .drawer-link:hover i {
@@ -223,7 +233,7 @@
         .drawer-link .chevron { 
             color: var(--cc-primary); 
             font-size: 0.8rem;
-            transition: transform var(--cc-transition), color var(--cc-transition);
+            transition: transform 0.2s ease, color 0.2s ease;
         }
         
         .drawer-link:hover .chevron {
@@ -240,7 +250,7 @@
             padding-left: 2.5rem;
             list-style: none;
             margin: 0 0 8px 0;
-            animation: fadeInSubmenu 0.3s ease forwards;
+            animation: fadeInSubmenu 0.2s ease forwards;
         }
 
         @@keyframes fadeInSubmenu {
@@ -282,7 +292,7 @@
 
         .drawer-sub-link i {
             color: var(--cc-primary); 
-            transition: color var(--cc-transition);
+            transition: color 0.2s ease;
         }
         
         .drawer-sub-link:hover i {
@@ -305,6 +315,11 @@
             font-size: 0.85rem; 
         }
 
+        /* FLOATING BOTTOM NAVIGATION (Mobile Only) */
+        .mobile-bottom-nav {
+            display: none;
+        }
+
         /* Reduced Motion */
         @@media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
@@ -315,28 +330,116 @@
             }
         }
 
-        /* Mobile Header Fixes */
+        /* Mobile View Customization */
         @@media (max-width: 575.98px) {
+            body {
+                padding-bottom: 90px !important;
+            }
+
             .navbar-logo {
                 height: 38px;
             }
+
             .brand-subtitle {
                 font-size: 0.65rem;
                 letter-spacing: 1px;
             }
+
             .navbar-brand.gap-3 {
                 gap: 0.75rem !important; 
             }
+
             .navbar-brand .gap-2 {
                 gap: 0.25rem !important; 
             }
-            .offcanvas-custom {
-                border-top-left-radius: 0;
-                border-bottom-left-radius: 0;
-                max-width: 85vw;
+
+            /* Hide Hamburger Icon on Mobile */
+            .navbar-toggler {
+                display: none !important;
             }
-            .navbar-toggler i {
-                font-size: 1.75rem !important;
+
+            /* Ultra-responsive & Optimized Floating Bottom Nav */
+            .mobile-bottom-nav {
+                display: block;
+                position: fixed;
+                bottom: 14px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: calc(100% - 32px);
+                max-width: 380px;
+                z-index: 1050;
+                background: rgba(16, 42, 67, 0.95);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(201, 162, 39, 0.4);
+                border-radius: 24px;
+                box-shadow: 0 8px 24px rgba(16, 42, 67, 0.28);
+                padding: 4px;
+                will-change: transform;
+            }
+
+            .mobile-nav-container {
+                display: flex;
+                align-items: center;
+                justify-content: safe center;
+                gap: 2px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                width: 100%;
+            }
+
+            @@supports not (justify-content: safe center) {
+                .mobile-nav-container {
+                    justify-content: center;
+                }
+            }
+
+            .mobile-nav-container::-webkit-scrollbar {
+                display: none;
+            }
+
+            .mobile-nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-width: 58px;
+                padding: 6px 6px;
+                color: rgba(255, 255, 255, 0.75);
+                text-decoration: none;
+                border-radius: 18px;
+                font-size: 0.68rem;
+                font-weight: 600;
+                white-space: nowrap;
+                flex-shrink: 0;
+                cursor: pointer;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
+                transition: transform 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+                will-change: transform;
+            }
+
+            .mobile-nav-item i {
+                font-size: 1.2rem;
+                margin-bottom: 2px;
+                transition: transform 0.12s ease, color 0.12s ease;
+            }
+
+            .mobile-nav-item:active {
+                transform: scale(0.92);
+                background: rgba(255, 255, 255, 0.18);
+            }
+
+            .mobile-nav-item.active {
+                color: var(--cc-gold-light);
+                background: rgba(255, 255, 255, 0.12);
+            }
+
+            .mobile-nav-item.active i {
+                color: var(--cc-gold);
+                transform: translateY(-1px);
             }
         }
     </style>
@@ -363,6 +466,7 @@
         </nav>
     </header>
 
+    <!-- Desktop Offcanvas Menu -->
     <div class="offcanvas offcanvas-end offcanvas-custom" tabindex="-1" id="offcanvasMenu">
         <div class="offcanvas-header">
             <h5 class="offcanvas-title d-flex align-items-center" style="color: var(--cc-primary);">
@@ -453,6 +557,68 @@
         <main role="main">@RenderBody()</main>
     </div>
 
+    <!-- Floating Bottom Navigation Bar (Mobile View Only) -->
+    <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <div class="mobile-nav-container">
+            <a asp-controller="Home" asp-action="Index" class="mobile-nav-item">
+                <i class="bi bi-house-door-fill"></i>
+                <span>Home</span>
+            </a>
+            <a asp-controller="Rankings" asp-action="Index" class="mobile-nav-item">
+                <i class="bi bi-trophy-fill"></i>
+                <span>Rankings</span>
+            </a>
+            <a asp-controller="Events" asp-action="Index" class="mobile-nav-item">
+                <i class="bi bi-calendar-event-fill"></i>
+                <span>Events</span>
+            </a>
+            <a asp-controller="Teams" asp-action="Dashboard" class="mobile-nav-item">
+                <i class="bi bi-people-fill"></i>
+                <span>Districts</span>
+            </a>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Coordinators" asp-action="Index" class="mobile-nav-item">
+                        <i class="bi bi-person-badge-fill"></i>
+                        <span>Coordinators</span>
+                    </a>
+                    <a asp-controller="Events" asp-action="ManageEvents" class="mobile-nav-item">
+                        <i class="bi bi-sliders"></i>
+                        <span>Manage</span>
+                    </a>
+                    <a asp-controller="Home" asp-action="GeneralOfficialReport" class="mobile-nav-item">
+                        <i class="bi bi-bar-chart-line-fill"></i>
+                        <span>Gen Report</span>
+                    </a>
+                    <a asp-controller="Home" asp-action="AllEventsResultsReport" class="mobile-nav-item">
+                        <i class="bi bi-list-check"></i>
+                        <span>All Results</span>
+                    </a>
+                    <a asp-controller="Home" asp-action="DistrictQualifierReport" class="mobile-nav-item">
+                        <i class="bi bi-award-fill"></i>
+                        <span>Qualifiers</span>
+                    </a>
+                }
+                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline m-0 p-0">
+                    <button type="submit" class="mobile-nav-item border-0 bg-transparent">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" class="mobile-nav-item">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    <span>Login</span>
+                </a>
+            }
+        </div>
+    </nav>
+
     <footer class="footer-custom text-center">
         <div class="container px-3">
             <p class="footer-text">&copy; 2026 Anthony Riel C. Diango CpE, LPT</p>
@@ -461,6 +627,22 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const currentPath = window.location.pathname.toLowerCase();
+            const mobileLinks = document.querySelectorAll('.mobile-nav-item');
+            
+            mobileLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);') {
+                    if (currentPath === href.toLowerCase() || (href !== '/' && currentPath.startsWith(href.toLowerCase()))) {
+                        link.classList.add('active');
+                        link.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
+                    }
+                }
+            });
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
