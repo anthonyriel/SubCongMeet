@@ -62,6 +62,7 @@
 
     // Combine Elementary and Secondary medals for each district.
     var overallStandings = Model
+        .Where(t => t.Team?.Division == "Elementary" || t.Team?.Division == "Secondary")
         .GroupBy(t => t.Team?.Name.Trim() ?? string.Empty)
         .Select(g => new {
             Municipality = g.Key,
@@ -469,8 +470,9 @@
             <!-- Division & Overall Selection Tabs (Rearranged Succession: Overall -> Elementary -> Secondary) -->
             <div class="division-filters">
                 <button class="filter-btn active-filter" onclick="setDivisionFilter('Overall', this)">Overall</button>
-                <button class="filter-btn" onclick="setDivisionFilter('Elementary', this)">Elementary</button>
                 <button class="filter-btn" onclick="setDivisionFilter('Secondary', this)">Secondary</button>
+                <button class="filter-btn" onclick="setDivisionFilter('Elementary', this)">Elementary</button>
+                <button class="filter-btn" onclick="setDivisionFilter('Paragames', this)">Paragames</button>
             </div>
 
             <div class="flex-grow-1 p-0 bg-transparent border-0 shadow-none">
@@ -488,7 +490,7 @@
                             <thead>
                                 <tr>
                                     <th class="text-center" style="width: 14%;">Rank</th>
-                                    <th style="width: 32%;">Area</th>
+                                    <th style="width: 32%;">District</th>
                                     <th class="text-center" style="width: 13%;">🥇 G</th>
                                     <th class="text-center" style="width: 13%;">🥈 S</th>
                                     <th class="text-center" style="width: 13%;">🥉 B</th>
@@ -606,7 +608,7 @@
 @section Scripts {
 <script>
     // Updated Division Rotation Order: Overall -> Elementary -> Secondary
-    const divisionsList = ['Overall', 'Elementary', 'Secondary'];
+    const divisionsList = ['Overall', 'Secondary', 'Elementary', 'Paragames'];
     let currentDivIndex = 0;
     let autoTimer = null;
     let idleTimer = null;

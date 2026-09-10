@@ -637,8 +637,9 @@
             <!-- Division Filters with 3D Pop -->
             <div class="division-filters">
                 <button class="filter-btn active-filter" onclick="setDivisionFilter('All', this)">Overall</button>
-                <button class="filter-btn" onclick="setDivisionFilter('Elementary', this)">Elementary</button>
                 <button class="filter-btn" onclick="setDivisionFilter('Secondary', this)">Secondary</button>
+                <button class="filter-btn" onclick="setDivisionFilter('Elementary', this)">Elementary</button>
+                <button class="filter-btn" onclick="setDivisionFilter('Paragames', this)">Paragames</button>
             </div>
             
             <!-- Filters -->
@@ -874,7 +875,9 @@
 
             // 3. Division Check
             var currentDiv = currentDivisionFilter.toLowerCase().trim();
-            var matchDivision = currentDiv === 'all' || rowDivision === currentDiv;
+            var matchDivision = currentDiv === 'all'
+                ? rowDivision === 'elementary' || rowDivision === 'secondary'
+                : rowDivision === currentDiv;
 
             // 4. Status Check
             var isCompleted = rowStatus === "completed";

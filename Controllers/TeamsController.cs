@@ -88,6 +88,7 @@ namespace SubcongMeet.Controllers
             else if (!string.IsNullOrEmpty(name))
             {
                 var matchedTeams = await _context.Teams
+                    .Where(t => t.Division == "Elementary" || t.Division == "Secondary")
                     .Where(t => t.Name == name || t.Acronym == name)
                     .ToListAsync();
 
@@ -104,7 +105,9 @@ namespace SubcongMeet.Controllers
                     .ToListAsync();
 
                 // Combine divisions only within the same district.
-                var allTeams = await _context.Teams.ToListAsync();
+                var allTeams = await _context.Teams
+                    .Where(t => t.Division == "Elementary" || t.Division == "Secondary")
+                    .ToListAsync();
                 var allTallies = await _context.GetTeamStandings().ToListAsync();
 
                 var municipalityGroups = allTeams.GroupBy(t => t.Name.Trim()).ToList();

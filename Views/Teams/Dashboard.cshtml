@@ -3,7 +3,8 @@
     ViewData["Title"] = "Participating Schools";
 
     // One overall card per district, combining its divisions.
-    var overallGroups = Model.GroupBy(t => t.Name?.Trim() ?? "").ToList();
+    var overallGroups = Model.Where(t => t.Division == "Elementary" || t.Division == "Secondary")
+        .GroupBy(t => t.Name?.Trim() ?? "").ToList();
 
     // Helper to get local team logo path dynamically based on the District Name
     string GetTeamLogoPath(string? name) {
@@ -180,9 +181,11 @@
 
     <!-- Division Filter Selection -->
     <div class="division-filters" role="group" aria-label="Division Filter">
+        <button type="button" class="btn filter-btn" data-filter="All">Overall</button>
         <button type="button" class="btn filter-btn active" data-filter="Secondary">Secondary</button>
         <button type="button" class="btn filter-btn" data-filter="Elementary">Elementary</button>
-        <button type="button" class="btn filter-btn" data-filter="All">Overall</button>
+        <button type="button" class="btn filter-btn" data-filter="Paragames">Paragames</button>
+
     </div>
 
     <!-- Centered Grid Container -->

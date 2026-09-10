@@ -45,6 +45,7 @@
     
     var elementaryEvents = new List<SubcongMeet.Models.Event>();
     var secondaryEvents = new List<SubcongMeet.Models.Event>();
+    var paragamesEvents = new List<SubcongMeet.Models.Event>();
     var otherEvents = new List<SubcongMeet.Models.Event>();
 
     if (groupEvents && reportEvents.Any())
@@ -55,6 +56,7 @@
             
             if (div.Contains("ELEM")) elementaryEvents.Add(evt);
             else if (div.Contains("SEC")) secondaryEvents.Add(evt);
+            else if (div == "PARAGAMES") paragamesEvents.Add(evt);
             else otherEvents.Add(evt);
         }
     }
@@ -474,6 +476,11 @@
                                 {
                                     <tr><td colspan="4" class="group-header py-2">SECONDARY</td></tr>
                                     foreach(var evt in secondaryEvents) { RenderEventRow(evt); }
+                                }
+                                if (paragamesEvents.Any())
+                                {
+                                    <tr><td colspan="4" class="group-header py-2">PARAGAMES</td></tr>
+                                    foreach(var evt in paragamesEvents) { RenderEventRow(evt); }
                                 }
                                 if (otherEvents.Any())
                                 {

@@ -40,8 +40,15 @@
 
     int overallTotalMedals = teamTallies.Sum(m => m.TotalMedals);
 
-    var overallLeader = overallTotalMedals > 0
-        ? teamTallies.OrderByDescending(m => m.Gold)
+    var overallStandings = teamTallies
+        .Where(m => m.Division == "Elementary" || m.Division == "Secondary")
+        .GroupBy(m => m.TeamName.Trim())
+        .Select(g => new { TeamName = g.Key, Gold = g.Sum(m => m.Gold), Silver = g.Sum(m => m.Silver), Bronze = g.Sum(m => m.Bronze) })
+        .Where(m => m.Gold + m.Silver + m.Bronze > 0)
+        .ToList();
+
+    var overallLeader = overallStandings.Any()
+        ? overallStandings.OrderByDescending(m => m.Gold)
             .ThenByDescending(m => m.Silver)
             .ThenByDescending(m => m.Bronze)
             .FirstOrDefault()
@@ -78,6 +85,10 @@
                                   .Take(3).ToList();
                                   
     var top3Secondary = teamTallies.Where(m => m.Division.Equals("Secondary", StringComparison.OrdinalIgnoreCase) && m.TotalMedals > 0)
+                                 .OrderByDescending(m => m.Gold).ThenByDescending(m => m.Silver).ThenByDescending(m => m.Bronze)
+                                 .Take(3).ToList();
+
+    var top3Paragames = teamTallies.Where(m => m.Division.Equals("Paragames", StringComparison.OrdinalIgnoreCase) && m.TotalMedals > 0)
                                  .OrderByDescending(m => m.Gold).ThenByDescending(m => m.Silver).ThenByDescending(m => m.Bronze)
                                  .Take(3).ToList();
 
@@ -482,8 +493,9 @@
                     
                     <!-- Division Buttons -->
                     <div class="division-filters mt-3 mt-md-0 mb-0">
-                        <button class="filter-btn active-filter" onclick="toggleTop3('Elementary', this)">Elementary</button>
                         <button class="filter-btn" onclick="toggleTop3('Secondary', this)">Secondary</button>
+                        <button class="filter-btn active-filter" onclick="toggleTop3('Elementary', this)">Elementary</button>
+                        <button class="filter-btn" onclick="toggleTop3('Paragames', this)">Paragames</button>
                     </div>
                 </div>
                 
@@ -533,6 +545,29 @@
                             </div>
                         }
                     </div>
+
+                    <!-- Paragames Top 3 -->
+                    <div class="row g-3 top3-view" id="top3-Paragames" style="display: none;">
+                        @if(!top3Paragames.Any())
+                        {
+                            <div class="col-12"><div class="glass-card text-center fw-bold" style="color: rgba(255,255,255,0.7); padding: 2.5rem 1rem;">No results recorded yet for Paragames.</div></div>
+                        }
+                        @foreach(var team in top3Paragames)
+                        {
+                            <div class="col-12 col-md-4">
+                                <a asp-controller="Teams" asp-action="Details" asp-route-id="@team.TeamId" class="text-decoration-none d-block h-100">
+                                    <div class="glass-card p-3 d-flex flex-row flex-md-column justify-content-between align-items-center text-center h-100">
+                                        <span class="fw-bold mb-0 mb-md-2 top3-team-name text-truncate w-100">@(team.TeamName ?? "N/A")</span>
+                                        <div class="d-flex gap-2 fw-bold px-3 py-1.5 rounded-pill medal-pill" style="font-size: 0.95rem;">
+                                            <span class="medal-text-gold">@team.Gold<small class="ms-0.5 fs-7" style="opacity: 0.7;">G</small></span>
+                                            <span class="medal-text-silver">@team.Silver<small class="ms-0.5 fs-7" style="opacity: 0.7;">S</small></span>
+                                            <span class="medal-text-bronze">@team.Bronze<small class="ms-0.5 fs-7" style="opacity: 0.7;">B</small></span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
             
@@ -554,17 +589,23 @@
                                 <div class="stat-value-prominent text-truncate small-leader-font">@(overallLeader?.TeamName ?? "TBD")</div>
                                 <div class="stat-subtext">Overall Leader</div>
                             </div>
-                            <!-- Slide 2: Elementary Leader -->
+                            <!-- Slide 2: Secondary Leader -->
+                            <div class="leader-slide" style="display: none;">
+                                <div class="stat-header"><span>Sec Leader</span><i class="bi bi-trophy-fill"></i></div>
+                                <div class="stat-value-prominent text-truncate small-leader-font">@(secondaryLeader?.TeamName ?? "TBD")</div>
+                                <div class="stat-subtext">Secondary Division</div>
+                            </div>
+                            <!-- Slide 3: Elementary Leader -->
                             <div class="leader-slide" style="display: none;">
                                 <div class="stat-header"><span>Elem Leader</span><i class="bi bi-trophy-fill"></i></div>
                                 <div class="stat-value-prominent text-truncate small-leader-font">@(elementaryLeader?.TeamName ?? "TBD")</div>
                                 <div class="stat-subtext">Elementary Division</div>
                             </div>
-                            <!-- Slide 3: Secondary Leader -->
+                            <!-- Slide 4: Paragames Leader -->
                             <div class="leader-slide" style="display: none;">
-                                <div class="stat-header"><span>Sec Leader</span><i class="bi bi-trophy-fill"></i></div>
-                                <div class="stat-value-prominent text-truncate small-leader-font">@(secondaryLeader?.TeamName ?? "TBD")</div>
-                                <div class="stat-subtext">Secondary Division</div>
+                                <div class="stat-header"><span>Para Leader</span><i class="bi bi-trophy-fill"></i></div>
+                                <div class="stat-value-prominent text-truncate small-leader-font">@(top3Paragames.FirstOrDefault()?.TeamName ?? "TBD")</div>
+                                <div class="stat-subtext">Paragames Division</div>
                             </div>
                         </div>
                     </div>

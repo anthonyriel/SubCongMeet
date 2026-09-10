@@ -98,13 +98,15 @@ namespace SubcongMeet.Controllers
                 .Distinct()
                 .ToListAsync();
 
-            ViewBag.DivisionsList = await _context.Teams
+            ViewBag.DivisionsList = (await _context.Teams
                 .Where(t => !string.IsNullOrEmpty(t.Division))
                 .Select(t => t.Division)
                 .Distinct()
+                .ToListAsync())
+                .Union(new[] { "Elementary", "Secondary", "Paragames" })
                 .OrderBy(d => d)
                 .Select(d => new SelectListItem { Value = d, Text = d })
-                .ToListAsync();
+                .ToList();
 
             ViewBag.TeamsList = await _context.Teams
                 .OrderBy(t => t.Name)
@@ -171,13 +173,15 @@ namespace SubcongMeet.Controllers
                 .Distinct()
                 .ToListAsync();
 
-            ViewBag.DivisionsList = await _context.Teams
+            ViewBag.DivisionsList = (await _context.Teams
                 .Where(t => !string.IsNullOrEmpty(t.Division))
                 .Select(t => t.Division)
                 .Distinct()
+                .ToListAsync())
+                .Union(new[] { "Elementary", "Secondary", "Paragames" })
                 .OrderBy(d => d)
                 .Select(d => new SelectListItem { Value = d, Text = d })
-                .ToListAsync();
+                .ToList();
 
             ViewBag.TeamNamesList = await _context.EventQualifiers
                 .Where(q => !string.IsNullOrEmpty(q.Team))
@@ -250,13 +254,15 @@ namespace SubcongMeet.Controllers
                 .Distinct()
                 .ToListAsync();
 
-            ViewBag.DivisionsList = await _context.Teams
+            ViewBag.DivisionsList = (await _context.Teams
                 .Where(t => !string.IsNullOrEmpty(t.Division))
                 .Select(t => t.Division)
                 .Distinct()
+                .ToListAsync())
+                .Union(new[] { "Elementary", "Secondary", "Paragames" })
                 .OrderBy(d => d)
                 .Select(d => new SelectListItem { Value = d, Text = d })
-                .ToListAsync();
+                .ToList();
 
             ViewBag.TeamNamesList = await _context.EventQualifiers
                 .Where(q => !string.IsNullOrEmpty(q.Team))

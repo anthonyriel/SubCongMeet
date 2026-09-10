@@ -493,23 +493,30 @@
                             {
                                 var elemQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("ELEM"); }).ToList();
                                 var secQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("SEC"); }).ToList();
-                                var otherQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt == null || (!GetEventDivision(evt).Contains("ELEM") && !GetEventDivision(evt).Contains("SEC")); }).ToList();
+                                var paragamesQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt) == "PARAGAMES"; }).ToList();
+                                var otherQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt == null || (!GetEventDivision(evt).Contains("ELEM") && !GetEventDivision(evt).Contains("SEC") && GetEventDivision(evt) != "PARAGAMES"); }).ToList();
 
                                 if (elemQualifiers.Any())
                                 {
-                                    ResetTracker(); 
+                                    ResetTracker();
                                     <tr><td colspan="6" class="group-header py-2">ELEMENTARY DIVISION</td></tr>
                                     foreach (var q in elemQualifiers) { RenderQualifierRow(q); }
                                 }
                                 if (secQualifiers.Any())
                                 {
-                                    ResetTracker(); 
+                                    ResetTracker();
                                     <tr><td colspan="6" class="group-header py-2">SECONDARY DIVISION</td></tr>
                                     foreach (var q in secQualifiers) { RenderQualifierRow(q); }
                                 }
+                                if (paragamesQualifiers.Any())
+                                {
+                                    ResetTracker();
+                                    <tr><td colspan="6" class="group-header py-2">PARAGAMES DIVISION</td></tr>
+                                    foreach (var q in paragamesQualifiers) { RenderQualifierRow(q); }
+                                }
                                 if (otherQualifiers.Any())
                                 {
-                                    ResetTracker(); 
+                                    ResetTracker();
                                     <tr><td colspan="6" class="group-header py-2">OTHER EVENTS</td></tr>
                                     foreach (var q in otherQualifiers) { RenderQualifierRow(q); }
                                 }
@@ -600,23 +607,30 @@
                             {
                                 var elemQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("ELEM"); }).ToList();
                                 var secQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("SEC"); }).ToList();
-                                var otherQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt == null || (!GetEventDivision(evt).Contains("ELEM") && !GetEventDivision(evt).Contains("SEC")); }).ToList();
+                                var paragamesQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt) == "PARAGAMES"; }).ToList();
+                                var otherQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt == null || (!GetEventDivision(evt).Contains("ELEM") && !GetEventDivision(evt).Contains("SEC") && GetEventDivision(evt) != "PARAGAMES"); }).ToList();
 
                                 if (elemQualifiers.Any())
                                 {
-                                    ResetTracker_PL(); 
+                                    ResetTracker_PL();
                                     <tr><td colspan="5" class="group-header py-2">ELEMENTARY DIVISION</td></tr>
                                     foreach (var q in elemQualifiers) { RenderParticipantRow(q); }
                                 }
                                 if (secQualifiers.Any())
                                 {
-                                    ResetTracker_PL(); 
+                                    ResetTracker_PL();
                                     <tr><td colspan="5" class="group-header py-2">SECONDARY DIVISION</td></tr>
                                     foreach (var q in secQualifiers) { RenderParticipantRow(q); }
                                 }
+                                if (paragamesQualifiers.Any())
+                                {
+                                    ResetTracker_PL();
+                                    <tr><td colspan="5" class="group-header py-2">PARAGAMES DIVISION</td></tr>
+                                    foreach (var q in paragamesQualifiers) { RenderParticipantRow(q); }
+                                }
                                 if (otherQualifiers.Any())
                                 {
-                                    ResetTracker_PL(); 
+                                    ResetTracker_PL();
                                     <tr><td colspan="5" class="group-header py-2">OTHER EVENTS</td></tr>
                                     foreach (var q in otherQualifiers) { RenderParticipantRow(q); }
                                 }
