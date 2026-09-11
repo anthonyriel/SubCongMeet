@@ -129,6 +129,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        position: relative; /* Added for absolute positioning of child icons */
         background: linear-gradient(-45deg,
             rgba(16, 42, 67, var(--card-opacity)) 0%,
             rgba(11, 31, 51, var(--card-opacity)) 25%,
@@ -143,7 +144,21 @@
         box-shadow: 0 16px 32px rgba(16, 42, 67, 0.22);
         color: #fff;
         overflow: hidden;
-        isolation: isolate;
+        isolation: isolate; /* Keeps z-index stacking contained */
+    }
+
+    /* Abstract & Artful Scattered Background Icons */
+    .hero-abstract-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: -1;
+        overflow: hidden;
+    }
+    .hero-abs-icon {
+        position: absolute;
+        color: #ffffff;
+        opacity: 0.06;
     }
 
     .hero-wordmark {
@@ -560,6 +575,23 @@
             
             <!-- 1. Hero Banner -->
             <div class="hero-banner">
+                
+                <!-- Abstract Artful Scattered Background Icons -->
+                <div class="hero-abstract-bg">
+                    <i class="bi bi-dribbble hero-abs-icon" style="top: 12%; left: 7%; font-size: 1.4rem; transform: rotate(-18deg);"></i>
+                    <i class="bi bi-bicycle hero-abs-icon" style="top: 78%; left: 14%; font-size: 1.2rem; transform: rotate(24deg);"></i>
+                    <i class="bi bi-trophy-fill hero-abs-icon" style="top: 18%; left: 88%; font-size: 1.8rem; transform: rotate(32deg);"></i>
+                    <i class="bi bi-bullseye hero-abs-icon" style="top: 82%; left: 85%; font-size: 1.3rem; transform: rotate(-25deg);"></i>
+                    <i class="bi bi-lightning-charge-fill hero-abs-icon" style="top: 48%; left: 4%; font-size: 1.6rem; transform: rotate(12deg);"></i>
+                    <i class="bi bi-award-fill hero-abs-icon" style="top: 52%; left: 91%; font-size: 1.5rem; transform: rotate(-15deg);"></i>
+                    <i class="bi bi-stopwatch-fill hero-abs-icon" style="top: 15%; left: 32%; font-size: 1.1rem; transform: rotate(45deg);"></i>
+                    <i class="bi bi-dribbble hero-abs-icon" style="top: 85%; left: 42%; font-size: 1.5rem; transform: rotate(-40deg);"></i>
+                    <i class="bi bi-bullseye hero-abs-icon" style="top: 32%; left: 68%; font-size: 1.2rem; transform: rotate(10deg);"></i>
+                    <i class="bi bi-bicycle hero-abs-icon" style="top: 68%; left: 62%; font-size: 1.7rem; transform: rotate(-22deg);"></i>
+                    <i class="bi bi-award-fill hero-abs-icon" style="top: 28%; left: 58%; font-size: 1.0rem; transform: rotate(28deg);"></i>
+                    <i class="bi bi-lightning-charge-fill hero-abs-icon" style="top: 72%; left: 28%; font-size: 1.6rem; transform: rotate(-8deg);"></i>
+                </div>
+
                 <div class="hero-wordmark">
                     <h1 class="hero-heading">
                         <span class="hero-locatu">LOCATU</span>
