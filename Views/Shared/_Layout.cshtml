@@ -315,7 +315,7 @@
             font-size: 0.85rem; 
         }
 
-        /* FLOATING BOTTOM NAVIGATION (Mobile Only) */
+        /* FLOATING BOTTOM NAVIGATION (Mobile Only Base) */
         .mobile-bottom-nav {
             display: none;
         }
@@ -330,8 +330,8 @@
             }
         }
 
-        /* Mobile View Customization */
-        @@media (max-width: 575.98px) {
+        /* Mobile View Customization - PORTRAIT */
+        @@media (max-width: 575.98px) and (orientation: portrait) {
             body {
                 padding-bottom: 90px !important;
             }
@@ -358,7 +358,7 @@
                 display: none !important;
             }
 
-            /* Ultra-responsive & Optimized Floating Bottom Nav */
+            /* Ultra-responsive & Optimized Floating Bottom Nav with Animated Gradient */
             .mobile-bottom-nav {
                 display: block;
                 position: fixed;
@@ -368,7 +368,13 @@
                 width: calc(100% - 32px);
                 max-width: 380px;
                 z-index: 1050;
-                background: rgba(16, 42, 67, 0.95);
+                background: linear-gradient(-45deg, 
+                    rgba(16, 42, 67, 0.95) 0%, 
+                    rgba(11, 31, 51, 0.95) 65%, 
+                    rgba(122, 31, 43, 0.95) 90%, 
+                    rgba(16, 42, 67, 0.95) 100%);
+                background-size: 300% 300%;
+                animation: gradientMove 12s ease-in-out infinite;
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
                 border: 1px solid rgba(201, 162, 39, 0.4);
@@ -423,6 +429,107 @@
 
             .mobile-nav-item i {
                 font-size: 1.2rem;
+                margin-bottom: 2px;
+                transition: transform 0.12s ease, color 0.12s ease;
+            }
+
+            .mobile-nav-item:active {
+                transform: scale(0.92);
+                background: rgba(255, 255, 255, 0.18);
+            }
+
+            .mobile-nav-item.active {
+                color: var(--cc-gold-light);
+                background: rgba(255, 255, 255, 0.12);
+            }
+
+            .mobile-nav-item.active i {
+                color: var(--cc-gold);
+                transform: translateY(-1px);
+            }
+        }
+
+        /* Mobile View Customization - LANDSCAPE MODE (Docked Left to Bottom, Vertically Scrollable) */
+        @@media (max-width: 991.98px) and (orientation: landscape) {
+            body {
+                padding-bottom: 0 !important;
+                padding-left: 80px !important; /* Reserves space so body content isn't overlapped */
+            }
+
+            .navbar-toggler {
+                display: none !important;
+            }
+
+            .mobile-bottom-nav {
+                display: block;
+                position: fixed;
+                top: 12px;
+                bottom: 12px;
+                left: 12px;
+                transform: none;
+                width: 68px;
+                max-width: none;
+                height: calc(100vh - 24px);
+                max-height: calc(100vh - 24px);
+                z-index: 1050;
+                background: linear-gradient(-45deg, 
+                    rgba(16, 42, 67, 0.95) 0%, 
+                    rgba(11, 31, 51, 0.95) 65%, 
+                    rgba(122, 31, 43, 0.95) 90%, 
+                    rgba(16, 42, 67, 0.95) 100%);
+                background-size: 300% 300%;
+                animation: gradientMove 12s ease-in-out infinite;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(201, 162, 39, 0.4);
+                border-radius: 24px;
+                box-shadow: 0 8px 24px rgba(16, 42, 67, 0.28);
+                padding: 6px 3px;
+                overflow: hidden;
+            }
+
+            .mobile-nav-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 6px;
+                height: 100%;
+                width: 100%;
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .mobile-nav-container::-webkit-scrollbar {
+                display: none;
+            }
+
+            .mobile-nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                min-width: unset;
+                padding: 8px 2px;
+                color: rgba(255, 255, 255, 0.75);
+                text-decoration: none;
+                border-radius: 16px;
+                font-size: 0.62rem;
+                font-weight: 600;
+                white-space: nowrap;
+                flex-shrink: 0;
+                cursor: pointer;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
+                transition: transform 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+            }
+
+            .mobile-nav-item i {
+                font-size: 1.15rem;
                 margin-bottom: 2px;
                 transition: transform 0.12s ease, color 0.12s ease;
             }
@@ -557,7 +664,7 @@
         <main role="main">@RenderBody()</main>
     </div>
 
-    <!-- Floating Bottom Navigation Bar (Mobile View Only) -->
+    <!-- Floating Navigation Bar (Mobile View Only: Horizontal Bottom on Portrait, Vertical Left on Landscape) -->
     <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
         <div class="mobile-nav-container">
             <a asp-controller="Home" asp-action="Index" class="mobile-nav-item">
@@ -631,13 +738,18 @@
         document.addEventListener("DOMContentLoaded", function () {
             const currentPath = window.location.pathname.toLowerCase();
             const mobileLinks = document.querySelectorAll('.mobile-nav-item');
+            const isLandscape = window.matchMedia("(orientation: landscape)").matches;
             
             mobileLinks.forEach(link => {
                 const href = link.getAttribute('href');
                 if (href && href !== '#' && href !== 'javascript:void(0);') {
                     if (currentPath === href.toLowerCase() || (href !== '/' && currentPath.startsWith(href.toLowerCase()))) {
                         link.classList.add('active');
-                        link.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
+                        link.scrollIntoView({ 
+                            behavior: 'auto', 
+                            inline: isLandscape ? 'nearest' : 'center', 
+                            block: isLandscape ? 'center' : 'nearest' 
+                        });
                     }
                 }
             });
