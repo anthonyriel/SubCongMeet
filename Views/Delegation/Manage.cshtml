@@ -243,11 +243,11 @@
                             <select name="Role" class="form-select form-control-custom">
                                 <option value="Athlete" selected>Athlete</option>
                                 <option value="Coach">Coach</option>
-                                <option value="Chaperon">Chaperon</option>
+                                <option value="Assistant Coach">Assistant Coach</option>
+                                <option value="Chaperon">Chaperone</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <!-- Updated from SchoolName to Team -->
                             <select name="Team" class="form-select form-control-custom" required>
                                 <option value="">Select Area</option>
                                 @foreach (var team in teams) {
@@ -329,7 +329,6 @@
                                         <input type="text" name="qualifiers[@index].ParticipantName" value="@item.ParticipantName" class="form-control form-control-sm fw-bold" required placeholder="Full Name" />
                                     </td>
                                     <td data-label="Area">
-                                        <!-- Updated from qualifiers[@index].SchoolName to Team -->
                                         <select name="qualifiers[@index].Team" class="form-select form-select-sm" required>
                                             <option value="">Select Area</option>
                                             @foreach (var team in teams)
@@ -342,8 +341,9 @@
                                     <td data-label="Role">
                                         <select name="qualifiers[@index].Role" class="form-select form-select-sm">
                                             @if (item.Role?.ToLower() == "coach") { <option value="Coach" selected>Coach</option> } else { <option value="Coach">Coach</option> }
-                                            @if (item.Role?.ToLower() == "chaperon" || item.Role?.ToLower() == "chaperone") { <option value="Chaperon" selected>Chaperon</option> } else { <option value="Chaperon">Chaperon</option> }
-                                            @if (item.Role?.ToLower() != "coach" && item.Role?.ToLower() != "chaperon" && item.Role?.ToLower() != "chaperone") { <option value="Athlete" selected>Athlete</option> } else { <option value="Athlete">Athlete</option> }
+                                            @if (item.Role?.ToLower() == "assistant coach") { <option value="Assistant Coach" selected>Assistant Coach</option> } else { <option value="Assistant Coach">Assistant Coach</option> }
+                                            @if (item.Role?.ToLower() == "chaperon" || item.Role?.ToLower() == "chaperone") { <option value="Chaperon" selected>Chaperone</option> } else { <option value="Chaperon">Chaperone</option> }
+                                            @if (item.Role?.ToLower() != "coach" && item.Role?.ToLower() != "assistant coach" && item.Role?.ToLower() != "chaperon" && item.Role?.ToLower() != "chaperone") { <option value="Athlete" selected>Athlete</option> } else { <option value="Athlete">Athlete</option> }
                                         </select>
                                     </td>
                                     <td data-label="T-Shirt Size">

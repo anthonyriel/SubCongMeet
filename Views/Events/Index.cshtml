@@ -858,6 +858,7 @@
         var visibleCount = 0;
 
         $('.event-row').each(function() {
+            var title = $(this).find('.event-title-display').text().toLowerCase();
             var title = ($(this).attr('data-title') || $(this).find('.event-title-display').text()).toLowerCase();
             var rowSport = ($(this).attr('data-sport') || '').toLowerCase().trim();
             var rowDivision = ($(this).attr('data-division') || '').toLowerCase().trim();
@@ -865,6 +866,8 @@
             
             var isAssigned = $(this).attr('data-is-assigned') === 'true';
 
+            // 1. Search Check
+            var matchSearch = title.indexOf(searchText) > -1;
             // 1. Search Check (matches results that contain the search words in the event title)
             var matchSearch = searchWords.length === 0 || searchWords.every(function(word) {
                 return title.indexOf(word) > -1;
@@ -875,6 +878,7 @@
 
             // 3. Division Check
             var currentDiv = currentDivisionFilter.toLowerCase().trim();
+            var matchDivision = currentDiv === 'all' || rowDivision === currentDiv;
             var matchDivision = currentDiv === 'all'
                 ? rowDivision === 'elementary' || rowDivision === 'secondary'
                 : rowDivision === currentDiv;
