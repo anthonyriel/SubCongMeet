@@ -2,7 +2,8 @@
 <html lang="en" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover is required for iOS safe-area-insets to work properly -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>@ViewData["Title"] - Sub-Congressional Meet 2026</title>
     
     <link rel="shortcut icon" href="~/images/locatu.png?v=2" asp-append-version="true" type="image/png" />
@@ -333,7 +334,8 @@
         /* Mobile View Customization - PORTRAIT */
         @@media (max-width: 575.98px) and (orientation: portrait) {
             body {
-                padding-bottom: 90px !important;
+                /* iOS Safe Area fix for body padding */
+                padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
             }
 
             .navbar-logo {
@@ -362,7 +364,8 @@
             .mobile-bottom-nav {
                 display: block;
                 position: fixed;
-                bottom: 14px;
+                /* iOS Safe Area fix for bottom placement */
+                bottom: calc(14px + env(safe-area-inset-bottom));
                 left: 50%;
                 transform: translateX(-50%);
                 width: calc(100% - 32px);
@@ -453,7 +456,8 @@
         @@media (max-width: 991.98px) and (orientation: landscape) {
             body {
                 padding-bottom: 0 !important;
-                padding-left: 80px !important; /* Reserves space so body content isn't overlapped */
+                /* Added safe area fix for notches on landscape devices */
+                padding-left: calc(80px + env(safe-area-inset-left)) !important; 
             }
 
             .navbar-toggler {
@@ -463,13 +467,14 @@
             .mobile-bottom-nav {
                 display: block;
                 position: fixed;
-                top: 12px;
-                bottom: 12px;
-                left: 12px;
+                top: calc(12px + env(safe-area-inset-top));
+                bottom: calc(12px + env(safe-area-inset-bottom));
+                /* iOS Safe Area fix for landscape placement */
+                left: calc(12px + env(safe-area-inset-left));
                 transform: none;
                 width: 68px;
                 max-width: none;
-                height: calc(100vh - 24px);
+                height: calc(100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
                 max-height: calc(100vh - 24px);
                 z-index: 1050;
                 background: linear-gradient(-45deg, 

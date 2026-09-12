@@ -607,7 +607,7 @@
 
 @section Scripts {
 <script>
-    // Updated Division Rotation Order: Overall -> Elementary -> Secondary
+    // Updated Division Rotation Order: Overall -> Secondary -> Elementary -> Paragames
     const divisionsList = ['Overall', 'Secondary', 'Elementary', 'Paragames'];
     let currentDivIndex = 0;
     let autoTimer = null;
@@ -667,12 +667,25 @@
         isAutoRotating = true;
         clearInterval(autoTimer);
         autoTimer = setInterval(function() {
-            currentDivIndex = (currentDivIndex + 1) % divisionsList.length;
+            currentDivIndex++;
+            
+            // Check if we have surpassed the last division in the list
+            if (currentDivIndex >= divisionsList.length) {
+                // We've shown all tabs, now reset state to 'Overall' and reload to fetch latest data
+                try {
+                    sessionStorage.setItem('subcong_rankings_division', 'Overall');
+                } catch (e) {}
+                
+                // Refresh the page
+                window.location.reload();
+                return; // Stop execution here
+            }
+
             let nextDiv = divisionsList[currentDivIndex];
             
             updateActiveButton(nextDiv);
             applyDivisionFilter(nextDiv);
-        }, 10000);
+        }, 10000); // 10 seconds per tab
     }
 
     function resetIdleTimer() {
