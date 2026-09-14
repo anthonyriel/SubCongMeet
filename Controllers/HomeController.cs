@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization; 
+using Microsoft.AspNetCore.Authorization;
 using SubcongMeet.Data;
 using SubcongMeet.Models;
 using System;
@@ -40,8 +40,8 @@ namespace SubcongMeet.Controllers
 
             return View(tallies);
         }
-        
-        [Authorize(Roles = "Admin")] 
+
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GeneralOfficialReport()
         {
             var medalTallies = await _context.GetTeamStandings()
@@ -54,9 +54,9 @@ namespace SubcongMeet.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AllEventsResultsReport(List<string> sportsName, List<int> eventId, List<string> division, List<int> teamId)
+        public async Task<IActionResult> AllEventsResultsReport(List<string> sportsName, List<int> eventId, List<string> division, List<int> schoolId)
         {
-            var query = _context.Events.AsQueryable();
+            var query = _context.Events.AsNoTracking().AsQueryable();
 
             if (sportsName != null && sportsName.Any())
             {
@@ -73,18 +73,20 @@ namespace SubcongMeet.Controllers
                 query = query.Where(e => e.Division != null && division.Contains(e.Division));
             }
 
-            if (teamId != null && teamId.Any())
+            if (schoolId != null && schoolId.Any())
             {
-                query = query.Where(e => (e.GoldTeamId.HasValue && teamId.Contains(e.GoldTeamId.Value)) || 
-                                       (e.SilverTeamId.HasValue && teamId.Contains(e.SilverTeamId.Value)) || 
-                                       (e.BronzeTeamId.HasValue && teamId.Contains(e.BronzeTeamId.Value)));
+                query = query.Where(e => 
+                    (e.GoldTeamId.HasValue && schoolId.Contains(e.GoldTeamId.Value)) || 
+                    (e.SilverTeamId.HasValue && schoolId.Contains(e.SilverTeamId.Value)) || 
+                    (e.BronzeTeamId.HasValue && schoolId.Contains(e.BronzeTeamId.Value)));
             }
 
-            var eventsList = await query
+            var resultList = await query
                 .OrderBy(e => e.Title)
                 .ToListAsync();
 
-            ViewBag.SportsList = await _context.Events
+            // Populate filter dropdowns with AsNoTracking for ultra-fast loading
+            ViewBag.SportsList = await _context.Events.AsNoTracking()
                 .Where(e => !string.IsNullOrEmpty(e.SportName))
                 .Select(e => e.SportName)
                 .Distinct()
@@ -92,13 +94,13 @@ namespace SubcongMeet.Controllers
                 .Select(s => new SelectListItem { Value = s, Text = s })
                 .ToListAsync();
 
-            ViewBag.EventsList = await _context.Events
+            ViewBag.EventsList = await _context.Events.AsNoTracking()
                 .OrderBy(e => e.Title)
                 .Select(e => new SelectListItem { Value = e.Id.ToString(), Text = e.Title })
                 .Distinct()
                 .ToListAsync();
 
-            ViewBag.DivisionsList = (await _context.Teams
+            ViewBag.DivisionsList = (await _context.Teams.AsNoTracking()
                 .Where(t => !string.IsNullOrEmpty(t.Division))
                 .Select(t => t.Division)
                 .Distinct()
@@ -108,15 +110,74 @@ namespace SubcongMeet.Controllers
                 .Select(d => new SelectListItem { Value = d, Text = d })
                 .ToList();
 
-            ViewBag.TeamsList = await _context.Teams
+            // Schools list for dropdown and name resolution
+            ViewBag.SchoolsList = await _context.Teams.AsNoTracking()
                 .OrderBy(t => t.Name)
                 .ToListAsync();
 
-            return View(eventsList);
+            return View(resultList);
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> PendingEventsReport(List<string> sportsName, List<int> eventId, List<string> division)
+        {
+            var query = _context.Events.AsNoTracking().AsQueryable();
+
+            // Published events are complete even when no medals were awarded.
+            query = query.Where(e => e.Status != "Completed");
+
+            if (sportsName != null && sportsName.Any())
+            {
+                query = query.Where(e => e.SportName != null && sportsName.Contains(e.SportName));
+            }
+
+            if (eventId != null && eventId.Any())
+            {
+                query = query.Where(e => eventId.Contains(e.Id));
+            }
+
+            if (division != null && division.Any())
+            {
+                query = query.Where(e => e.Division != null && division.Contains(e.Division));
+            }
+
+            var resultList = await query
+                .OrderBy(e => e.Title)
+                .ToListAsync();
+
+            ViewBag.SportsList = await _context.Events.AsNoTracking()
+                .Where(e => !string.IsNullOrEmpty(e.SportName))
+                .Select(e => e.SportName)
+                .Distinct()
+                .OrderBy(s => s)
+                .Select(s => new SelectListItem { Value = s, Text = s })
+                .ToListAsync();
+
+            ViewBag.EventsList = await _context.Events.AsNoTracking()
+                .OrderBy(e => e.Title)
+                .Select(e => new SelectListItem { Value = e.Id.ToString(), Text = e.Title })
+                .Distinct()
+                .ToListAsync();
+
+            ViewBag.DivisionsList = (await _context.Teams.AsNoTracking()
+                .Where(t => !string.IsNullOrEmpty(t.Division))
+                .Select(t => t.Division)
+                .Distinct()
+                .ToListAsync())
+                .Union(new[] { "Elementary", "Secondary", "Paragames" })
+                .OrderBy(d => d)
+                .Select(d => new SelectListItem { Value = d, Text = d })
+                .ToList();
+
+            ViewBag.SchoolsList = await _context.Teams.AsNoTracking()
+                .OrderBy(t => t.Name)
+                .ToListAsync();
+
+            return View(resultList);
         }
 
         [Authorize(Roles = "Admin,Coordinator")]
-        public async Task<IActionResult> DistrictQualifierReport(List<string> sportsName, List<long> eventId, List<string> division, List<string> teamName)
+        public async Task<IActionResult> DistrictQualifierReport(List<string> sportsName, List<long> eventId, List<string> division, List<string> district)
         {
             var joinedQuery = from q in _context.EventQualifiers
                               join e in _context.Events on q.EventId equals e.Id
@@ -137,14 +198,13 @@ namespace SubcongMeet.Controllers
                 joinedQuery = joinedQuery.Where(x => division.Contains(x.Event.Division));
             }
 
-            if (teamName != null && teamName.Any())
+            if (district != null && district.Any())
             {
-                joinedQuery = joinedQuery.Where(x => x.Qualifier.Team != null && teamName.Contains(x.Qualifier.Team));
+                joinedQuery = joinedQuery.Where(x => x.Qualifier.Team != null && district.Contains(x.Qualifier.Team));
             }
 
             var rawList = await joinedQuery.ToListAsync();
 
-            // Strictly order by Sports Name -> Event Title -> Role (Athlete, Coach, Chaperon) -> Participant Name
             var sortedQualifiers = rawList
                 .OrderBy(x => x.Event.SportName ?? "")
                 .ThenBy(x => x.Event.Title ?? "")
@@ -191,6 +251,15 @@ namespace SubcongMeet.Controllers
                 .Select(s => new SelectListItem { Value = s, Text = s })
                 .ToListAsync();
 
+            // Populate DistrictsList for the dropdown
+            ViewBag.DistrictsList = await _context.EventQualifiers
+                .Where(q => !string.IsNullOrEmpty(q.Team))
+                .Select(q => q.Team)
+                .Distinct()
+                .OrderBy(d => d)
+                .Select(d => new SelectListItem { Value = d, Text = d })
+                .ToListAsync();
+
             return View(sortedQualifiers);
         }
 
@@ -224,7 +293,6 @@ namespace SubcongMeet.Controllers
 
             var rawList = await joinedQuery.ToListAsync();
 
-            // Strict multi-level sorting: Division -> Sports -> Event Title -> Role (Athlete, Coach, Chaperon) -> Participant Name
             var sortedQualifiers = rawList
                 .OrderBy(x => x.Event.Division ?? "")
                 .ThenBy(x => x.Event.SportName ?? "")
@@ -292,7 +360,7 @@ namespace SubcongMeet.Controllers
                     {
                         existing.EventId = q.EventId;
                         existing.ParticipantName = q.ParticipantName;
-                        existing.Team = q.Team; 
+                        existing.Team = q.Team;
                         existing.Role = q.Role;
                         existing.TshirtSize = q.TshirtSize;
                         existing.UpdatedAt = DateTime.UtcNow;

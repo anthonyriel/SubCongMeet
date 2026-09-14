@@ -627,6 +627,9 @@
                         </button>
                     }
                     @if (User?.IsInRole("Admin") == true) { 
+                        <a asp-controller="Home" asp-action="PendingEventsReport" class="btn btn-outline-warning text-dark fw-bold btn-3d-pop" style="padding: 6px 16px; font-size: 0.85rem; border: 2px solid #ffc107;">
+                            <i class="bi bi-clock-history"></i> Pending Report
+                        </a>
                         <a asp-action="Create" class="btn btn-primary fw-bold btn-3d-pop" style="padding: 6px 16px; font-size: 0.85rem; background-color: var(--cc-primary, #102A43); border: none;">
                             <span><i class="bi bi-plus-lg"></i> Add Event</span>
                         </a> 
@@ -637,8 +640,8 @@
             <!-- Division Filters with 3D Pop -->
             <div class="division-filters">
                 <button class="filter-btn active-filter" onclick="setDivisionFilter('All', this)">Overall</button>
-                <button class="filter-btn" onclick="setDivisionFilter('Secondary', this)">Secondary</button>
                 <button class="filter-btn" onclick="setDivisionFilter('Elementary', this)">Elementary</button>
+                <button class="filter-btn" onclick="setDivisionFilter('Secondary', this)">Secondary</button>
                 <button class="filter-btn" onclick="setDivisionFilter('Paragames', this)">Paragames</button>
             </div>
             
@@ -727,13 +730,13 @@
                                                     <div style="font-size: 0.9rem;"><span class="medal-text-bronze">🥉</span> <span class="fw-bold">@teamAcronymsLookup[ev.BronzeTeamId.Value]</span></div>
                                                 }
                                                 @if (!hasResults) { 
-                                                    <small class="text-muted fw-bold"><i class="bi bi-dash"></i>Pending Result</small> 
+                                                    <small class="text-muted fw-bold"><i class="bi bi-dash"></i>@(ev.Status == "Completed" ? "No results recorded" : "Pending Result")</small>
                                                 }
                                             </div>
                                         </td>
                                         
                                         <td class="text-center align-middle">
-                                            @if (hasResults) { 
+                                            @if (hasResults || ev.Status == "Completed") {
                                                 <a asp-action="SubmitResults" asp-route-id="@ev.Id" class="btn btn-sm w-100 @(isAuthorized ? "btn-outline-primary" : "btn-light border") fw-bold rounded-pill mb-1">@(isAuthorized ? "Update" : "View")</a> 
                                             }
                                             else if (isAuthorized) { 
@@ -858,7 +861,6 @@
         var visibleCount = 0;
 
         $('.event-row').each(function() {
-            var title = $(this).find('.event-title-display').text().toLowerCase();
             var title = ($(this).attr('data-title') || $(this).find('.event-title-display').text()).toLowerCase();
             var rowSport = ($(this).attr('data-sport') || '').toLowerCase().trim();
             var rowDivision = ($(this).attr('data-division') || '').toLowerCase().trim();
@@ -866,8 +868,6 @@
             
             var isAssigned = $(this).attr('data-is-assigned') === 'true';
 
-            // 1. Search Check
-            var matchSearch = title.indexOf(searchText) > -1;
             // 1. Search Check (matches results that contain the search words in the event title)
             var matchSearch = searchWords.length === 0 || searchWords.every(function(word) {
                 return title.indexOf(word) > -1;
@@ -878,7 +878,6 @@
 
             // 3. Division Check
             var currentDiv = currentDivisionFilter.toLowerCase().trim();
-            var matchDivision = currentDiv === 'all' || rowDivision === currentDiv;
             var matchDivision = currentDiv === 'all'
                 ? rowDivision === 'elementary' || rowDivision === 'secondary'
                 : rowDivision === currentDiv;

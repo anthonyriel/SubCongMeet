@@ -19,6 +19,25 @@
         .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .ToList();
 
+    // Determine the dynamic text for the selected sports
+    string selectedSportsText = "OVERALL";
+    if (selectedSports.Any() && ViewBag.SportsList != null)
+    {
+        var sportsEnum = ViewBag.SportsList as IEnumerable<SelectListItem>;
+        if (sportsEnum != null)
+        {
+            var matchedSports = sportsEnum
+                .Where(s => selectedSports.Contains(s.Value))
+                .Select(s => s.Text)
+                .ToList();
+                
+            if (matchedSports.Any())
+            {
+                selectedSportsText = string.Join(", ", matchedSports).ToUpper();
+            }
+        }
+    }
+
     // Helper lambda to determine division
     string GetEventDivision(SubcongMeet.Models.Event evt) {
         if (evt == null) return "";
@@ -134,8 +153,6 @@
         .Distinct()
         .Count();
 
-    bool groupEvents = selectedDivisions.Count == 0 || selectedDivisions.Count > 1;
-
     // ==========================================
     // LOGIC FOR DISTRICT QUALIFIER REPORT
     // ==========================================
@@ -246,29 +263,32 @@
         background-color: #ffffff; 
         color: #000000; 
         font-family: Arial, Helvetica, sans-serif;
-        max-width: 1000px;
+        max-width: 950px;
         margin: 0 auto;
-        padding: 40px 50px;
+        padding: 25px 35px;
         border-radius: 8px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         display: flex;
         flex-direction: column;
     }
     
-    .report-header-text { font-size: 0.9rem; margin-bottom: 3px; font-weight: 600; color: #000000; }
-    .report-divider { border-top: 2px solid #000000; margin: 15px 0; width: 100%; }
-    .report-title { font-size: 1.4rem; font-weight: 800; letter-spacing: 0.5px; color: #000000; }
+    .report-header-text { font-size: 0.82rem; margin-bottom: 2px; font-weight: 600; color: #000000; }
+    .report-header-title { font-size: 1.05rem; font-weight: 800; margin-top: 4px; margin-bottom: 2px; color: #000000; letter-spacing: 0.5px; }
+    .report-divider { border-top: 1.5px solid #000000; margin: 8px 0; width: 100%; }
+    .report-title { font-size: 1.15rem; font-weight: 800; letter-spacing: 0.5px; color: #000000; }
     
     .meta-col { border-right: 1px solid #000000; }
     .meta-col:last-child { border-right: none; }
-    .meta-label { font-size: 0.65rem; color: #000000; margin-bottom: 2px; font-weight: 700; letter-spacing: 0.5px; }
-    .meta-value { font-size: 0.85rem; font-weight: bold; color: #000000; }
+    .meta-label { font-size: 0.62rem; color: #000000; margin-bottom: 1px; font-weight: 700; letter-spacing: 0.5px; }
+    .meta-value { font-size: 0.8rem; font-weight: bold; color: #000000; }
     
-    .table-report { width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #ffffff; border: 1px solid #000000; }
+    .section-subtitle { font-size: 0.95rem; font-weight: 800; letter-spacing: 0.4px; margin-bottom: 8px; margin-top: 4px; }
     
-    .table-report th { padding: 8px 10px; font-size: 0.75rem; font-weight: bold; border-bottom: 2px solid #000000; color: #000000; background-color: #f2f2f2; }
-    .table-report td { padding: 8px 10px; font-size: 0.75rem; border-bottom: 1px solid #cccccc; vertical-align: top; color: #000000; }
-    .group-header { background-color: #e9ecef !important; color: #000000 !important; font-weight: bold !important; text-align: left !important; font-size: 0.85rem !important; border-top: 2px solid #000000 !important; border-bottom: 2px solid #000000 !important; }
+    .table-report { width: 100%; border-collapse: collapse; margin-bottom: 15px; background-color: #ffffff; border: 1px solid #000000; }
+    
+    .table-report th { padding: 5px 8px; font-size: 0.72rem; font-weight: bold; border-bottom: 2px solid #000000; color: #000000; background-color: #f2f2f2; }
+    .table-report td { padding: 5px 8px; font-size: 0.72rem; border-bottom: 1px solid #cccccc; vertical-align: top; color: #000000; }
+    .group-header { background-color: #e9ecef !important; color: #000000 !important; font-weight: bold !important; text-align: left !important; font-size: 0.78rem !important; padding: 4px 8px !important; border-top: 1.5px solid #000000 !important; border-bottom: 1.5px solid #000000 !important; }
 
     .event-title-clamp {
         display: -webkit-box;
@@ -279,7 +299,7 @@
         white-space: normal; 
     }
 
-    .cert-text { font-size: 0.85rem; line-height: 1.5; color: #000000; margin-bottom: 25px; text-align: justify; }
+    .cert-text { font-size: 0.8rem; line-height: 1.4; color: #000000; margin-bottom: 15px; text-align: justify; }
     
     .setup-card {
         background-color: #ffffff;
@@ -292,14 +312,15 @@
     }
 
     .dynamic-signatures-container { text-align: center; width: 100%; }
-    .sig-block { display: inline-block; width: 48%; vertical-align: top; margin-top: 40px; text-align: center; page-break-inside: avoid !important; }
+    .sig-block { display: inline-block; width: 48%; vertical-align: top; margin-top: 25px; text-align: center; page-break-inside: avoid !important; }
     .sig-block-odd { width: 100% !important; display: block; margin-left: auto; margin-right: auto; }
-    .sig-title { font-size: 0.85rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000000; padding-bottom: 2px; display: inline-block; min-width: 200px; }
-    .sig-line { font-size: 0.75rem; margin-top: 2px; }
+    .sig-title { font-size: 0.8rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000000; padding-bottom: 2px; display: inline-block; min-width: 190px; }
+    .sig-line { font-size: 0.72rem; margin-top: 2px; }
 
+    /* Page Setup tailored specifically for Long Bond Paper (8.5 x 13 inches) */
     @@page {
-        size: A4 portrait;
-        margin: 0.5in !important; 
+        size: 8.5in 13in portrait;
+        margin: 0.4in !important; 
     }
 
     @@media print {
@@ -317,23 +338,23 @@
             box-shadow: none !important;
         }
 
-        .report-divider { border-top: 2px solid #000000 !important; margin: 18px 0 !important; }
+        .report-divider { border-top: 1.5px solid #000000 !important; margin: 8px 0 !important; }
         .meta-col { border-right: 1px solid #cccccc !important; width: 50%; display: inline-block; vertical-align: top; }
-        .meta-label { color: #000000 !important; font-size: 0.7rem !important; }
-        .meta-value { color: #000000 !important; font-size: 0.9rem !important; }
+        .meta-label { color: #000000 !important; font-size: 0.62rem !important; }
+        .meta-value { color: #000000 !important; font-size: 0.8rem !important; }
         
-        .table-report { border: 1px solid #000000 !important; margin-bottom: 25px !important; width: 100% !important; }
+        .table-report { border: 1px solid #000000 !important; margin-bottom: 15px !important; width: 100% !important; }
         .table-report thead { display: table-header-group; }
         .table-report tr { page-break-inside: avoid; }
-        .table-report th { background-color: #f2f2f2 !important; color: #000000 !important; border-bottom: 2px solid #000000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .table-report td { color: #000000 !important; border-bottom: 1px solid #cccccc !important; }
+        .table-report th { background-color: #f2f2f2 !important; color: #000000 !important; border-bottom: 2px solid #000000 !important; padding: 4px 6px !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .table-report td { color: #000000 !important; border-bottom: 1px solid #cccccc !important; padding: 4px 6px !important; }
         .group-header { background-color: #e9ecef !important; color: #000000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         
         .dynamic-signatures-container { text-align: center !important; width: 100% !important; }
-        .sig-block { display: inline-block !important; width: 48% !important; vertical-align: top; page-break-inside: avoid !important; margin-top: 30px !important; text-align: center !important; }
+        .sig-block { display: inline-block !important; width: 48% !important; vertical-align: top; page-break-inside: avoid !important; margin-top: 20px !important; text-align: center !important; }
         .sig-block-odd { width: 100% !important; display: block !important; margin-left: auto !important; margin-right: auto !important; }
-        .sig-title { font-size: 0.85rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000000; padding-bottom: 2px; display: inline-block; min-width: 200px; color: #000000 !important; }
-        .sig-line { font-size: 0.75rem; margin-top: 2px; color: #000000 !important; }
+        .sig-title { font-size: 0.8rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000000; padding-bottom: 2px; display: inline-block; min-width: 190px; color: #000000 !important; }
+        .sig-line { font-size: 0.72rem; margin-top: 2px; color: #000000 !important; }
         .row::after { content: ""; clear: both; display: table; }
     }
 </style>
@@ -432,7 +453,7 @@
 
     <!-- STEP 2A: REPORT PREVIEW / PRINT AREA (QUALIFIER REPORT) -->
     <div id="report-section" style="display: none;">
-        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-4 mx-auto gap-3 d-print-none" style="max-width: 1000px;">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-4 mx-auto gap-3 d-print-none" style="max-width: 950px;">
             <button onclick="backToSetup()" class="btn btn-outline-secondary btn-sm fw-bold">Back to Configuration</button>
             <div class="d-flex gap-2">
                 <button onclick="window.print()" class="btn text-white shadow px-4 fw-bold" style="background-color: #0033A0;"><i class="bi bi-printer"></i> Print / Save PDF</button>
@@ -446,13 +467,13 @@
                     <div class="report-header-text">Republic of the Philippines</div>
                     <div class="report-header-text">Department of Education</div>
                     <div class="report-header-text">Division of Bohol</div>
-                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">LOCATU ATHLETIC MEET</div>
+                    <div class="report-header-title">LOCATU ATHLETIC MEET</div>
                 </div>
 
                 <div class="report-divider"></div>
 
-                <div class="text-center mb-3">
-                    <div class="report-title mb-1">HIGHER MEET QUALIFIER 2026</div>
+                <div class="text-center mb-2">
+                    <div class="report-title">HIGHER MEET QUALIFIER 2026</div>
                 </div>
 
                 <div class="report-divider"></div>
@@ -470,15 +491,15 @@
 
                 <div class="report-divider"></div>
 
-                <h5 class="fw-bold mb-3" style="font-size: 1.05rem; letter-spacing: 0.5px;">QUALIFIED PARTICIPANTS LIST</h5>
+                <h5 class="section-subtitle">QUALIFIED PARTICIPANTS LIST - @selectedSportsText</h5>
                 <table class="table-report" id="resultsTable">
                     <thead>
                         <tr>
-                            <th class="text-start" style="width: 15%;">Sports</th>
-                            <th class="text-start" style="width: 26%;">Event Title</th>
-                            <th class="text-start" style="width: 20%;">Participant Name</th>
-                            <th class="text-start" style="width: 20%;">District</th>
-                            <th class="text-center" style="width: 9%;">Role</th>
+                            <th class="text-start" style="width: 14%;">Sports</th>
+                            <th class="text-start" style="width: 25%;">Event Title</th>
+                            <th class="text-start" style="width: 28%;">Participant Name</th>
+                            <th class="text-start" style="width: 15%;">District</th>
+                            <th class="text-center" style="width: 8%;">Role</th>
                             <th class="text-center" style="width: 10%;">T-Shirt Sizes</th>
                         </tr>
                     </thead>
@@ -489,57 +510,46 @@
                         }
                         else
                         {
-                            if (groupEvents)
-                            {
-                                var elemQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("ELEM"); }).ToList();
-                                var secQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("SEC"); }).ToList();
-                                var paragamesQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt) == "PARAGAMES"; }).ToList();
-                                var otherQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt == null || (!GetEventDivision(evt).Contains("ELEM") && !GetEventDivision(evt).Contains("SEC") && GetEventDivision(evt) != "PARAGAMES"); }).ToList();
+                            var elemQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("ELEM"); }).ToList();
+                            var secQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("SEC"); }).ToList();
+                            var paragamesQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt) == "PARAGAMES"; }).ToList();
+                            var otherQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt == null || (!GetEventDivision(evt).Contains("ELEM") && !GetEventDivision(evt).Contains("SEC") && GetEventDivision(evt) != "PARAGAMES"); }).ToList();
 
-                                if (elemQualifiers.Any())
-                                {
-                                    ResetTracker();
-                                    <tr><td colspan="6" class="group-header py-2">ELEMENTARY DIVISION</td></tr>
-                                    foreach (var q in elemQualifiers) { RenderQualifierRow(q); }
-                                }
-                                if (secQualifiers.Any())
-                                {
-                                    ResetTracker();
-                                    <tr><td colspan="6" class="group-header py-2">SECONDARY DIVISION</td></tr>
-                                    foreach (var q in secQualifiers) { RenderQualifierRow(q); }
-                                }
-                                if (paragamesQualifiers.Any())
-                                {
-                                    ResetTracker();
-                                    <tr><td colspan="6" class="group-header py-2">PARAGAMES DIVISION</td></tr>
-                                    foreach (var q in paragamesQualifiers) { RenderQualifierRow(q); }
-                                }
-                                if (otherQualifiers.Any())
-                                {
-                                    ResetTracker();
-                                    <tr><td colspan="6" class="group-header py-2">OTHER EVENTS</td></tr>
-                                    foreach (var q in otherQualifiers) { RenderQualifierRow(q); }
-                                }
-                            }
-                            else 
+                            if (elemQualifiers.Any())
                             {
                                 ResetTracker();
-                                foreach (var qualifier in reportQualifiers)
-                                {
-                                    RenderQualifierRow(qualifier);
-                                }
+                                <tr><td colspan="6" class="group-header py-1">ELEMENTARY DIVISION</td></tr>
+                                foreach (var q in elemQualifiers) { RenderQualifierRow(q); }
+                            }
+                            if (secQualifiers.Any())
+                            {
+                                ResetTracker();
+                                <tr><td colspan="6" class="group-header py-1">SECONDARY DIVISION</td></tr>
+                                foreach (var q in secQualifiers) { RenderQualifierRow(q); }
+                            }
+                            if (paragamesQualifiers.Any())
+                            {
+                                ResetTracker();
+                                <tr><td colspan="6" class="group-header py-1">PARAGAMES DIVISION</td></tr>
+                                foreach (var q in paragamesQualifiers) { RenderQualifierRow(q); }
+                            }
+                            if (otherQualifiers.Any())
+                            {
+                                ResetTracker();
+                                <tr><td colspan="6" class="group-header py-1">OTHER EVENTS</td></tr>
+                                foreach (var q in otherQualifiers) { RenderQualifierRow(q); }
                             }
                         }
                     </tbody>
                 </table>
 
-                <h5 class="fw-bold mb-2 mt-4" style="font-size: 1.05rem; letter-spacing: 0.5px;">CERTIFICATION</h5>
+                <h5 class="fw-bold mb-1 mt-3" style="font-size: 0.95rem; letter-spacing: 0.4px;">CERTIFICATION</h5>
                 <p class="cert-text">
                     This official report lists all confirmed athletes, coaches, and chaperones qualified for the higher meet, 
                     verified and recorded through the Sub-Congressional Meet Management System.
                 </p>
 
-                <div class="report-divider" style="margin-bottom: 25px;"></div>
+                <div class="report-divider" style="margin-bottom: 20px;"></div>
                 <div class="row dynamic-signatures-container" id="dynamic-signatures-qualifier"></div>
             </div>
         </div>
@@ -547,7 +557,7 @@
 
     <!-- STEP 2B: REPORT PREVIEW / PRINT AREA (PARTICIPANT LIST) -->
     <div id="participant-section" style="display: none;">
-        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-4 mx-auto gap-3 d-print-none" style="max-width: 1000px;">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-4 mx-auto gap-3 d-print-none" style="max-width: 950px;">
             <button onclick="backToSetup()" class="btn btn-outline-secondary btn-sm fw-bold">Back to Configuration</button>
             <div class="d-flex gap-2">
                 <button onclick="window.print()" class="btn text-white shadow px-4 fw-bold" style="background-color: #17a2b8;"><i class="bi bi-printer"></i> Print / Save PDF</button>
@@ -561,14 +571,14 @@
                     <div class="report-header-text">Republic of the Philippines</div>
                     <div class="report-header-text">Department of Education</div>
                     <div class="report-header-text">Division of Bohol</div>
-                    <div class="report-header-text fs-5 mt-2 mb-1 fw-bold">SUB-CONGRESSIONAL DISTRICT MEET</div>
+                    <div class="report-header-title">SUB-CONGRESSIONAL DISTRICT MEET</div>
                     <div class="report-header-text" style="font-weight: normal;">LoCaTu, Bohol</div>
                 </div>
 
                 <div class="report-divider"></div>
 
-                <div class="text-center mb-3">
-                    <div class="report-title mb-1">LIST OF QUALIFIERS 2026</div>
+                <div class="text-center mb-2">
+                    <div class="report-title">LIST OF QUALIFIERS 2026</div>
                 </div>
 
                 <div class="report-divider"></div>
@@ -585,13 +595,14 @@
                 </div>
 
                 <div class="report-divider"></div>
-
+                
+                <h5 class="section-subtitle">PARTICIPANT LIST - @selectedSportsText</h5>
                 <table class="table-report" id="participantTable">
                     <thead>
                         <tr>
-                            <th class="text-start" style="width: 18%;">Sports</th>
-                            <th class="text-start" style="width: 32%;">Participant Name</th>
-                            <th class="text-start" style="width: 28%;">District</th>
+                            <th class="text-start" style="width: 15%;">Sports</th>
+                            <th class="text-start" style="width: 40%;">Participant Name</th>
+                            <th class="text-start" style="width: 23%;">District</th>
                             <th class="text-center" style="width: 11%;">Role</th>
                             <th class="text-center" style="width: 11%;">T-Shirt Sizes</th>
                         </tr>
@@ -603,56 +614,45 @@
                         }
                         else
                         {
-                            if (groupEvents)
-                            {
-                                var elemQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("ELEM"); }).ToList();
-                                var secQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("SEC"); }).ToList();
-                                var paragamesQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt) == "PARAGAMES"; }).ToList();
-                                var otherQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt == null || (!GetEventDivision(evt).Contains("ELEM") && !GetEventDivision(evt).Contains("SEC") && GetEventDivision(evt) != "PARAGAMES"); }).ToList();
+                            var elemQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("ELEM"); }).ToList();
+                            var secQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt).Contains("SEC"); }).ToList();
+                            var paragamesQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt != null && GetEventDivision(evt) == "PARAGAMES"; }).ToList();
+                            var otherQualifiers = reportQualifiers.Where(q => { var evt = GetEvent(q.EventId); return evt == null || (!GetEventDivision(evt).Contains("ELEM") && !GetEventDivision(evt).Contains("SEC") && GetEventDivision(evt) != "PARAGAMES"); }).ToList();
 
-                                if (elemQualifiers.Any())
-                                {
-                                    ResetTracker_PL();
-                                    <tr><td colspan="5" class="group-header py-2">ELEMENTARY DIVISION</td></tr>
-                                    foreach (var q in elemQualifiers) { RenderParticipantRow(q); }
-                                }
-                                if (secQualifiers.Any())
-                                {
-                                    ResetTracker_PL();
-                                    <tr><td colspan="5" class="group-header py-2">SECONDARY DIVISION</td></tr>
-                                    foreach (var q in secQualifiers) { RenderParticipantRow(q); }
-                                }
-                                if (paragamesQualifiers.Any())
-                                {
-                                    ResetTracker_PL();
-                                    <tr><td colspan="5" class="group-header py-2">PARAGAMES DIVISION</td></tr>
-                                    foreach (var q in paragamesQualifiers) { RenderParticipantRow(q); }
-                                }
-                                if (otherQualifiers.Any())
-                                {
-                                    ResetTracker_PL();
-                                    <tr><td colspan="5" class="group-header py-2">OTHER EVENTS</td></tr>
-                                    foreach (var q in otherQualifiers) { RenderParticipantRow(q); }
-                                }
-                            }
-                            else 
+                            if (elemQualifiers.Any())
                             {
                                 ResetTracker_PL();
-                                foreach (var qualifier in reportQualifiers)
-                                {
-                                    RenderParticipantRow(qualifier);
-                                }
+                                <tr><td colspan="5" class="group-header py-1">ELEMENTARY DIVISION</td></tr>
+                                foreach (var q in elemQualifiers) { RenderParticipantRow(q); }
+                            }
+                            if (secQualifiers.Any())
+                            {
+                                ResetTracker_PL();
+                                <tr><td colspan="5" class="group-header py-1">SECONDARY DIVISION</td></tr>
+                                foreach (var q in secQualifiers) { RenderParticipantRow(q); }
+                            }
+                            if (paragamesQualifiers.Any())
+                            {
+                                ResetTracker_PL();
+                                <tr><td colspan="5" class="group-header py-1">PARAGAMES DIVISION</td></tr>
+                                foreach (var q in paragamesQualifiers) { RenderParticipantRow(q); }
+                            }
+                            if (otherQualifiers.Any())
+                            {
+                                ResetTracker_PL();
+                                <tr><td colspan="5" class="group-header py-1">OTHER EVENTS</td></tr>
+                                foreach (var q in otherQualifiers) { RenderParticipantRow(q); }
                             }
                         }
                     </tbody>
                 </table>
 
-                <h5 class="fw-bold mb-2 mt-4" style="font-size: 1.05rem; letter-spacing: 0.5px;">CERTIFICATION</h5>
+                <h5 class="fw-bold mb-1 mt-3" style="font-size: 0.95rem; letter-spacing: 0.4px;">CERTIFICATION</h5>
                 <p class="cert-text">
                     This official report lists all confirmed qualifiers, coaches, and chaperones verified and recorded through the Sub-Congressional Meet Management System.
                 </p>
 
-                <div class="report-divider" style="margin-bottom: 25px;"></div>
+                <div class="report-divider" style="margin-bottom: 20px;"></div>
                 <div class="row dynamic-signatures-container" id="dynamic-signatures-participant"></div>
             </div>
         </div>
@@ -666,6 +666,7 @@
     
     <script>
         let activeSignatories = [];
+        const dynamicReportSelectedSportsText = '@Html.Raw(selectedSportsText)';
 
         $(document).ready(function() {
             loadSignatories();
@@ -763,15 +764,16 @@
             
             const sheetName = isQualifier ? 'District Qualifiers' : 'Participant List';
             const worksheet = workbook.addWorksheet(sheetName, {
-                pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 9999 }
+                pageSetup: { paperSize: 14, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 9999 }
             });
 
             const lastCol = isQualifier ? 'F' : 'E';
 
+            // Excel Column widths standard for 8.5 x 13 printing
             if (isQualifier) {
-                worksheet.columns = [{ width: 16 }, { width: 32 }, { width: 28 }, { width: 32 }, { width: 14 }, { width: 15 }];
+                worksheet.columns = [{ width: 14 }, { width: 30 }, { width: 35 }, { width: 18 }, { width: 10 }, { width: 12 }];
             } else {
-                worksheet.columns = [{ width: 20 }, { width: 38 }, { width: 38 }, { width: 14 }, { width: 15 }];
+                worksheet.columns = [{ width: 16 }, { width: 45 }, { width: 25 }, { width: 12 }, { width: 12 }];
             }
 
             function addCenterText(text, size, bold) {
@@ -785,12 +787,14 @@
             addCenterText('Republic of the Philippines', 9, false);
             addCenterText('Department of Education', 9, false);
             addCenterText('Division of Bohol', 9, false);
-            addCenterText('SUB-CONGRESSIONAL DISTRICT MEET', 12, true);
+            addCenterText('SUB-CONGRESSIONAL DISTRICT MEET', 11, true);
             addCenterText('LoCaTu, Bohol', 9, false);
             worksheet.addRow();
 
-            const reportTitle = isQualifier ? 'HIGHER MEET QUALIFIER 2026' : 'LIST OF PARTICIPANTS 2026';
-            addCenterText(reportTitle, 14, true);
+            const reportTitle = isQualifier 
+                ? 'HIGHER MEET QUALIFIER 2026' 
+                : 'LIST OF PARTICIPANTS 2026';
+            addCenterText(reportTitle, 13, true);
             worksheet.addRow();
 
             const labelRow = worksheet.addRow(['REPORT DATE', '', '', isQualifier ? 'TOTAL QUALIFIERS' : 'TOTAL PARTICIPANTS', '', '']);
@@ -807,6 +811,11 @@
                 worksheet.mergeCells(`D${labelRow.number}:E${labelRow.number}`);
                 worksheet.mergeCells(`D${valueRow.number}:E${valueRow.number}`);
             }
+            
+            worksheet.addRow();
+            const subTitleRow = worksheet.addRow([isQualifier ? `QUALIFIED PARTICIPANTS LIST - ${dynamicReportSelectedSportsText}` : `PARTICIPANT LIST - ${dynamicReportSelectedSportsText}`]);
+            subTitleRow.font = { size: 10, bold: true };
+            worksheet.mergeCells(`A${subTitleRow.number}:${lastCol}${subTitleRow.number}`);
             worksheet.addRow();
 
             const tableHeaders = isQualifier 
@@ -819,7 +828,6 @@
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
                 cell.border = { bottom: { style: 'medium' }, top: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
                 
-                // Center align Role and T-Shirt Sizes columns in Excel, left align others
                 const isCenter = isQualifier ? (colNumber >= 5) : (colNumber >= 4);
                 cell.alignment = { horizontal: isCenter ? 'center' : 'left', vertical: 'middle', wrapText: true };
             });
@@ -832,7 +840,7 @@
                     worksheet.mergeCells(`A${r.number}:${lastCol}${r.number}`);
                     const cell = r.getCell(1);
                     cell.alignment = { horizontal: 'left', vertical: 'middle' };
-                    cell.font = { bold: true, size: 11 };
+                    cell.font = { bold: true, size: 10 };
                     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE9ECEF' } };
                     cell.border = { bottom: { style: 'medium', color: { argb: 'FF000000' } }, top: { style: 'medium', color: { argb: 'FF000000' } } };
                 } else {
@@ -852,15 +860,17 @@
             worksheet.addRow();
 
             const certTitle = worksheet.addRow(['CERTIFICATION']);
-            certTitle.font = { bold: true, size: 11 };
+            certTitle.font = { bold: true, size: 10 };
             
-            const certBody = 'This official report lists all confirmed athletes, coaches, and chaperones verified and recorded through the Sub-Congressional Meet Management System.';
+            const certBody = isQualifier 
+                ? 'This official report lists all confirmed athletes, coaches, and chaperones qualified for the higher meet, verified and recorded through the Sub-Congressional Meet Management System.'
+                : 'This official report lists all confirmed qualifiers, coaches, and chaperones verified and recorded through the Sub-Congressional Meet Management System.';
                 
             const certText = worksheet.addRow([certBody]);
             worksheet.mergeCells(`A${certText.number}:${lastCol}${certText.number}`);
             certText.getCell(1).alignment = { wrapText: true, horizontal: 'left', vertical: 'top' };
             certText.getCell(1).font = { bold: false };
-            worksheet.getRow(certText.number).height = 35;
+            worksheet.getRow(certText.number).height = 30;
 
             worksheet.addRow();
             worksheet.addRow();
