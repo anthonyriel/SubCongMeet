@@ -4,6 +4,7 @@
     ViewData["Title"] = "Manage & Edit Qualifiers";
     var eventsList = ViewBag.AllEvents as List<SubcongMeet.Models.Event> ?? new List<SubcongMeet.Models.Event>();
     var teamsList = ViewBag.TeamsList as List<SubcongMeet.Models.Team> ?? new List<SubcongMeet.Models.Team>();
+    var eventsById = eventsList.ToDictionary(e => (long)e.Id);
 
     var selectedSports = Context.Request.Query["sportsName"].ToList();
     var selectedEvents = Context.Request.Query["eventId"].ToList();
@@ -176,9 +177,9 @@
                 <div class="col-md-3">
                     <label class="form-label small fw-bold mb-1">Filter by Area / Team</label>
                     <select name="team" class="form-select select2-multi" multiple="multiple" data-placeholder="-- All Areas --">
-                        @if (ViewBag.SchoolNamesList != null)
+                        @if (ViewBag.TeamNamesList != null)
                         {
-                            foreach (var sch in (List<SelectListItem>)ViewBag.SchoolNamesList)
+                            foreach (var sch in (List<SelectListItem>)ViewBag.TeamNamesList)
                             {
                                 if (selectedTeams.Contains(sch.Value)) { <option value="@sch.Value" selected>@sch.Text</option> }
                                 else { <option value="@sch.Value">@sch.Text</option> }
@@ -243,7 +244,7 @@
                             int index = 0;
                             foreach (var q in Model)
                             {
-                                var evt = eventsList.FirstOrDefault(e => e.Id == q.EventId);
+                                eventsById.TryGetValue(q.EventId, out var evt);
                                 <tr>
                                     <td class="text-center mobile-select-row" style="width: 35px;">
                                         <input type="checkbox" name="selectedIds" value="@q.Id" class="form-check-input row-checkbox" />
@@ -261,12 +262,11 @@
                                         </select>
                                     </td>
                                     <td data-label="Event & Sport">
-                                        <select name="qualifiers[@index].EventId" class="form-select form-select-sm" required>
+                                        <select name="qualifiers[@index].EventId" class="form-select form-select-sm deferred-event-select" required>
                                             <option value="">-- Select Event --</option>
-                                            @foreach(var eItem in eventsList)
+                                            @if (evt != null)
                                             {
-                                                if (q.EventId == eItem.Id) { <option value="@eItem.Id" selected>@eItem.Division | @eItem.SportName - @eItem.Title</option> }
-                                                else { <option value="@eItem.Id">@eItem.Division | @eItem.SportName - @eItem.Title</option> }
+                                                <option value="@evt.Id" selected>@evt.Division | @evt.SportName - @evt.Title</option>
                                             }
                                         </select>
                                     </td>
@@ -312,7 +312,7 @@
                     
                     <div class="mb-3">
                         <label class="form-label fw-bold">Select Event</label>
-                        <select name="EventId" class="form-select" required>
+                        <select name="EventId" id="allEventOptions" class="form-select" required>
                             <option value="">-- Choose Event --</option>
                             @foreach(var evt in eventsList)
                             {
@@ -369,6 +369,21 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        // Expand only the event dropdown being used; untouched rows still post their selected IDs.
+        function populateEventOptions(event) {
+            const select = event.target.closest('.deferred-event-select');
+            if (!select || select.dataset.loaded === 'true') return;
+            const value = select.value;
+            const options = document.getElementById('allEventOptions').cloneNode(true);
+            options.options[0].textContent = '-- Select Event --';
+            select.replaceChildren(...Array.from(options.childNodes));
+            select.value = value;
+            select.dataset.loaded = 'true';
+        }
+        document.addEventListener('focusin', populateEventOptions);
+        document.addEventListener('pointerdown', populateEventOptions);
+        document.addEventListener('keydown', populateEventOptions);
+
         (function checkQueryRetention() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);

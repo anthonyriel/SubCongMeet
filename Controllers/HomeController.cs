@@ -267,9 +267,9 @@ namespace SubcongMeet.Controllers
         [Authorize(Roles = "Admin,Coordinator")]
         public async Task<IActionResult> EditQualifiers(List<string> sportsName, List<long> eventId, List<string> division, List<string> teamName)
         {
-            var joinedQuery = from q in _context.EventQualifiers
-                              join e in _context.Events on q.EventId equals e.Id
-                              select new { Qualifier = q, Event = e };
+            var joinedQuery = from q in _context.EventQualifiers.AsNoTracking()
+                              join e in _context.Events.AsNoTracking() on q.EventId equals e.Id
+                              select new { Qualifier = q, Event = new { e.Id, e.Division, e.SportName, e.Title } };
 
             if (sportsName != null && sportsName.Any())
             {
@@ -285,6 +285,9 @@ namespace SubcongMeet.Controllers
             {
                 joinedQuery = joinedQuery.Where(x => division.Contains(x.Event.Division));
             }
+
+            if (teamName == null || teamName.Count == 0)
+                teamName = Request.Query["team"].Select(value => value ?? string.Empty).ToList();
 
             if (teamName != null && teamName.Any())
             {
@@ -308,41 +311,25 @@ namespace SubcongMeet.Controllers
                 .Select(x => x.Qualifier)
                 .ToList();
 
-            ViewBag.SportsList = await _context.Events
-                .Where(e => !string.IsNullOrEmpty(e.SportName))
-                .Select(e => e.SportName)
-                .Distinct()
-                .OrderBy(s => s)
-                .Select(s => new SelectListItem { Value = s, Text = s })
+            // Reuse the same read-only event and team data for every dropdown.
+            var allEvents = await _context.Events.AsNoTracking()
+                .OrderBy(e => e.SportName).ThenBy(e => e.Title)
+                .Select(e => new Event { Id = e.Id, Title = e.Title, SportName = e.SportName, Division = e.Division })
                 .ToListAsync();
-
-            ViewBag.EventsList = await _context.Events
-                .OrderBy(e => e.Title)
-                .Select(e => new SelectListItem { Value = e.Id.ToString(), Text = e.Title })
-                .Distinct()
-                .ToListAsync();
-
-            ViewBag.DivisionsList = (await _context.Teams
-                .Where(t => !string.IsNullOrEmpty(t.Division))
-                .Select(t => t.Division)
-                .Distinct()
-                .ToListAsync())
-                .Union(new[] { "Elementary", "Secondary", "Paragames" })
-                .OrderBy(d => d)
-                .Select(d => new SelectListItem { Value = d, Text = d })
-                .ToList();
-
-            ViewBag.TeamNamesList = await _context.EventQualifiers
-                .Where(q => !string.IsNullOrEmpty(q.Team))
-                .Select(q => q.Team)
-                .Distinct()
-                .OrderBy(s => s)
-                .Select(s => new SelectListItem { Value = s, Text = s })
-                .ToListAsync();
-
-            ViewBag.TeamsList = await _context.Teams.OrderBy(t => t.Name).ToListAsync();
-            ViewBag.AllEvents = await _context.Events.OrderBy(e => e.SportName).ThenBy(e => e.Title).ToListAsync();
-
+            var teams = await _context.Teams.AsNoTracking().OrderBy(t => t.Name).ToListAsync();
+            ViewBag.SportsList = allEvents.Where(e => !string.IsNullOrEmpty(e.SportName))
+                .Select(e => e.SportName).Distinct().OrderBy(s => s)
+                .Select(s => new SelectListItem { Value = s, Text = s }).ToList();
+            ViewBag.EventsList = allEvents.OrderBy(e => e.Title)
+                .Select(e => new SelectListItem { Value = e.Id.ToString(), Text = e.Title }).ToList();
+            ViewBag.DivisionsList = teams.Where(t => !string.IsNullOrEmpty(t.Division))
+                .Select(t => t.Division).Union(new[] { "Elementary", "Secondary", "Paragames" })
+                .OrderBy(d => d).Select(d => new SelectListItem { Value = d, Text = d }).ToList();
+            ViewBag.TeamNamesList = await _context.EventQualifiers.AsNoTracking()
+                .Where(q => !string.IsNullOrEmpty(q.Team)).Select(q => q.Team).Distinct().OrderBy(t => t)
+                .Select(t => new SelectListItem { Value = t, Text = t }).ToListAsync();
+            ViewBag.TeamsList = teams;
+            ViewBag.AllEvents = allEvents;
             return View(sortedQualifiers);
         }
 
