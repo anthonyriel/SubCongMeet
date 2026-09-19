@@ -1,0 +1,89 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model SubcongMeet.Models.PlayerEventReport
+@{
+    ViewData["Title"] = "Player Winning Events Report";
+    var scope = string.Join(" • ", new[] { string.IsNullOrWhiteSpace(Model.Player) ? "All Players" : Model.Player, Model.District ?? "All Districts", Model.Sport ?? "All Sports", Model.Category ?? "All Categories", Model.Division ?? "All Divisions" });
+    var generatedAt = DateTime.UtcNow.AddHours(8).ToString("MMMM dd, yyyy h:mm tt") + " PST";
+}
+<style>
+    .player-report { background: white; color: #102a43; padding: 2rem; border-radius: 12px; }
+    .player-report th { background: #102a43; color: white; }
+    .player-report td, .player-report th { padding: .5rem; vertical-align: middle; }
+    .player-signature { text-align: center; margin-top: 2.5rem; }
+    .player-signature strong { display: inline-block; border-bottom: 1px solid; padding: 0 1rem .25rem; }
+    @@media (max-width: 575px) { .player-report { padding: 1rem; } }
+    @@page { size: A4 portrait; margin: 12mm; }
+    @@media print {
+        header, footer, nav, .d-print-none, .mobile-nav { display: none !important; }
+        html, body { background: white !important; background-image: none !important; }
+        .player-report { padding: 0; color: black; }
+        .container { max-width: none !important; padding: 0; }
+        .table-responsive { overflow: visible; }
+        .player-report thead { display: table-header-group; }
+        .player-report tr, .player-signature { break-inside: avoid; }
+        .player-report th { background: #eee !important; color: black; print-color-adjust: exact; }
+    }
+</style>
+<div class="container py-4">
+    <div class="card p-3 mb-4 d-print-none">
+        <div class="d-flex justify-content-between flex-wrap gap-2 mb-3"><h2 class="h4">Player Winning Events Report</h2><a asp-action="PlayerMedalReport">Back to Medal Totals</a></div>
+        <form method="get" asp-action="PlayerEventReport" class="row g-3">
+            <div class="col-md-6"><label asp-for="Player" class="form-label">Search Player Name</label><input asp-for="Player" class="form-control" placeholder="Enter a full or partial player name" /></div>
+            <div class="col-md-6"><label asp-for="District" class="form-label">District</label><select asp-for="District" asp-items="@(new SelectList(Model.Districts))" class="form-select"><option value="">All Districts</option></select></div>
+            <div class="col-md-4"><label asp-for="Sport" class="form-label">Sport</label><select asp-for="Sport" asp-items="@(new SelectList(Model.Sports))" class="form-select"><option value="">All Sports</option></select></div>
+            <div class="col-md-4"><label asp-for="Category" class="form-label">Sports Category</label><select asp-for="Category" asp-items="@(new SelectList(Model.Categories))" class="form-select"><option value="">All Categories</option></select></div>
+            <div class="col-md-4"><label asp-for="Division" class="form-label">Division</label><select asp-for="Division" asp-items="@(new SelectList(Model.Divisions))" class="form-select"><option value="">All Divisions</option></select></div>
+            <div class="col-12 d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-primary">Search / Apply Filters</button>
+                <a asp-action="PlayerEventReport" class="btn btn-outline-secondary">Reset</a>
+                <button type="button" onclick="window.print()" class="btn btn-outline-primary">Print / Save PDF</button>
+                <button type="button" id="exportPlayerEvents" class="btn btn-success">Export Excel</button>
+            </div>
+        </form>
+    </div>
+    <section class="player-report">
+        <div class="text-center mb-4"><div>Department of Education • Division of Bohol</div><h1 class="h4 mt-3">LOCATU 2026 — PLAYER WINNING EVENTS REPORT</h1><p>@scope</p><small>@generatedAt</small></div>
+        <p class="small">Named winners from completed events, ordered Gold, Silver, then Bronze. Boys, Girls, and Mixed follow event titles. Names are matched without regard to capitalization; use District and Division to distinguish players with the same name.</p>
+        <p class="fw-bold">Gold: @Model.Results.Count(r => r.Medal == "Gold") &nbsp; | &nbsp; Silver: @Model.Results.Count(r => r.Medal == "Silver") &nbsp; | &nbsp; Bronze: @Model.Results.Count(r => r.Medal == "Bronze") &nbsp; | &nbsp; Total: @Model.Results.Count</p>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead><tr><th>Medal</th><th>Player</th><th>District</th><th>Division / Group</th><th>Sport / Category</th><th>Event Won</th></tr></thead>
+                <tbody>
+                    @if (!Model.Results.Any()) { <tr><td colspan="6" class="text-center">No winning events match these filters.</td></tr> }
+                    @foreach (var row in Model.Results) {
+                        <tr><td class="fw-bold">@row.Medal</td><td>@row.Name</td><td>@row.District</td><td>@row.Division<br />@row.Group</td><td>@row.Sport<br /><small>@row.Category</small></td><td>@row.EventTitle</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="player-signature"><strong>MARIO L. GARCIA, PhD</strong><div>Chief Recorder</div></div>
+    </section>
+</div>
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        document.getElementById('exportPlayerEvents').addEventListener('click', async function () {
+            this.disabled = true;
+            try {
+                const rows = @Json.Serialize(Model.Results);
+                const book = new ExcelJS.Workbook();
+                const sheet = book.addWorksheet('Winning Events', {pageSetup: {paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0}});
+                sheet.columns = [12, 28, 23, 17, 12, 22, 18, 38].map(width => ({width}));
+                function heading(text) {
+                    const row = sheet.addRow([text]); sheet.mergeCells(row.number, 1, row.number, 8);
+                    row.getCell(1).alignment = {horizontal: 'center', wrapText: true};
+                }
+                heading('LOCATU 2026 — PLAYER WINNING EVENTS REPORT');
+                heading(@Json.Serialize(scope)); heading(@Json.Serialize(generatedAt));
+                sheet.addRow([]);
+                sheet.addRow(['Medal', 'Player', 'District', 'Division', 'Group', 'Sport', 'Category', 'Event Won']).font = {bold: true};
+                for (const r of rows) sheet.addRow([r.medal, r.name, r.district, r.division, r.group, r.sport, r.category, r.eventTitle]);
+                heading(`Gold: ${rows.filter(r => r.medal === 'Gold').length} | Silver: ${rows.filter(r => r.medal === 'Silver').length} | Bronze: ${rows.filter(r => r.medal === 'Bronze').length} | Total: ${rows.length}`);
+                sheet.addRow([]); heading('MARIO L. GARCIA, PhD'); heading('Chief Recorder');
+                saveAs(new Blob([await book.xlsx.writeBuffer()], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'LOCATU_Player_Winning_Events.xlsx');
+            } catch (error) { alert('The Excel export could not be created. Please reload and try again.'); }
+            finally { this.disabled = false; }
+        });
+    </script>
+}

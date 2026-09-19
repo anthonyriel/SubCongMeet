@@ -96,8 +96,8 @@
         .ThenBy(q => {
             string r = q.Role?.ToLower() ?? "";
             if (r.Contains("athlete")) return 1;
-            if (r.Contains("coach")) return 2;
             if (r.Contains("assistant coach")) return 3;
+            if (r.Contains("coach")) return 2;
             if (r.Contains("chaperon") || r.Contains("chaperone")) return 4;
             return 5;
         })
@@ -162,6 +162,15 @@
         bool boys = Regex.IsMatch(title, @"\bboys?\b", RegexOptions.IgnoreCase);
         bool girls = Regex.IsMatch(title, @"\bgirls?\b", RegexOptions.IgnoreCase);
         return boys && !girls ? "Boys" : girls && !boys ? "Girls" : "Mixed";
+    }
+
+    int ParticipantRoleOrder(string? role) {
+        var value = (role ?? "").Trim().ToLowerInvariant();
+        if (value.Contains("athlete")) return 1;
+        if (value.Contains("assistant") && value.Contains("coach")) return 3;
+        if (value.Contains("coach")) return 2;
+        if (value.Contains("chaperon")) return 4;
+        return 5;
     }
 
     void RenderSummary(string id) {
@@ -553,7 +562,7 @@
                                     if (!participants.Any()) { continue; }
                                     ResetTracker();
                                     <tr class="participant-group" data-category="@category"><td></td><td><strong>@category</strong></td><td></td><td></td><td></td><td></td><td class="text-center"><strong>@CountPeople(participants)</strong></td></tr>
-                                    foreach (var q in participants) { RenderQualifierRow(q); }
+                                    foreach (var q in participants.OrderBy(q => ParticipantRoleOrder(q.Role))) { RenderQualifierRow(q); }
                                 }
                             }
                         }
@@ -640,7 +649,7 @@
                                     var participants = sportGroup.Where(q => ParticipantGroup(q) == category).ToList();
                                     if (!participants.Any()) { continue; }
                                     <tr class="participant-group" data-category="@category"><td></td><td><strong>@category</strong></td><td></td><td></td><td></td><td class="text-center"><strong>@CountPeople(participants)</strong></td></tr>
-                                    foreach (var q in participants) { RenderParticipantRow(q); }
+                                    foreach (var q in participants.OrderBy(q => ParticipantRoleOrder(q.Role))) { RenderParticipantRow(q); }
                                 }
                             }
                         }

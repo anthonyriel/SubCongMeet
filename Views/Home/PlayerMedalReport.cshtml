@@ -1,0 +1,122 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model SubcongMeet.Models.PlayerMedalReport
+@{
+    ViewData["Title"] = "Player Medal Report";
+    var scope = string.Join(" • ", new[] { Model.Sport ?? "All Sports", Model.Category ?? "All Categories", Model.Division ?? "All Divisions" });
+    var generatedAt = DateTime.UtcNow.AddHours(8).ToString("MMMM dd, yyyy h:mm tt") + " PST";
+}
+<style>
+    .player-report { background: white; color: #102a43; padding: 2rem; border-radius: 12px; }
+    .player-report th { background: #102a43; color: white; }
+    .player-report td, .player-report th { padding: .5rem; vertical-align: middle; }
+    .player-signature { text-align: center; margin-top: 2.5rem; }
+    .player-signature strong { display: inline-block; border-bottom: 1px solid; padding: 0 1rem .25rem; }
+    @@media (max-width: 575px) { .player-report { padding: 1rem; } }
+    @@page { size: A4 portrait; margin: 12mm; }
+    @@media print {
+        header, footer, nav, .d-print-none, .mobile-nav { display: none !important; }
+        html, body { background: white !important; background-image: none !important; }
+        .player-report { padding: 0; color: black; }
+        .container { max-width: none !important; padding: 0; }
+        .table-responsive { overflow: visible; }
+        .player-report thead { display: table-header-group; }
+        .player-report tr, .player-signature { break-inside: avoid; }
+        .player-report th { background: #eee !important; color: black; print-color-adjust: exact; }
+    }
+</style>
+<div class="container py-4">
+    <div class="card p-3 mb-4 d-print-none">
+        <h2 class="h4">Player Medal Report</h2><a asp-action="PlayerEventReport" class="mb-3">Search Player Winning Events</a>
+        <form method="get" asp-action="PlayerMedalReport" class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="Sport" class="form-label">Sport</label>
+                <select asp-for="Sport" asp-items="@(new SelectList(Model.Sports))" class="form-select"><option value="">All Sports</option></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Category" class="form-label">Sports Category</label>
+                <select asp-for="Category" asp-items="@(new SelectList(Model.Categories))" class="form-select"><option value="">All Categories</option></select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Division" class="form-label">Division</label>
+                <select asp-for="Division" asp-items="@(new SelectList(Model.Divisions))" class="form-select"><option value="">All Divisions</option></select>
+            </div>
+            <div class="col-12 d-flex gap-2 flex-wrap">
+                <button class="btn btn-primary" type="submit">Apply Filters</button>
+                <a asp-action="PlayerMedalReport" class="btn btn-outline-secondary">Reset</a>
+                <button type="button" class="btn btn-outline-primary" onclick="window.print()">Print / Save PDF</button>
+                <button type="button" class="btn btn-success" id="exportPlayerMedals">Export Excel</button>
+            </div>
+        </form>
+    </div>
+    <section class="player-report">
+        <div class="text-center mb-4">
+            <div>Republic of the Philippines • Department of Education</div>
+            <div>Division of Bohol</div>
+            <h1 class="h4 mt-3">LOCATU 2026 — PLAYER MEDAL REPORT</h1>
+            <p class="fw-bold">@scope</p>
+            <small>@generatedAt</small>
+        </div>
+        <p class="small">Counts use named winners in completed events, one player per line. Each listed team-event player receives one medal. Matching names are combined within the same district, division, and Boys/Girls/Mixed group. Groups follow event titles; titles with neither or both Boys and Girls use Mixed. Unnamed winners are excluded.</p>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead><tr><th>Player</th><th>District</th><th>Division</th><th>Gold</th><th>Silver</th><th>Bronze</th><th>Total</th></tr></thead>
+                <tbody>
+                    @if (!Model.Players.Any()) {
+                        <tr><td colspan="7" class="text-center">No named medal winners match these filters.</td></tr>
+                    }
+                    @foreach (var group in new[] { "Boys", "Girls", "Mixed" }) {
+                        var groupPlayers = Model.Players.Where(p => p.Group == group).ToList();
+                        if (!groupPlayers.Any()) { continue; }
+                        <tr class="table-secondary"><td colspan="7"><strong>@group</strong></td></tr>
+                    @foreach (var player in groupPlayers) {
+                        <tr><td><a asp-action="PlayerEventReport" asp-route-player="@player.Name" asp-route-district="@player.District" asp-route-division="@player.Division" asp-route-sport="@Model.Sport" asp-route-category="@Model.Category">@player.Name</a></td><td>@player.District</td><td>@player.Division</td><td class="text-center">@player.Gold</td><td class="text-center">@player.Silver</td><td class="text-center">@player.Bronze</td><td class="text-center fw-bold">@player.Total</td></tr>
+                    }
+                    }
+                </tbody>
+                <tfoot><tr class="fw-bold"><td colspan="3">Total — @Model.Players.Count player records</td><td class="text-center">@Model.Players.Sum(p => p.Gold)</td><td class="text-center">@Model.Players.Sum(p => p.Silver)</td><td class="text-center">@Model.Players.Sum(p => p.Bronze)</td><td class="text-center">@Model.Players.Sum(p => p.Total)</td></tr></tfoot>
+            </table>
+        </div>
+        <div class="player-signature"><strong>MARIO L. GARCIA, PhD</strong><div>Chief Recorder</div></div>
+    </section>
+</div>
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        document.getElementById('exportPlayerMedals').addEventListener('click', async function () {
+            this.disabled = true;
+            try {
+                const players = @Json.Serialize(Model.Players);
+                const book = new ExcelJS.Workbook();
+                const sheet = book.addWorksheet('Player Medals', { pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
+                sheet.columns = [{width: 30}, {width: 25}, {width: 16}, {width: 9}, {width: 9}, {width: 9}, {width: 9}];
+                for (const text of ['LOCATU 2026 — PLAYER MEDAL REPORT', @Json.Serialize(scope), @Json.Serialize(generatedAt)]) {
+                    const row = sheet.addRow([text]);
+                    sheet.mergeCells(row.number, 1, row.number, 7);
+                    row.getCell(1).alignment = { horizontal: 'center', wrapText: true };
+                }
+                sheet.addRow([]);
+                sheet.addRow(['Player', 'District', 'Division', 'Gold', 'Silver', 'Bronze', 'Total']).font = {bold: true};
+                for (const group of ['Boys', 'Girls', 'Mixed']) {
+                    const groupPlayers = players.filter(p => p.group === group);
+                    if (!groupPlayers.length) continue;
+                    const heading = sheet.addRow([group]);
+                    sheet.mergeCells(heading.number, 1, heading.number, 7);
+                    heading.font = {bold: true};
+                    for (const p of groupPlayers) sheet.addRow([p.name, p.district, p.division, p.gold, p.silver, p.bronze, p.total]);
+                }
+                const sum = key => players.reduce((total, p) => total + p[key], 0);
+                sheet.addRow(['Total', '', '', sum('gold'), sum('silver'), sum('bronze'), sum('total')]).font = {bold: true};
+                sheet.addRow([]);
+                for (const text of ['MARIO L. GARCIA, PhD', 'Chief Recorder']) {
+                    const row = sheet.addRow([text]);
+                    sheet.mergeCells(row.number, 1, row.number, 7);
+                    row.getCell(1).alignment = {horizontal: 'center'};
+                }
+                saveAs(new Blob([await book.xlsx.writeBuffer()], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'LOCATU_Player_Medal_Report.xlsx');
+            } catch (error) {
+                alert('The Excel export could not be created. Please reload and try again.');
+            } finally { this.disabled = false; }
+        });
+    </script>
+}

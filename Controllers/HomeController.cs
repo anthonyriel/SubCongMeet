@@ -54,6 +54,55 @@ namespace SubcongMeet.Controllers
         }
 
         [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> PlayerMedalReport(string? sport, string? category, string? division)
+        {
+            var options = await _context.Events.AsNoTracking()
+                .Select(e => new { e.SportName, e.SportCategory, e.Division }).Distinct().ToListAsync();
+            var query = _context.Events.AsNoTracking().Where(e => e.Status == "Completed");
+            if (!string.IsNullOrEmpty(sport)) query = query.Where(e => e.SportName == sport);
+            if (!string.IsNullOrEmpty(category)) query = query.Where(e => e.SportCategory == category);
+            if (!string.IsNullOrEmpty(division)) query = query.Where(e => e.Division == division);
+            var events = await query.Select(e => new Event {
+                Title = e.Title, Division = e.Division, Status = e.Status,
+                GoldTeamId = e.GoldTeamId, SilverTeamId = e.SilverTeamId, BronzeTeamId = e.BronzeTeamId,
+                GoldWinnerName = e.GoldWinnerName, SilverWinnerName = e.SilverWinnerName, BronzeWinnerName = e.BronzeWinnerName
+            }).ToListAsync();
+            var teams = await _context.Teams.AsNoTracking().ToDictionaryAsync(t => t.Id, t => t.Name);
+            return View(new Models.PlayerMedalReport {
+                Players = Models.PlayerMedalReport.CountMedals(events, teams),
+                Sports = options.Select(e => e.SportName).OfType<string>().Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(s => s).ToList(),
+                Categories = options.Select(e => e.SportCategory).OfType<string>().Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(s => s).ToList(),
+                Divisions = options.Select(e => e.Division).Distinct().OrderBy(s => s).ToList(),
+                Sport = sport, Category = category, Division = division
+            });
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> PlayerEventReport(string? sport, string? category, string? division, string? player, string? district)
+        {
+            var options = await _context.Events.AsNoTracking()
+                .Select(e => new { e.SportName, e.SportCategory, e.Division }).Distinct().ToListAsync();
+            var query = _context.Events.AsNoTracking().Where(e => e.Status == "Completed");
+            if (!string.IsNullOrEmpty(sport)) query = query.Where(e => e.SportName == sport);
+            if (!string.IsNullOrEmpty(category)) query = query.Where(e => e.SportCategory == category);
+            if (!string.IsNullOrEmpty(division)) query = query.Where(e => e.Division == division);
+            var events = await query.Select(e => new Event {
+                Title = e.Title, SportName = e.SportName, SportCategory = e.SportCategory, Division = e.Division, Status = e.Status,
+                GoldTeamId = e.GoldTeamId, SilverTeamId = e.SilverTeamId, BronzeTeamId = e.BronzeTeamId,
+                GoldWinnerName = e.GoldWinnerName, SilverWinnerName = e.SilverWinnerName, BronzeWinnerName = e.BronzeWinnerName
+            }).ToListAsync();
+            var teams = await _context.Teams.AsNoTracking().ToDictionaryAsync(t => t.Id, t => t.Name);
+            return View(new Models.PlayerEventReport {
+                Results = Models.PlayerEventReport.Build(events, teams, player, district),
+                Player = player, District = district, Districts = teams.Values.Distinct().OrderBy(t => t).ToList(),
+                Sports = options.Select(e => e.SportName).OfType<string>().Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(s => s).ToList(),
+                Categories = options.Select(e => e.SportCategory).OfType<string>().Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(s => s).ToList(),
+                Divisions = options.Select(e => e.Division).Distinct().OrderBy(s => s).ToList(),
+                Sport = sport, Category = category, Division = division
+            });
+        }
+
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AllEventsResultsReport(List<string> sportsName, List<int> eventId, List<string> division, List<int> schoolId)
         {
             var query = _context.Events.AsNoTracking().AsQueryable();

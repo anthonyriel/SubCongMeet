@@ -2,6 +2,7 @@
 @{
     var eventDetails = ViewBag.Event as SubcongMeet.Models.Event;
     var teams = ViewBag.Teams as List<SubcongMeet.Models.Team> ?? new List<SubcongMeet.Models.Team>();
+    var recordedWinners = ViewBag.RecordedWinners as List<SubcongMeet.Models.RecordedDelegationWinner> ?? new();
     ViewData["Title"] = "Manage Delegation - " + eventDetails?.Title;
 
     var tShirtSizes = new[] { "12", "14", "16", "18", "20", "XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL" };
@@ -231,6 +232,32 @@
                 <h5 class="mb-3 fw-bold" style="font-family: var(--font-body); color: var(--cc-primary, #102A43);">
                     <i class="bi bi-person-plus-fill me-1 text-warning"></i> Add New Participant
                 </h5>
+                <details class="mb-3 border rounded p-3">
+                    <summary class="fw-bold">Select recorded Silver and Bronze winners (@recordedWinners.Count)</summary>
+                    <p class="text-muted small mt-2">@eventDetails?.SportName — @eventDetails?.Division. Official results only. Names already in this delegation are excluded. Selected winners are added as athletes.</p>
+                    @if (recordedWinners.Count == 0)
+                    {
+                        <p class="mb-0">No additional recorded silver or bronze winners are available. You can still enter participants manually below.</p>
+                    }
+                    else
+                    {
+                        <form asp-action="AddRecordedWinners" method="post" id="recordedWinnersForm">
+                            <input type="hidden" name="eventId" value="@eventDetails?.Id" />
+                            <label class="d-block mb-2 fw-bold"><input type="checkbox" id="selectAllWinners" class="form-check-input me-2" />Select all</label>
+                            <div class="border rounded p-2" style="max-height: 300px; overflow-y: auto;">
+                                @foreach (var winner in recordedWinners)
+                                {
+                                    <label class="d-flex gap-2 border-bottom py-2">
+                                        <input type="checkbox" name="winnerKeys" value="@winner.Key" class="form-check-input winner-checkbox flex-shrink-0" />
+                                        <span><strong>@winner.Name</strong> — @winner.District<br /><small class="text-muted">@winner.Result</small></span>
+                                    </label>
+                                }
+                            </div>
+                            <button type="submit" class="btn btn-custom-primary mt-3" id="addSelectedWinners" disabled>Add selected winners (0)</button>
+                        </form>
+                    }
+                </details>
+                <h6 class="fw-bold">Manual entry</h6>
                 <form asp-action="SaveQualifier" method="post" id="participantForm">
                     <input type="hidden" name="EventId" value="@eventDetails?.Id" />
                     <input type="hidden" name="Id" value="@Guid.Empty" />
@@ -392,6 +419,30 @@
         }
 
         // Handle Add Participant Form
+        const winnersForm = document.getElementById('recordedWinnersForm');
+        if (winnersForm) {
+            const all = document.getElementById('selectAllWinners');
+            const choices = [...winnersForm.querySelectorAll('.winner-checkbox')];
+            const add = document.getElementById('addSelectedWinners');
+            function updateWinnerSelection() {
+                const count = choices.filter(c => c.checked).length;
+                all.checked = count === choices.length;
+                all.indeterminate = count > 0 && count < choices.length;
+                add.disabled = count === 0;
+                add.textContent = `Add selected winners (${count})`;
+            }
+            all.addEventListener('change', () => {
+                choices.forEach(c => c.checked = all.checked);
+                updateWinnerSelection();
+            });
+            choices.forEach(c => c.addEventListener('change', updateWinnerSelection));
+            winnersForm.addEventListener('submit', e => {
+                if (!choices.some(c => c.checked)) { e.preventDefault(); return; }
+                add.disabled = true;
+                showProgress('Adding selected winners...', 'bg-success');
+            });
+            updateWinnerSelection();
+        }
         if (participantForm) {
             participantForm.addEventListener('submit', function() {
                 showProgress('Adding participant...', 'bg-success');

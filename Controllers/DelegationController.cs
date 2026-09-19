@@ -73,7 +73,57 @@ namespace SubcongMeet.Controllers
                 ViewBag.Teams = await teamsQuery.GroupBy(t => t.Name).Select(g => g.First()).OrderBy(t => t.Name).ToListAsync();
             }
             
+            var existingNames = qualifiers.Select(q => RecordedDelegationWinner.Identity(q.ParticipantName, q.Team)).ToHashSet();
+            ViewBag.RecordedWinners = (await GetRecordedWinners(eventDetails))
+                .Where(w => !existingNames.Contains(w.Key)).ToList();
             return View(qualifiers);
+        }
+
+        private async Task<List<RecordedDelegationWinner>> GetRecordedWinners(Event target)
+        {
+            if (string.IsNullOrWhiteSpace(target.SportName)) return new();
+            var sport = target.SportName.Trim().ToLower();
+            var division = target.Division.Trim().ToLower();
+            var events = await _context.Events.AsNoTracking()
+                .Where(e => e.Status == "Completed" && e.SportName != null
+                    && e.SportName.Trim().ToLower() == sport && e.Division.Trim().ToLower() == division)
+                .ToListAsync();
+            var teams = await _context.Teams.AsNoTracking()
+                .Where(t => t.Division.Trim().ToLower() == division).ToDictionaryAsync(t => t.Id, t => t.Name);
+            return RecordedDelegationWinner.Build(events, target, teams);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddRecordedWinners(long eventId, List<string>? winnerKeys)
+        {
+            var target = await _context.Events.FirstOrDefaultAsync(e => e.Id == eventId);
+            if (target == null) return NotFound("Event not found.");
+            var coordinatorId = GetCurrentCoordinatorId();
+            if (!User.IsInRole("Admin") && (coordinatorId == null || target.CoordinatorId != coordinatorId))
+                return Forbid();
+
+            var selected = (winnerKeys ?? new()).ToHashSet(StringComparer.Ordinal);
+            // Re-read official results: posted names and districts are never trusted.
+            var available = await GetRecordedWinners(target);
+            var existing = await _context.EventQualifiers.AsNoTracking().Where(q => q.EventId == eventId).ToListAsync();
+            var identities = existing.Select(q => RecordedDelegationWinner.Identity(q.ParticipantName, q.Team)).ToHashSet();
+            int added = 0;
+            foreach (var winner in available.Where(w => selected.Contains(w.Key)))
+            {
+                if (!identities.Add(winner.Key)) continue;
+                _context.EventQualifiers.Add(new EventQualifier { Id = Guid.NewGuid(), EventId = eventId,
+                    ParticipantName = winner.Name, Team = winner.District, Role = "Athlete",
+                    Gender = winner.Gender, UpdatedAt = DateTime.UtcNow });
+                added++;
+            }
+            if (added > 0)
+            {
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"{added} recorded winner(s) added as athletes. Existing participants were skipped.";
+            }
+            else TempData["ErrorMessage"] = "No new participants added. Select available winners; existing participants and unavailable results are skipped.";
+            return RedirectToAction(nameof(Manage), new { eventId });
         }
 
         [HttpPost]

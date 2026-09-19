@@ -274,6 +274,7 @@
                                         <select name="qualifiers[@index].Role" class="form-select form-select-sm" required>
                                             @if (q.Role?.ToLower() == "athlete") { <option value="Athlete" selected>Athlete</option> } else { <option value="Athlete">Athlete</option> }
                                             @if (q.Role?.ToLower() == "coach") { <option value="Coach" selected>Coach</option> } else { <option value="Coach">Coach</option> }
+                                            @if (string.Equals(q.Role?.Trim(), "Assistant Coach", StringComparison.OrdinalIgnoreCase)) { <option value="Assistant Coach" selected>Assistant Coach</option> } else { <option value="Assistant Coach">Assistant Coach</option> }
                                             @if (q.Role?.ToLower() == "chaperon" || q.Role?.ToLower() == "chaperone") { <option value="Chaperon" selected>Chaperon</option> } else { <option value="Chaperon">Chaperon</option> }
                                         </select>
                                     </td>
@@ -342,6 +343,7 @@
                         <select name="Role" class="form-select" required>
                             <option value="Athlete">Athlete</option>
                             <option value="Coach">Coach</option>
+                            <option value="Assistant Coach">Assistant Coach</option>
                             <option value="Chaperon">Chaperon</option>
                         </select>
                     </div>
